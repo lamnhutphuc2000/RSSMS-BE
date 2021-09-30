@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>RSSMS.API</name>
+    </assembly>
+    <members>
+        <member name="M:RSSMS.API.Controllers.UsersController.Get(RSSMS.DataService.ViewModels.UserViewModel,System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get all users
+            </summary>
+            <param name="model"></param>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

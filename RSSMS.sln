@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30503.244
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RSSMS.API", "RSSMS\RSSMS.API.csproj", "{71AD2722-672D-4CE2-86DA-F76CD04E97C3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RSSMS.DataService", "RSSMS.DataService\RSSMS.DataService.csproj", "{D6BC9CDD-DC11-4609-BA74-EE2A7176C0D5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{71AD2722-672D-4CE2-86DA-F76CD04E97C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71AD2722-672D-4CE2-86DA-F76CD04E97C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71AD2722-672D-4CE2-86DA-F76CD04E97C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71AD2722-672D-4CE2-86DA-F76CD04E97C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6BC9CDD-DC11-4609-BA74-EE2A7176C0D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6BC9CDD-DC11-4609-BA74-EE2A7176C0D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6BC9CDD-DC11-4609-BA74-EE2A7176C0D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6BC9CDD-DC11-4609-BA74-EE2A7176C0D5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F1DEE92F-A854-4725-BEAC-A3DBFB8D7F08}
+	EndGlobalSection
+EndGlobal
