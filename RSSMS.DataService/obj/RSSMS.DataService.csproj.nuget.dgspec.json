@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj": {}
+    "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj": {}
   },
   "projects": {
-    "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj": {
+    "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj",
+        "projectUniqueName": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj",
         "projectName": "RSSMS.DataService",
-        "projectPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj",
-        "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\obj\\",
+        "projectPath": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj",
+        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
+        "outputPath": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -26,6 +26,7 @@
         },
         "frameworks": {
           "netcoreapp3.1": {
+            "targetAlias": "netcoreapp3.1",
             "projectReferences": {}
           }
         },
@@ -37,6 +38,7 @@
       },
       "frameworks": {
         "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
           "dependencies": {
             "AutoMapper": {
               "target": "Package",
@@ -84,14 +86,11 @@
           "assetTargetFallback": true,
           "warn": true,
           "frameworkReferences": {
-            "Microsoft.AspNetCore.App": {
-              "privateAssets": "none"
-            },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.402\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400\\RuntimeIdentifierGraph.json"
         }
       }
     }
