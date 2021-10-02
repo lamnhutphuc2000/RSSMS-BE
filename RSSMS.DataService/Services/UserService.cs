@@ -48,15 +48,17 @@ namespace RSSMS.DataService.Services
 
         public async Task<UserCreateViewModel> Create(UserCreateViewModel model)
         {
-            var user = _mapper.Map<User>(model);
-            await CreateAsync(user);
+            var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
+            if (user != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email is existed");
+            var userCreate = _mapper.Map<User>(model);
+            await CreateAsync(userCreate);
             return model;
         }
 
         public async Task<UserViewModel> Delete(int id)
         {
-            var entity = await GetAsync<int>(id);
-            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id not found");
+            var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
+            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
             entity.IsActive = false;
             await UpdateAsync(entity);
             return _mapper.Map<UserViewModel>(entity);

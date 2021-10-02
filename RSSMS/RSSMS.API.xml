@@ -11,7 +11,7 @@
             <param name="model"></param>
             <returns></returns>
         </member>
-        <member name="M:RSSMS.API.Controllers.UsersController.Get(RSSMS.DataService.ViewModels.UserViewModel,System.String[],System.Int32,System.Int32)">
+        <member name="M:RSSMS.API.Controllers.UsersController.Get(RSSMS.DataService.ViewModels.Users.UserViewModel,System.String[],System.Int32,System.Int32)">
             <summary>
             Get all users
             </summary>

@@ -92,7 +92,7 @@ namespace RSSMS.API.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             await _userService.Delete(id);
-            return Ok("Deleted");
+            return Ok("Deleted successfully");
         }
     }
 }
