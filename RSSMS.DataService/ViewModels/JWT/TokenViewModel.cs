@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RSSMS.DataService.ViewModels.Images;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -14,10 +15,10 @@ namespace RSSMS.DataService.ViewModels.JWT
         public string Name { get; set; }
         public string Email { get; set; }
         public string Address { get; set; }
-        public string Avatar { get; set; }
         public string RoleName { get; set; }
         public int? StorageId { get; set; }
         public string Phone { get; set; }
-        
+        public virtual ICollection<AvatarImageViewModel> Images { get; set; }
+
     }
 }

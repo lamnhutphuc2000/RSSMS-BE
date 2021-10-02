@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 #nullable disable
 
@@ -7,7 +8,6 @@ namespace RSSMS.DataService.Models
     public partial class Image
     {
         public int Id { get; set; }
-        public int? ResourceId { get; set; }
         public string Url { get; set; }
         public string Type { get; set; }
         public bool? IsActive { get; set; }
@@ -16,10 +16,14 @@ namespace RSSMS.DataService.Models
         public DateTime? ModifiedDate { get; set; }
         public int? ModifiedBy { get; set; }
         public string Note { get; set; }
+        public int? UserId { get; set; }
+        public int? ProductId { get; set; }
+        public int? StorageId { get; set; }
+        public int? OrderId { get; set; }
 
-        public virtual Product Resource { get; set; }
-        public virtual Storage Resource1 { get; set; }
-        public virtual User Resource2 { get; set; }
-        public virtual Request ResourceNavigation { get; set; }
+        public virtual Order Order { get; set; }
+        public virtual Product Product { get; set; }
+        public virtual Storage Storage { get; set; }
+        public virtual User User { get; set; }
     }
 }

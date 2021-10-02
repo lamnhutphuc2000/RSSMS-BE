@@ -10,6 +10,9 @@ namespace RSSMS.DataService.AutoMapper
         {
             mc.CreateMap<Image, AvatarImageViewModel>();
             mc.CreateMap<AvatarImageViewModel, Image>();
+
+            mc.CreateMap<AvatarImageCreateViewModel, Image>()
+                .ForMember(des => des.IsActive, opt => opt.MapFrom(src => true));
         }
     }
 }

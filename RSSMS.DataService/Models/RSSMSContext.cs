@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
@@ -32,6 +34,8 @@ namespace RSSMS.DataService.Models
         {
             if (!optionsBuilder.IsConfigured)
             {
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+                optionsBuilder.UseSqlServer("Server=localhost;Database=RSSMS;Trusted_Connection=True;");
             }
         }
 
@@ -82,8 +86,6 @@ namespace RSSMS.DataService.Models
             {
                 entity.ToTable("Image");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
-
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
@@ -96,25 +98,25 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Url).HasMaxLength(100);
 
-                entity.HasOne(d => d.Resource)
+                entity.HasOne(d => d.Order)
                     .WithMany(p => p.Images)
-                    .HasForeignKey(d => d.ResourceId)
-                    .HasConstraintName("FK_Image_Product");
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_Image_Order");
 
-                entity.HasOne(d => d.ResourceNavigation)
+                entity.HasOne(d => d.Product)
                     .WithMany(p => p.Images)
-                    .HasForeignKey(d => d.ResourceId)
-                    .HasConstraintName("FK_Image_Request");
+                    .HasForeignKey(d => d.ProductId)
+                    .HasConstraintName("FK_Image_Product1");
 
-                entity.HasOne(d => d.Resource1)
+                entity.HasOne(d => d.Storage)
                     .WithMany(p => p.Images)
-                    .HasForeignKey(d => d.ResourceId)
+                    .HasForeignKey(d => d.StorageId)
                     .HasConstraintName("FK_Image_Storage");
 
-                entity.HasOne(d => d.Resource2)
+                entity.HasOne(d => d.User)
                     .WithMany(p => p.Images)
-                    .HasForeignKey(d => d.ResourceId)
-                    .HasConstraintName("FK_Image_User");
+                    .HasForeignKey(d => d.UserId)
+                    .HasConstraintName("FK_Image_User1");
             });
 
             modelBuilder.Entity<Order>(entity =>
@@ -240,6 +242,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
+                entity.Property(e => e.Address).HasMaxLength(100);
+
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
@@ -304,6 +308,11 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.Storages)
                     .HasForeignKey(d => d.ManagerId)
                     .HasConstraintName("FK_Storage_User");
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.Storages)
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_Storage_Order");
             });
 
             modelBuilder.Entity<User>(entity =>

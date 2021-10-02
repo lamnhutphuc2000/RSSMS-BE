@@ -1,4 +1,7 @@
-﻿namespace RSSMS.DataService.ViewModels.Users
+﻿using RSSMS.DataService.ViewModels.Images;
+using System.Collections.Generic;
+
+namespace RSSMS.DataService.ViewModels.Users
 {
     public class UserCreateViewModel
     {
@@ -9,5 +12,6 @@
         public string Phone { get; set; }
         public int? RoleId { get; set; }
         public int? StorageId { get; set; }
+        public virtual ICollection<AvatarImageCreateViewModel> Images { get; set; }
     }
 }

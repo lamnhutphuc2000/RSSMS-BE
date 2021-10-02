@@ -92,7 +92,7 @@ namespace RSSMS.DataService.Services
 
         public async Task<TokenViewModel> Login(UserLoginViewModel model)
         {
-            var user = await Get(x => x.Email == model.Email && x.Password == model.Password && x.IsActive == true).Include(x => x.Role).FirstOrDefaultAsync();
+            var user = await Get(x => x.Email == model.Email && x.Password == model.Password && x.IsActive == true).Include(x => x.Role).Include(x => x.Images).FirstOrDefaultAsync();
             if (user == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
             var result = _mapper.Map<TokenViewModel>(user);
             var token = GenerateToken(user);
