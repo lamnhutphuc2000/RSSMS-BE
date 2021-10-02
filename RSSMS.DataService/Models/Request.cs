@@ -9,7 +9,6 @@ namespace RSSMS.DataService.Models
     {
         public Request()
         {
-            Images = new HashSet<Image>();
             Schedules = new HashSet<Schedule>();
         }
 
@@ -27,7 +26,6 @@ namespace RSSMS.DataService.Models
 
         public virtual Order Order { get; set; }
         public virtual User User { get; set; }
-        public virtual ICollection<Image> Images { get; set; }
         public virtual ICollection<Schedule> Schedules { get; set; }
     }
 }

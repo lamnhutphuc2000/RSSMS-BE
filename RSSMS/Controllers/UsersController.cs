@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels;
+using RSSMS.DataService.ViewModels.JWT;
 using RSSMS.DataService.ViewModels.Users;
 using System.Net;
 using System.Threading.Tasks;
@@ -20,6 +22,20 @@ namespace RSSMS.API.Controllers
             _userService = userService;
         }
         /// <summary>
+        /// Login by email and password
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPost("login")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(TokenViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> Login(UserLoginViewModel model)
+        {
+            return Ok(await _userService.Login(model));
+        }
+        /// <summary>
         /// Get all users
         /// </summary>
         /// <param name="model"></param>
@@ -29,6 +45,7 @@ namespace RSSMS.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [MapToApiVersion("1")]
+        //[Authorize]
         [ProducesResponseType(typeof(DynamicModelResponse<UserViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
@@ -75,7 +92,7 @@ namespace RSSMS.API.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             await _userService.Delete(id);
-            return Ok("Deleted");
+            return Ok("Deleted successfully");
         }
     }
 }

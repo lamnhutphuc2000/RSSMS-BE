@@ -86,8 +86,6 @@ namespace RSSMS.DataService.Models
             {
                 entity.ToTable("Image");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
-
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
@@ -100,25 +98,25 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Url).HasMaxLength(100);
 
-                entity.HasOne(d => d.Resource)
+                entity.HasOne(d => d.Order)
                     .WithMany(p => p.Images)
-                    .HasForeignKey(d => d.ResourceId)
-                    .HasConstraintName("FK_Image_Product");
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_Image_Order");
 
-                entity.HasOne(d => d.ResourceNavigation)
+                entity.HasOne(d => d.Product)
                     .WithMany(p => p.Images)
-                    .HasForeignKey(d => d.ResourceId)
-                    .HasConstraintName("FK_Image_Request");
+                    .HasForeignKey(d => d.ProductId)
+                    .HasConstraintName("FK_Image_Product1");
 
-                entity.HasOne(d => d.Resource1)
+                entity.HasOne(d => d.Storage)
                     .WithMany(p => p.Images)
-                    .HasForeignKey(d => d.ResourceId)
+                    .HasForeignKey(d => d.StorageId)
                     .HasConstraintName("FK_Image_Storage");
 
-                entity.HasOne(d => d.Resource2)
+                entity.HasOne(d => d.User)
                     .WithMany(p => p.Images)
-                    .HasForeignKey(d => d.ResourceId)
-                    .HasConstraintName("FK_Image_User");
+                    .HasForeignKey(d => d.UserId)
+                    .HasConstraintName("FK_Image_User1");
             });
 
             modelBuilder.Entity<Order>(entity =>
@@ -244,6 +242,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
+                entity.Property(e => e.Address).HasMaxLength(100);
+
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
@@ -306,6 +306,11 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.Storages)
                     .HasForeignKey(d => d.ManagerId)
                     .HasConstraintName("FK_Storage_User");
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.Storages)
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_Storage_Order");
             });
 
             modelBuilder.Entity<User>(entity =>

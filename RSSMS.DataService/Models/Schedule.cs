@@ -11,6 +11,7 @@ namespace RSSMS.DataService.Models
         public int? OrderId { get; set; }
         public int? UserId { get; set; }
         public int? RequestId { get; set; }
+        public string Address { get; set; }
         public DateTime? TimeFrom { get; set; }
         public DateTime? TimeTo { get; set; }
         public string Note { get; set; }

@@ -9,6 +9,8 @@ using RSSMS.API.App_Start;
 using RSSMS.API.Handler;
 using RSSMS.DataService.Extensions;
 using RSSMS.DataService.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RSSMS
 {
@@ -20,12 +22,12 @@ namespace RSSMS
         }
 
         public IConfiguration Configuration { get; }
-
+        public static readonly string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             //services.AddControllers();
-
+            services.AddCors();
             services.AddDbContext<RSSMSContext>(options => options.UseSqlServer(Configuration.GetConnectionString("RSSMSContext")));
 
             services.AddScoped<RSSMSContext>();
@@ -47,7 +49,10 @@ namespace RSSMS
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            app.UseCors(builder => builder
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader());
             app.UseHttpsRedirection();
 
             app.UseRouting();
