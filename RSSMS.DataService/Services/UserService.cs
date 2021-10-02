@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Logging;
+using Microsoft.IdentityModel.Tokens;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
@@ -8,16 +10,22 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels;
+using RSSMS.DataService.ViewModels.JWT;
 using RSSMS.DataService.ViewModels.Users;
+using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
 {
     public interface IUserService : IBaseService<User>
     {
+        Task<TokenViewModel> Login(UserLoginViewModel model);
         Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, string[] fields, int page, int size);
         Task<UserViewModel> GetById(int id);
         Task<UserCreateViewModel> Create(UserCreateViewModel model);
@@ -80,6 +88,18 @@ namespace RSSMS.DataService.Services
             return result;
         }
 
+        public async Task<TokenViewModel> Login(UserLoginViewModel model)
+        {
+            var user = await Get(x => x.Email == model.Email && x.Password == model.Password && x.IsActive == true).Include(x => x.Role).FirstOrDefaultAsync();
+            if (user == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
+            var result = _mapper.Map<TokenViewModel>(user);
+            var token = GenerateToken(user);
+            var refreshToken = GenerateRefreshToken(user);
+            token.RefreshToken = refreshToken;
+            result = _mapper.Map(token, result);
+            return result;
+        }
+
         public async Task<UserViewModel> Update(int id, UserUpdateViewModel model)
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User Id not matched");
@@ -91,6 +111,56 @@ namespace RSSMS.DataService.Services
             await UpdateAsync(updateEntity);
 
             return _mapper.Map<UserViewModel>(updateEntity);
+        }
+        
+        private TokenGenerateModel GenerateToken(User user)
+        {
+            var authClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.Name),
+                    new Claim("user_id",user.Id.ToString()),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                };
+            authClaims.Add(new Claim(ClaimTypes.Role, user.Role.Name));
+            string secret = SecretKeyConstant.SECRET_KEY;
+            IdentityModelEventSource.ShowPII = true;
+
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            var token = new JwtSecurityToken(
+                issuer: SecretKeyConstant.ISSUER,
+                audience: SecretKeyConstant.ISSUER,
+                expires: DateTime.Now.AddMinutes(60),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+                );
+            TimeSpan expires = DateTime.Now.Subtract(token.ValidTo);
+            return new TokenGenerateModel
+            {
+                IdToken = new JwtSecurityTokenHandler().WriteToken(token),
+                ExpiresIn = expires.TotalMinutes,
+                TokenType = "Bearer",
+            };
+        }
+        private string GenerateRefreshToken(User user)
+        {
+            var authClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.Name),
+                    new Claim("user_id",user.Id.ToString()),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                };
+            authClaims.Add(new Claim(ClaimTypes.Role, user.Role.Name));
+            string secret = SecretKeyConstant.SECRET_KEY;
+            IdentityModelEventSource.ShowPII = true;
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            var token = new JwtSecurityToken(
+                issuer: SecretKeyConstant.ISSUER,
+                audience: SecretKeyConstant.ISSUER,
+                expires: DateTime.Now.AddMonths(1),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+                );
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 
