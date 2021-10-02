@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels;
+using RSSMS.DataService.ViewModels.JWT;
 using RSSMS.DataService.ViewModels.Users;
 using System;
 
@@ -19,6 +20,9 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<UserUpdateViewModel, User>();
             mc.CreateMap<User, UserUpdateViewModel>();
+
+            mc.CreateMap<User, TokenViewModel>();
+            mc.CreateMap<TokenGenerateModel, TokenViewModel>();
         }
     }
 }
