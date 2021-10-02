@@ -22,6 +22,11 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<StorageUpdateViewModel, Storage>()
                 .ForMember(des => des.ModifiedDate, opt => opt.MapFrom(src => DateTime.Now));
             mc.CreateMap<Storage, StorageUpdateViewModel>();
+
+
+            mc.CreateMap<Storage, StorageGetIdViewModel>();
+            mc.CreateMap<StorageGetIdViewModel, Storage>();
+
         }
     }
 }

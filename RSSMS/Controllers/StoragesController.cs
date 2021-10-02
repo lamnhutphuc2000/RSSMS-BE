@@ -42,7 +42,7 @@ namespace RSSMS.API.Controllers
         /// <returns></returns>
         [HttpGet("{id}")]
         [MapToApiVersion("1")]
-        [ProducesResponseType(typeof(StorageViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(StorageGetIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetById(int id)

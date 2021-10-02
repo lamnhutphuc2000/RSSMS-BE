@@ -32,6 +32,7 @@ namespace RSSMS.DataService.Services
         Task<UserViewModel> Update(int id, UserUpdateViewModel model);
         Task<UserViewModel> Delete(int id);
         Task<int> Count(List<UserViewModel> shelves);
+  /*      Task<bool> UpdateUserStorageID(UserListStaffViewModel listUser, int storageID);*/
     }
     public class UserService : BaseService<User>, IUserService
     {
@@ -164,6 +165,11 @@ namespace RSSMS.DataService.Services
                 );
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+/*        public Task<bool> UpdateUserStorageID(UserListStaffViewModel listUser, int storageID)
+        {
+            return true;
+        }*/
     }
 
 }

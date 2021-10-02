@@ -20,6 +20,9 @@ namespace RSSMS.DataService.DI
             services.AddScoped<IStorageRepository, StorageRepository>();
             services.AddScoped<IStorageService, StorageService>();
 
+            services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IOrderService, OrderService>();
+
 
         }
     }

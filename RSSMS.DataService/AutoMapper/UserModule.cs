@@ -23,6 +23,9 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<User, TokenViewModel>();
             mc.CreateMap<TokenGenerateModel, TokenViewModel>();
+
+            mc.CreateMap<User, UserListStaffViewModel>();
+            mc.CreateMap<UserListStaffViewModel, User>();
         }
     }
 }
