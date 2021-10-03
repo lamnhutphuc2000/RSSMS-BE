@@ -20,7 +20,7 @@ namespace RSSMS.DataService.Services
     {
         Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, string[] fields, int page, int size);
         Task<StorageGetIdViewModel> GetById(int id);
-        Task<StorageCreateViewModel> Create(StorageCreateViewModel model);
+        Task<StorageViewModel> Create(StorageCreateViewModel model);
         Task<StorageUpdateViewModel> Update(int id, StorageUpdateViewModel model);
         Task<StorageViewModel> Delete(int id);
         Task<int> Count(List<StorageViewModel> shelves);
@@ -42,11 +42,16 @@ namespace RSSMS.DataService.Services
             throw new NotImplementedException();
         }
 
-        public async Task<StorageCreateViewModel> Create(StorageCreateViewModel model)
+        public async Task<StorageViewModel> Create(StorageCreateViewModel model)
         {
+            
+
+
             var storage = _mapper.Map<Storage>(model);
             await CreateAsync(storage);
+            
 
+            //Update User in Storage
             UserUpdateViewModel staff = new UserUpdateViewModel();
             var listAssignedStaff = model.ListStaff;
             foreach (UserListStaffViewModel staffAssigned in listAssignedStaff)
@@ -56,7 +61,8 @@ namespace RSSMS.DataService.Services
                 await _userService.Update(staffAssigned.Id, staff);
             }
 
-            return model;
+  
+            return _mapper.Map<StorageViewModel>(storage); ;
 
         }
 

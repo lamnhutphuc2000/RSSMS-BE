@@ -1,4 +1,7 @@
-﻿namespace RSSMS.DataService.ViewModels.Storages
+﻿using System.Collections.Generic;
+using RSSMS.DataService.ViewModels.Images;
+
+namespace RSSMS.DataService.ViewModels.Storages
 {
     public class StorageUpdateViewModel
     {
@@ -10,6 +13,7 @@
         public int? Type { get; set; }
         public string Address { get; set; }
         public int? Status { get; set; }
+        public virtual ICollection<AvatarImageViewModel> Images { get; set; }
 
     }
 }

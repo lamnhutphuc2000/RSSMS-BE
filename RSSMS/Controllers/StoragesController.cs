@@ -56,7 +56,7 @@ namespace RSSMS.API.Controllers
         /// <returns></returns>
         [HttpPost]
         [MapToApiVersion("1")]
-        [ProducesResponseType(typeof(StorageCreateViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(StorageViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Add(StorageCreateViewModel model)
