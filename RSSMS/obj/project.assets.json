@@ -5883,19 +5883,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Admin\\.nuget\\packages\\": {}
+    "C:\\Users\\ASUS\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS\\RSSMS.API.csproj",
+      "projectUniqueName": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\RSSMS.API.csproj",
       "projectName": "RSSMS.API",
-      "projectPath": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS\\RSSMS.API.csproj",
-      "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-      "outputPath": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS\\obj\\",
+      "projectPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\RSSMS.API.csproj",
+      "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
+      "outputPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -5907,10 +5907,9 @@
       },
       "frameworks": {
         "netcoreapp3.1": {
-          "targetAlias": "netcoreapp3.1",
           "projectReferences": {
-            "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj": {
-              "projectPath": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj"
+            "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj": {
+              "projectPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj"
             }
           }
         }
@@ -5923,7 +5922,6 @@
     },
     "frameworks": {
       "netcoreapp3.1": {
-        "targetAlias": "netcoreapp3.1",
         "dependencies": {
           "Microsoft.AspNetCore.Authentication.JwtBearer": {
             "target": "Package",
@@ -5952,12 +5950,6 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[3.1.18, 3.1.18]"
-          }
-        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -5966,7 +5958,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.402\\RuntimeIdentifierGraph.json"
       }
     }
   }

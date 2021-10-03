@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using RSSMS.DataService.ViewModels.Images;
+using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Storages
 {
@@ -24,7 +24,7 @@ namespace RSSMS.DataService.ViewModels.Storages
         [BindNever]
         public string Address { get; set; }
         [BindNever]
-        public int? Status { get; set;}
+        public int? Status { get; set; }
 
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
 

@@ -16,9 +16,9 @@ using System.Net;
 using System.Threading.Tasks;
 namespace RSSMS.DataService.Services
 {
-    public interface IStorageService: IBaseService<Storage>
+    public interface IStorageService : IBaseService<Storage>
     {
-       Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, string[] fields, int page, int size);
+        Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, string[] fields, int page, int size);
         Task<StorageGetIdViewModel> GetById(int id);
         Task<StorageCreateViewModel> Create(StorageCreateViewModel model);
         Task<StorageUpdateViewModel> Update(int id, StorageUpdateViewModel model);
@@ -57,7 +57,7 @@ namespace RSSMS.DataService.Services
             }
 
             return model;
-           
+
         }
 
         public async Task<StorageViewModel> Delete(int id)
@@ -80,7 +80,8 @@ namespace RSSMS.DataService.Services
                 {
                     Page = page,
                     Size = size,
-                    Total = storages.Item1
+                    Total = storages.Item1,
+                    TotalPage = (int)Math.Ceiling((double)storages.Item1 / size)
                 },
                 Data = storages.Item2.ToList()
             };
@@ -92,12 +93,12 @@ namespace RSSMS.DataService.Services
             var result = await Get(x => x.Id == id && x.IsActive == true).ProjectTo<StorageGetIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
 
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
-            if(result.OrderId != null)
+            if (result.OrderId != null)
             {
                 int timeRetaming = await _orderService.GetTimeRemaining((int)result.OrderId);
                 result.RemainingTime = timeRetaming;
             }
-            
+
             return result;
         }
 

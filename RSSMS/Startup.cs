@@ -9,8 +9,6 @@ using RSSMS.API.App_Start;
 using RSSMS.API.Handler;
 using RSSMS.DataService.Extensions;
 using RSSMS.DataService.Models;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace RSSMS
 {

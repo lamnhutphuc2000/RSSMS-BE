@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
-using RSSMS.DataService.ViewModels;
 using RSSMS.DataService.ViewModels.JWT;
 using RSSMS.DataService.ViewModels.Users;
 using System.Net;

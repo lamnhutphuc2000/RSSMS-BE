@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using RSSMS.DataService.Models;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using RSSMS.DataService.ViewModels.Images;
 using RSSMS.DataService.ViewModels.Users;
+using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Storages
 {

@@ -1,10 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.UnitOfWorks;
-using Microsoft.EntityFrameworkCore;
+using System;
+using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
 {
@@ -21,10 +21,10 @@ namespace RSSMS.DataService.Services
         public async Task<int> GetTimeRemaining(int id)
         {
             var order = await Get(x => x.Id == id).FirstOrDefaultAsync();
-            if(order != null)
+            if (order != null)
             {
                 DateTime returnDate = (DateTime)order.ReturnDate;
-                if(DateTime.Compare(returnDate, DateTime.Now) > 0)
+                if (DateTime.Compare(returnDate, DateTime.Now) > 0)
                 {
                     TimeSpan difference = returnDate - DateTime.Now;
                     return difference.Days;
