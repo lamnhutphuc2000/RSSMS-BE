@@ -16,8 +16,7 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<StorageCreateViewModel, Storage>()
                 .ForMember(des => des.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(des => des.CreatedDate, opt => opt.MapFrom(src => DateTime.Now))
-                .ForMember(des => des.Usage, opt => opt.MapFrom(src => 0))
-                .ForMember(des => des.Type, opt => opt.MapFrom(src => 0));
+                .ForMember(des => des.Usage, opt => opt.MapFrom(src => 0));
 
             mc.CreateMap<StorageUpdateViewModel, Storage>()
                 .ForMember(des => des.ModifiedDate, opt => opt.MapFrom(src => DateTime.Now));

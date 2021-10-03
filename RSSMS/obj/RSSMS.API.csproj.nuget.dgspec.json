@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\RSSMS.API.csproj": {}
+    "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS\\RSSMS.API.csproj": {}
   },
   "projects": {
-    "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj": {
+    "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj",
+        "projectUniqueName": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj",
         "projectName": "RSSMS.DataService",
-        "projectPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj",
-        "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\obj\\",
+        "projectPath": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj",
+        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
+        "outputPath": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -26,6 +26,7 @@
         },
         "frameworks": {
           "netcoreapp3.1": {
+            "targetAlias": "netcoreapp3.1",
             "projectReferences": {}
           }
         },
@@ -37,6 +38,7 @@
       },
       "frameworks": {
         "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
           "dependencies": {
             "AutoMapper": {
               "target": "Package",
@@ -45,6 +47,10 @@
             "AutoMapper.Extensions.Microsoft.DependencyInjection": {
               "target": "Package",
               "version": "[8.1.1, )"
+            },
+            "Microsoft.AspNetCore.Mvc.Core": {
+              "target": "Package",
+              "version": "[2.2.5, )"
             },
             "Microsoft.AspNetCore.Mvc.Versioning": {
               "target": "Package",
@@ -84,28 +90,25 @@
           "assetTargetFallback": true,
           "warn": true,
           "frameworkReferences": {
-            "Microsoft.AspNetCore.App": {
-              "privateAssets": "none"
-            },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.402\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400\\RuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\RSSMS.API.csproj": {
+    "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS\\RSSMS.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\RSSMS.API.csproj",
+        "projectUniqueName": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS\\RSSMS.API.csproj",
         "projectName": "RSSMS.API",
-        "projectPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\RSSMS.API.csproj",
-        "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\obj\\",
+        "projectPath": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS\\RSSMS.API.csproj",
+        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
+        "outputPath": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -117,9 +120,10 @@
         },
         "frameworks": {
           "netcoreapp3.1": {
+            "targetAlias": "netcoreapp3.1",
             "projectReferences": {
-              "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj": {
-                "projectPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj"
+              "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj": {
+                "projectPath": "D:\\Capstone\\project\\BE\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj"
               }
             }
           }
@@ -132,6 +136,7 @@
       },
       "frameworks": {
         "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
           "dependencies": {
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
@@ -160,6 +165,12 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[3.1.18, 3.1.18]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -168,7 +179,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.402\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400\\RuntimeIdentifierGraph.json"
         }
       }
     }

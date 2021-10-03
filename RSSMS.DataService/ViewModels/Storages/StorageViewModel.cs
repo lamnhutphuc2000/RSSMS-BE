@@ -7,7 +7,7 @@ namespace RSSMS.DataService.ViewModels.Storages
     public partial class StorageViewModel
     {
         public static string[] Fields = {
-            "Id","ManagerId","ManagerName","Name","Size","Usage","Address","Status","Images"
+            "Id","ManagerId","ManagerName","Name","Size","Usage","Address","Status","Images","Type"
         };
         [BindNever]
         public int Id { get; set; }
@@ -25,6 +25,8 @@ namespace RSSMS.DataService.ViewModels.Storages
         public string Address { get; set; }
         [BindNever]
         public int? Status { get; set; }
+        [BindNever]
+        public int? Type { get; set; }
 
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
 
