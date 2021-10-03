@@ -1,7 +1,7 @@
-﻿using System;
-using AutoMapper;
+﻿using AutoMapper;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.Storages;
+using System;
 
 namespace RSSMS.DataService.AutoMapper
 {

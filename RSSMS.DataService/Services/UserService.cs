@@ -9,7 +9,6 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
-using RSSMS.DataService.ViewModels;
 using RSSMS.DataService.ViewModels.JWT;
 using RSSMS.DataService.ViewModels.Users;
 using System;
@@ -28,11 +27,11 @@ namespace RSSMS.DataService.Services
         Task<TokenViewModel> Login(UserLoginViewModel model);
         Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, string[] fields, int page, int size);
         Task<UserViewModel> GetById(int id);
-        Task<UserCreateViewModel> Create(UserCreateViewModel model);
+        Task<UserViewModel> Create(UserCreateViewModel model);
         Task<UserViewModel> Update(int id, UserUpdateViewModel model);
         Task<UserViewModel> Delete(int id);
         Task<int> Count(List<UserViewModel> shelves);
-  /*      Task<bool> UpdateUserStorageID(UserListStaffViewModel listUser, int storageID);*/
+        /*      Task<bool> UpdateUserStorageID(UserListStaffViewModel listUser, int storageID);*/
     }
     public class UserService : BaseService<User>, IUserService
     {
@@ -47,13 +46,13 @@ namespace RSSMS.DataService.Services
             return Count();
         }
 
-        public async Task<UserCreateViewModel> Create(UserCreateViewModel model)
+        public async Task<UserViewModel> Create(UserCreateViewModel model)
         {
             var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
             if (user != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email is existed");
             var userCreate = _mapper.Map<User>(model);
             await CreateAsync(userCreate);
-            return model;
+            return await GetById(userCreate.Id);
         }
 
         public async Task<UserViewModel> Delete(int id)
@@ -77,7 +76,8 @@ namespace RSSMS.DataService.Services
                 {
                     Page = page,
                     Size = size,
-                    Total = users.Item1
+                    Total = users.Item1,
+                    TotalPage = (int)Math.Ceiling((double)users.Item1 / size)
                 },
                 Data = users.Item2.ToList()
             };
@@ -115,7 +115,7 @@ namespace RSSMS.DataService.Services
 
             return _mapper.Map<UserViewModel>(updateEntity);
         }
-        
+
         private TokenGenerateModel GenerateToken(User user)
         {
             var authClaims = new List<Claim>
@@ -166,10 +166,10 @@ namespace RSSMS.DataService.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-/*        public Task<bool> UpdateUserStorageID(UserListStaffViewModel listUser, int storageID)
-        {
-            return true;
-        }*/
+        /*        public Task<bool> UpdateUserStorageID(UserListStaffViewModel listUser, int storageID)
+                {
+                    return true;
+                }*/
     }
 
 }

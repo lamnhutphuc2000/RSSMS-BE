@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using RSSMS.DataService.Models;
-using RSSMS.DataService.ViewModels;
 using RSSMS.DataService.ViewModels.JWT;
 using RSSMS.DataService.ViewModels.Users;
 using System;

@@ -4,6 +4,45 @@
         <name>RSSMS.API</name>
     </assembly>
     <members>
+        <member name="M:RSSMS.API.Controllers.StoragesController.Get(RSSMS.DataService.ViewModels.Storages.StorageViewModel,System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get all Storage
+            </summary>
+            <param name="model"></param>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StoragesController.GetById(System.Int32)">
+            <summary>
+            Get Storage By ID
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StoragesController.Add(RSSMS.DataService.ViewModels.Storages.StorageCreateViewModel)">
+            <summary>
+            Create Storage
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StoragesController.Update(System.Int32,RSSMS.DataService.ViewModels.Storages.StorageUpdateViewModel)">
+            <summary>
+            Update Storage
+            </summary>
+            <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StoragesController.Delete(System.Int32)">
+            <summary>
+              Delete Storage 
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
         <member name="M:RSSMS.API.Controllers.UsersController.Login(RSSMS.DataService.ViewModels.Users.UserLoginViewModel)">
             <summary>
             Login by email and password

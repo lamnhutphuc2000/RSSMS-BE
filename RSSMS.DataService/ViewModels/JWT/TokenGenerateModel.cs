@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RSSMS.DataService.ViewModels.JWT
+﻿namespace RSSMS.DataService.ViewModels.JWT
 {
     public class TokenGenerateModel
     {
