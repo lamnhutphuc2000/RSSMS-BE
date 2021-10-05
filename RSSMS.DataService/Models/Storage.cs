@@ -11,6 +11,7 @@ namespace RSSMS.DataService.Models
         {
             Areas = new HashSet<Area>();
             Images = new HashSet<Image>();
+            OrderStorageDetails = new HashSet<OrderStorageDetail>();
             Users = new HashSet<User>();
         }
 
@@ -30,9 +31,9 @@ namespace RSSMS.DataService.Models
         public int? OrderId { get; set; }
 
         public virtual User Manager { get; set; }
-        public virtual Order Order { get; set; }
         public virtual ICollection<Area> Areas { get; set; }
         public virtual ICollection<Image> Images { get; set; }
+        public virtual ICollection<OrderStorageDetail> OrderStorageDetails { get; set; }
         public virtual ICollection<User> Users { get; set; }
     }
 }

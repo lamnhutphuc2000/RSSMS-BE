@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
@@ -19,9 +21,12 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<Box> Boxes { get; set; }
         public virtual DbSet<Image> Images { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
+        public virtual DbSet<OrderBoxDetail> OrderBoxDetails { get; set; }
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
+        public virtual DbSet<OrderStorageDetail> OrderStorageDetails { get; set; }
         public virtual DbSet<Product> Products { get; set; }
         public virtual DbSet<Request> Requests { get; set; }
+        public virtual DbSet<RequestDetail> RequestDetails { get; set; }
         public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<Schedule> Schedules { get; set; }
         public virtual DbSet<Shelf> Shelves { get; set; }
@@ -31,10 +36,7 @@ namespace RSSMS.DataService.Models
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
-            {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=localhost;Database=RSSMS;Trusted_Connection=True;");
-            }
+            { }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -44,8 +46,6 @@ namespace RSSMS.DataService.Models
             modelBuilder.Entity<Area>(entity =>
             {
                 entity.ToTable("Area");
-
-                entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
@@ -62,8 +62,6 @@ namespace RSSMS.DataService.Models
             modelBuilder.Entity<Box>(entity =>
             {
                 entity.ToTable("Box");
-
-                entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
@@ -121,8 +119,6 @@ namespace RSSMS.DataService.Models
             {
                 entity.ToTable("Order");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
-
                 entity.Property(e => e.AddressReturn).HasMaxLength(100);
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
@@ -148,6 +144,25 @@ namespace RSSMS.DataService.Models
                     .HasConstraintName("FK_Order_User1");
             });
 
+            modelBuilder.Entity<OrderBoxDetail>(entity =>
+            {
+                entity.HasKey(e => new { e.OrderId, e.BoxId });
+
+                entity.ToTable("OrderBoxDetail");
+
+                entity.HasOne(d => d.Box)
+                    .WithMany(p => p.OrderBoxDetails)
+                    .HasForeignKey(d => d.BoxId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_OrderBoxDetail_Box");
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.OrderBoxDetails)
+                    .HasForeignKey(d => d.OrderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_OrderBoxDetail_Order");
+            });
+
             modelBuilder.Entity<OrderDetail>(entity =>
             {
                 entity.HasKey(e => new { e.OrderId, e.ProductId });
@@ -171,11 +186,28 @@ namespace RSSMS.DataService.Models
                     .HasConstraintName("FK_OrderDetail_Product");
             });
 
+            modelBuilder.Entity<OrderStorageDetail>(entity =>
+            {
+                entity.HasKey(e => new { e.OrderId, e.StorageId });
+
+                entity.ToTable("OrderStorageDetail");
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.OrderStorageDetails)
+                    .HasForeignKey(d => d.OrderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_OrderStorageDetail_Order");
+
+                entity.HasOne(d => d.Storage)
+                    .WithMany(p => p.OrderStorageDetails)
+                    .HasForeignKey(d => d.StorageId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_OrderStorageDetail_Storage");
+            });
+
             modelBuilder.Entity<Product>(entity =>
             {
                 entity.ToTable("Product");
-
-                entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
@@ -202,8 +234,6 @@ namespace RSSMS.DataService.Models
             {
                 entity.ToTable("Request");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
-
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
@@ -221,11 +251,28 @@ namespace RSSMS.DataService.Models
                     .HasConstraintName("FK_Request_User");
             });
 
+            modelBuilder.Entity<RequestDetail>(entity =>
+            {
+                entity.HasKey(e => new { e.RequestId, e.BoxId });
+
+                entity.ToTable("RequestDetail");
+
+                entity.HasOne(d => d.Box)
+                    .WithMany(p => p.RequestDetails)
+                    .HasForeignKey(d => d.BoxId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_RequestDetail_Box");
+
+                entity.HasOne(d => d.Request)
+                    .WithMany(p => p.RequestDetails)
+                    .HasForeignKey(d => d.RequestId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_RequestDetail_Request");
+            });
+
             modelBuilder.Entity<Role>(entity =>
             {
                 entity.ToTable("Role");
-
-                entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
@@ -237,8 +284,6 @@ namespace RSSMS.DataService.Models
             modelBuilder.Entity<Schedule>(entity =>
             {
                 entity.ToTable("Schedule");
-
-                entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.Address).HasMaxLength(100);
 
@@ -272,8 +317,6 @@ namespace RSSMS.DataService.Models
             {
                 entity.ToTable("Shelf");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
-
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
@@ -304,11 +347,6 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.Storages)
                     .HasForeignKey(d => d.ManagerId)
                     .HasConstraintName("FK_Storage_User");
-
-                entity.HasOne(d => d.Order)
-                    .WithMany(p => p.Storages)
-                    .HasForeignKey(d => d.OrderId)
-                    .HasConstraintName("FK_Storage_Order");
             });
 
             modelBuilder.Entity<User>(entity =>

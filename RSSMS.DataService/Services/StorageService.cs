@@ -78,6 +78,7 @@ namespace RSSMS.DataService.Services
         public async Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, string[] fields, int page, int size)
         {
             var storages = Get(x => x.IsActive == true).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider)
+                .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (storages.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
             var rs = new DynamicModelResponse<StorageViewModel>

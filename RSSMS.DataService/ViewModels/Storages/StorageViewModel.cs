@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using RSSMS.DataService.Attributes;
 using RSSMS.DataService.ViewModels.Images;
 using System.Collections.Generic;
 
@@ -10,12 +11,12 @@ namespace RSSMS.DataService.ViewModels.Storages
             "Id","ManagerId","ManagerName","Name","Size","Usage","Address","Status","Images","Type"
         };
         [BindNever]
-        public int Id { get; set; }
+        public int? Id { get; set; }
         [BindNever]
         public int? ManagerId { get; set; }
         [BindNever]
         public string ManagerName { get; set; }
-        [BindNever]
+        [String]
         public string Name { get; set; }
         [BindNever]
         public string Size { get; set; }

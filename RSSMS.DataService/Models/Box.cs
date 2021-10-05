@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 #nullable disable
 
@@ -6,6 +7,12 @@ namespace RSSMS.DataService.Models
 {
     public partial class Box
     {
+        public Box()
+        {
+            OrderBoxDetails = new HashSet<OrderBoxDetail>();
+            RequestDetails = new HashSet<RequestDetail>();
+        }
+
         public int Id { get; set; }
         public int? OrderId { get; set; }
         public int? ShelfId { get; set; }
@@ -19,5 +26,7 @@ namespace RSSMS.DataService.Models
 
         public virtual Order Order { get; set; }
         public virtual Shelf Shelf { get; set; }
+        public virtual ICollection<OrderBoxDetail> OrderBoxDetails { get; set; }
+        public virtual ICollection<RequestDetail> RequestDetails { get; set; }
     }
 }
