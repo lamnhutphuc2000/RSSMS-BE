@@ -47,9 +47,9 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(DynamicModelResponse<UserViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Get([FromQuery] UserViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
+        public async Task<IActionResult> Get([FromQuery] UserViewModel model, [FromQuery] int? storageId, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
         {
-            return Ok(await _userService.GetAll(model, fields, page, size));
+            return Ok(await _userService.GetAll(model,storageId, fields, page, size));
         }
 
         [HttpGet("{id}")]

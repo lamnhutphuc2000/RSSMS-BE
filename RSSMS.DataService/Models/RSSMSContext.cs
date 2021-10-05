@@ -30,6 +30,7 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<Schedule> Schedules { get; set; }
         public virtual DbSet<Shelf> Shelves { get; set; }
+        public virtual DbSet<StaffManageStorage> StaffManageStorages { get; set; }
         public virtual DbSet<Storage> Storages { get; set; }
         public virtual DbSet<User> Users { get; set; }
 
@@ -329,6 +330,25 @@ namespace RSSMS.DataService.Models
                     .HasConstraintName("FK_Shelf_Area");
             });
 
+            modelBuilder.Entity<StaffManageStorage>(entity =>
+            {
+                entity.ToTable("StaffManageStorage");
+
+                entity.Property(e => e.StorageName).HasMaxLength(100);
+
+                entity.HasOne(d => d.Storage)
+                    .WithMany(p => p.StaffManageStorages)
+                    .HasForeignKey(d => d.StorageId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_StaffManageStorage_Storage");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.StaffManageStorages)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_StaffManageStorage_User");
+            });
+
             modelBuilder.Entity<Storage>(entity =>
             {
                 entity.ToTable("Storage");
@@ -342,11 +362,6 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Name).HasMaxLength(100);
 
                 entity.Property(e => e.Size).HasMaxLength(100);
-
-                entity.HasOne(d => d.Manager)
-                    .WithMany(p => p.Storages)
-                    .HasForeignKey(d => d.ManagerId)
-                    .HasConstraintName("FK_Storage_User");
             });
 
             modelBuilder.Entity<User>(entity =>
@@ -373,11 +388,6 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.Users)
                     .HasForeignKey(d => d.RoleId)
                     .HasConstraintName("FK_User_Role");
-
-                entity.HasOne(d => d.Storage)
-                    .WithMany(p => p.Users)
-                    .HasForeignKey(d => d.StorageId)
-                    .HasConstraintName("FK_User_Storage");
             });
 
             OnModelCreatingPartial(modelBuilder);

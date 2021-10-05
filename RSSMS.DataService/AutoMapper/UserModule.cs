@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.JWT;
+using RSSMS.DataService.ViewModels.StaffManageUser;
 using RSSMS.DataService.ViewModels.Users;
 using System;
 
@@ -25,6 +26,9 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<User, UserListStaffViewModel>();
             mc.CreateMap<UserListStaffViewModel, User>();
+
+            mc.CreateMap<User, StaffManageStorageCreateViewModel>()
+                .ForMember(des => des.UserId, opt => opt.MapFrom(src => src.Id));
         }
     }
 }

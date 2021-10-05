@@ -7,6 +7,7 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
+using RSSMS.DataService.ViewModels.StaffManageUser;
 using RSSMS.DataService.ViewModels.Storages;
 using RSSMS.DataService.ViewModels.Users;
 using System;
@@ -29,12 +30,12 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IOrderService _orderService;
-        private readonly IUserService _userService;
-        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IOrderService orderService, IUserService userService) : base(unitOfWork, repository)
+        private readonly IStaffManageStorageService _staffManageStorageService;
+        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IOrderService orderService, IStaffManageStorageService staffManageStorageService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _orderService = orderService;
-            _userService = userService;
+            _staffManageStorageService = staffManageStorageService;
         }
 
         public Task<int> Count(List<StorageViewModel> shelves)
@@ -44,24 +45,16 @@ namespace RSSMS.DataService.Services
 
         public async Task<StorageViewModel> Create(StorageCreateViewModel model)
         {
-            
-
-
             var storage = _mapper.Map<Storage>(model);
             await CreateAsync(storage);
             
-
-            //Update User in Storage
-            UserUpdateViewModel staff = new UserUpdateViewModel();
-            var listAssignedStaff = model.ListStaff;
-            foreach (UserListStaffViewModel staffAssigned in listAssignedStaff)
+            foreach (UserListStaffViewModel staffAssigned in model.ListStaff)
             {
-                staff.Id = staffAssigned.Id;
-                staff.StorageId = storage.Id;
-                await _userService.Update(staffAssigned.Id, staff);
+                var staffAssignModel = _mapper.Map<StaffManageStorageCreateViewModel>(storage);
+                staffAssignModel.UserId = staffAssigned.Id;
+                await _staffManageStorageService.Create(staffAssignModel);
             }
 
-  
             return _mapper.Map<StorageViewModel>(storage); ;
 
         }

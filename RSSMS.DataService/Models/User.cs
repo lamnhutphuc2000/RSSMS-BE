@@ -16,12 +16,11 @@ namespace RSSMS.DataService.Models
             ProductModifiedByNavigations = new HashSet<Product>();
             Requests = new HashSet<Request>();
             Schedules = new HashSet<Schedule>();
-            Storages = new HashSet<Storage>();
+            StaffManageStorages = new HashSet<StaffManageStorage>();
         }
 
         public int Id { get; set; }
         public int? RoleId { get; set; }
-        public int? StorageId { get; set; }
         public string Name { get; set; }
         public string Address { get; set; }
         public string Password { get; set; }
@@ -35,7 +34,6 @@ namespace RSSMS.DataService.Models
         public int? ModifiedBy { get; set; }
 
         public virtual Role Role { get; set; }
-        public virtual Storage Storage { get; set; }
         public virtual ICollection<Image> Images { get; set; }
         public virtual ICollection<Order> OrderCustomers { get; set; }
         public virtual ICollection<Order> OrderManagers { get; set; }
@@ -43,6 +41,6 @@ namespace RSSMS.DataService.Models
         public virtual ICollection<Product> ProductModifiedByNavigations { get; set; }
         public virtual ICollection<Request> Requests { get; set; }
         public virtual ICollection<Schedule> Schedules { get; set; }
-        public virtual ICollection<Storage> Storages { get; set; }
+        public virtual ICollection<StaffManageStorage> StaffManageStorages { get; set; }
     }
 }

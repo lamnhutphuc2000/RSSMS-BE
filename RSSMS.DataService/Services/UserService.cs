@@ -10,6 +10,7 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.JWT;
+using RSSMS.DataService.ViewModels.StaffManageUser;
 using RSSMS.DataService.ViewModels.Users;
 using System;
 using System.Collections.Generic;
@@ -25,20 +26,21 @@ namespace RSSMS.DataService.Services
     public interface IUserService : IBaseService<User>
     {
         Task<TokenViewModel> Login(UserLoginViewModel model);
-        Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, string[] fields, int page, int size);
+        Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, int? storageId, string[] fields, int page, int size);
         Task<UserViewModel> GetById(int id);
         Task<UserViewModel> Create(UserCreateViewModel model);
         Task<UserViewModel> Update(int id, UserUpdateViewModel model);
         Task<UserViewModel> Delete(int id);
         Task<int> Count(List<UserViewModel> shelves);
-        /*      Task<bool> UpdateUserStorageID(UserListStaffViewModel listUser, int storageID);*/
     }
     public class UserService : BaseService<User>, IUserService
     {
         private readonly IMapper _mapper;
-        public UserService(IUnitOfWork unitOfWork, IUserRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IStaffManageStorageService _staffManageStorageService;
+        public UserService(IUnitOfWork unitOfWork, IUserRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
+            _staffManageStorageService = staffManageStorageService;
         }
 
         public Task<int> Count(List<UserViewModel> shelves)
@@ -52,6 +54,15 @@ namespace RSSMS.DataService.Services
             if (user != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email is existed");
             var userCreate = _mapper.Map<User>(model);
             await CreateAsync(userCreate);
+            if(model.StorageIds != null)
+            {
+                for(int i = 0; i < model.StorageIds.Count; i ++)
+                {
+                    var staffAssignModel = _mapper.Map<StaffManageStorageCreateViewModel>(userCreate);
+                    staffAssignModel.StorageId = model.StorageIds.ElementAt(i);
+                    await _staffManageStorageService.Create(staffAssignModel);
+                }
+            }
             return await GetById(userCreate.Id);
         }
 
@@ -64,22 +75,33 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<UserViewModel>(entity);
         }
 
-        public async Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, string[] fields, int page, int size)
+        public async Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, int? storageId, string[] fields, int page, int size)
         {
-            var users = Get(x => x.IsActive == true).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
-                .DynamicFilter(model)
-                .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-            if (users.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+            var users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin")).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                .DynamicFilter(model);
+            if (storageId == 0)
+            {
+                users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer") && x.StaffManageStorages.Count == 0).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                .DynamicFilter(model);
+            } 
+            if(storageId != null && storageId != 0)
+            {
+                users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
+                    .Where(x => x.StaffManageStorages.Any(a => a.StorageId == storageId)).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                    .DynamicFilter(model);
+            }
+            var result = users.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
             var rs = new DynamicModelResponse<UserViewModel>
             {
                 Metadata = new PagingMetaData
                 {
                     Page = page,
                     Size = size,
-                    Total = users.Item1,
-                    TotalPage = (int)Math.Ceiling((double)users.Item1 / size)
+                    Total = result.Item1,
+                    TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
                 },
-                Data = users.Item2.ToList()
+                Data = result.Item2.ToList()
             };
             return rs;
         }
@@ -93,7 +115,7 @@ namespace RSSMS.DataService.Services
 
         public async Task<TokenViewModel> Login(UserLoginViewModel model)
         {
-            var user = await Get(x => x.Email == model.Email && x.Password == model.Password && x.IsActive == true).Include(x => x.Role).Include(x => x.Images).FirstOrDefaultAsync();
+            var user = await Get(x => x.Email == model.Email && x.Password == model.Password && x.IsActive == true).Include(x => x.Role).Include(x => x.Images).Include(x => x.StaffManageStorages).FirstOrDefaultAsync();
             if (user == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
             var result = _mapper.Map<TokenViewModel>(user);
             var token = GenerateToken(user);
@@ -166,10 +188,6 @@ namespace RSSMS.DataService.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        /*        public Task<bool> UpdateUserStorageID(UserListStaffViewModel listUser, int storageID)
-                {
-                    return true;
-                }*/
     }
 
 }
