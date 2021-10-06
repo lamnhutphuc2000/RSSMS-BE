@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.Images;
+using RSSMS.DataService.ViewModels.Orders;
 using RSSMS.DataService.ViewModels.Users;
 using System.Collections.Generic;
 
@@ -7,24 +9,18 @@ namespace RSSMS.DataService.ViewModels.Storages
 {
     public partial class StorageGetIdViewModel
     {
-        public static string[] Fields = {
-            "ManagerName","Name","Size","Usage","Address","Status","Images"
-        };
 
-        [BindNever]
+
         public string Name { get; set; }
-        [BindNever]
+        public string ManagerName { get; set; }
         public string Size { get; set; }
-        [BindNever]
         public string Address { get; set; }
-        [BindNever]
-        public int? RemainingTime { get; set; }
-        [BindNever]
-        public int? Status { get; set; }
-        [BindNever]
+        public int? Usage { get; set; }
         public int? OrderId { get; set; }
+        public OrderStorageViewModel OrderInfo { get; set; }
 
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
         public virtual ICollection<UserListStaffViewModel> ListUser { get; set; }
+        public int? Status { get; set; }
     }
 }

@@ -14,6 +14,8 @@ namespace RSSMS.API.App_Start
                 mc.ConfigImageModule();
                 mc.ConfigStorageModule();
                 mc.ConfigStaffManageOrderModule();
+                mc.ConfigAreaModule();
+                mc.ConfigOrderModule();
             });
             IMapper mapper = mappingConfig.CreateMapper();
             services.AddSingleton(mapper);

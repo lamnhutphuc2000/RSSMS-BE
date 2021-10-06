@@ -95,8 +95,7 @@ namespace RSSMS.DataService.Services
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
             if (result.OrderId != null)
             {
-                int timeRetaming = await _orderService.GetTimeRemaining((int)result.OrderId);
-                result.RemainingTime = timeRetaming;
+                result.OrderInfo = await _orderService.GetSelfStorageOrderInfo((int)result.OrderId);
             }
 
             return result;

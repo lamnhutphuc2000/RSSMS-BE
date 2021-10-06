@@ -17,6 +17,9 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<StaffManageStorageCreateViewModel, StaffManageStorage>();
 
             mc.CreateMap<StaffManageStorageUpdateViewModel, StaffManageStorage>();
+
+
+            
         }
     }
 }

@@ -25,6 +25,9 @@ namespace RSSMS.DataService.DI
 
             services.AddScoped<IStaffManageStorageRepository, StaffManageStorageRepository>();
             services.AddScoped<IStaffManageStorageService, StaffManageStorageService>();
+
+            services.AddScoped<IAreaRepository, AreaRepository>();
+            services.AddScoped<IAreaService, AreaService>();
         }
     }
 }
