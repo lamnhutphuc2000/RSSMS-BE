@@ -4,11 +4,43 @@
         <name>RSSMS.API</name>
     </assembly>
     <members>
-        <member name="M:RSSMS.API.Controllers.StaffManageStorageController.Assign(RSSMS.DataService.ViewModels.StaffManageUser.StaffAssignViewModel)">
+        <member name="M:RSSMS.API.Controllers.AreaController.GetAreaByStorageID(System.Int32,RSSMS.DataService.ViewModels.Areas.AreaViewModel,System.String[],System.Int32,System.Int32)">
             <summary>
-            Update Storage
+            
+            </summary>
+            <param name="storageid"></param>
+            <param name="model"></param>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AreaController.Add(RSSMS.DataService.ViewModels.Areas.AreaCreateViewModel)">
+            <summary>
+            Create Area by Storage Id
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AreaController.Delete(System.Int32)">
+            <summary>
+            Delete Area by ID
             </summary>
             <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AreaController.Update(System.Int32,RSSMS.DataService.ViewModels.Areas.AreaUpdateViewModel)">
+            <summary>
+            Update name Area by ID
+            </summary>
+            <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StaffManageStorageController.Assign(RSSMS.DataService.ViewModels.StaffManageUser.StaffAssignViewModel)">
+            <summary>
+            Assign staff to storage
+            </summary>
             <param name="model"></param>
             <returns></returns>
         </member>

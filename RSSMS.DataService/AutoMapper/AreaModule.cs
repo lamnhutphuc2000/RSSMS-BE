@@ -15,7 +15,8 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<Area, AreaCreateViewModel>();
             mc.CreateMap<AreaCreateViewModel, Area>()
-                .ForMember(des => des.Usage, opt => opt.MapFrom(src => 0)); ;
+                .ForMember(des => des.Usage, opt => opt.MapFrom(src => 0))
+                .ForMember(des => des.IsActive, opt => opt.MapFrom(src => true));
 
             mc.CreateMap<Area, AreaUpdateViewModel>();
             mc.CreateMap<AreaUpdateViewModel, Area>();
