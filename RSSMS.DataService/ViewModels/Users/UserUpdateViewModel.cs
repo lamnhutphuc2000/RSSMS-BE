@@ -11,6 +11,5 @@ namespace RSSMS.DataService.ViewModels.Users
         public string Address { get; set; }
         public string Phone { get; set; }
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
-        public virtual ICollection<StaffManageStorageUpdateViewModel> StaffManageStorages { get; set; }
     }
 }

@@ -132,6 +132,7 @@ namespace RSSMS.DataService.Services
             var entity = await GetAsync(id);
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User not found");
 
+
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);
 

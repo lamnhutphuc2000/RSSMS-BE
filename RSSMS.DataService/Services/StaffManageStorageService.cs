@@ -7,6 +7,7 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.ViewModels.StaffManageUser;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,29 +31,61 @@ namespace RSSMS.DataService.Services
         {
             var staffAssigned = model.UserAssigned;
             var staffUnAssigned = model.UserUnAssigned;
-            if(staffAssigned != null)
+            if (staffAssigned != null)
             {
-                var staffs = await Get(x => staffUnAssigned.Contains(x.UserId) && x.StorageId == model.StorageId).ToListAsync();
-                foreach (var staff in staffs)
+                var managerAssigned = staffAssigned.Where(a => a.RoleName == "Manager");
+                if(managerAssigned != null)
                 {
-                    await DeleteAsync(staff);
+                    if (managerAssigned.Count() > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "More than 1 manager assigned to this storage");
+                    var managerInStorage = Get(x => x.StorageId == model.StorageId && x.RoleName == "Manager").FirstOrDefault();
+                    if (managerInStorage != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "This storage has assigned manager");
                 }
-            }
-            
-            if(staffUnAssigned != null)
-            {
+
                 foreach (var staff in staffAssigned)
                 {
-                    var staffAssign = await Get(x => x.StorageId == model.StorageId && x.UserId == staff).FirstOrDefaultAsync();
+                    var staffManageStorage = await Get(x => x.UserId == staff.UserId && x.RoleName != "Manager").FirstOrDefaultAsync();
+                    if(staffManageStorage != null)
+                    {
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Staff has assigned to a storage before");
+                    }
+                    
+                }
+
+
+
+                if (staffUnAssigned != null)
+                {
+                    var staffs =  Get(x => x.StorageId == model.StorageId).ToList().Where(x => staffUnAssigned.Any(a => a.UserId == x.UserId)).ToList();
+
+                    foreach (var staff in staffs)
+                    {
+                        await DeleteAsync(staff);
+                    }
+                }
+
+                
+
+
+                
+
+                foreach (var staff in staffAssigned)
+                {
+                    var staffAssign = await Get(x => x.StorageId == model.StorageId && x.UserId == staff.UserId).FirstOrDefaultAsync();
                     if (staffAssign == null)
                     {
-                        StaffManageStorage staffAdd = new StaffManageStorage();
-                        staffAdd.StorageId = model.StorageId;
-                        staffAdd.UserId = staff;
+                        StaffManageStorage staffAdd = new StaffManageStorage
+                        {
+                            StorageId = model.StorageId,
+                            UserId = staff.UserId,
+                            RoleName = staff.RoleName,
+                            StorageName = model.StorageName
+                        };
                         await CreateAsync(staffAdd);
                     }
                 }
             }
+
+            
             
             
             return null;

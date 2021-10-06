@@ -19,11 +19,10 @@ namespace RSSMS.API.Controllers
         {
             _staffManageStorage = staffManageStorage;
         }
-        
+
         /// <summary>
-        /// Update Storage
+        /// Assign staff to storage
         /// </summary>
-        /// <param name="id"></param>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut("assign-staff")]

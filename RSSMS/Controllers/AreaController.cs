@@ -25,20 +25,20 @@ namespace RSSMS.API.Controllers
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="storageid"></param>
         /// <param name="model"></param>
         /// <param name="fields"></param>
         /// <param name="page"></param>
         /// <param name="size"></param>
         /// <returns></returns>
-        [HttpGet("{id}")]
+        [HttpGet]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(DynamicModelResponse<AreaViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetAreaByStorageID(int id, [FromQuery] AreaViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
+        public async Task<IActionResult> GetAreaByStorageID([FromQuery]int storageid, [FromQuery] AreaViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
         {
-            return Ok(await _areaService.GetByStorageId(id, model, fields, page, size));
+            return Ok(await _areaService.GetByStorageId(storageid, model, fields, page, size));
         }
         /// <summary>
         /// Create Area by Storage Id

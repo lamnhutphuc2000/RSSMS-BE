@@ -11,6 +11,7 @@ namespace RSSMS.DataService.Models
         public int UserId { get; set; }
         public int StorageId { get; set; }
         public string StorageName { get; set; }
+        public string RoleName { get; set; }
 
         public virtual Storage Storage { get; set; }
         public virtual User User { get; set; }
