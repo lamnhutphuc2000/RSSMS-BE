@@ -17,6 +17,7 @@ namespace RSSMS.DataService.ViewModels.Storages
         public string Size { get; set; }
         public string Address { get; set; }
         public int? Usage { get; set; }
+        public int? Type { get; set; }
         public int? OrderId { get; set; }
         public OrderStorageViewModel OrderInfo { get; set; }
 

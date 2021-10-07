@@ -13,8 +13,6 @@ namespace RSSMS.DataService.ViewModels.Storages
         [BindNever]
         public int? Id { get; set; }
         [BindNever]
-        public int? ManagerId { get; set; }
-        [BindNever]
         public string ManagerName { get; set; }
         [String]
         public string Name { get; set; }

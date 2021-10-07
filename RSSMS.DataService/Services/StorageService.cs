@@ -70,9 +70,13 @@ namespace RSSMS.DataService.Services
 
         public async Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, string[] fields, int page, int size)
         {
-            var storages = Get(x => x.IsActive == true).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider)
-                .DynamicFilter(model)
-                .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+
+            var storages =  Get(x => x.IsActive == true)
+                    .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
+                    .ThenInclude(a => a.User).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider)
+                    .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+
+               
             if (storages.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
             var rs = new DynamicModelResponse<StorageViewModel>
             {
@@ -90,7 +94,10 @@ namespace RSSMS.DataService.Services
 
         public async Task<StorageGetIdViewModel> GetById(int id)
         {
-            var result = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager")).ThenInclude(a => a.User).ProjectTo<StorageGetIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
+            var result = await Get(x => x.Id == id && x.IsActive == true)
+                .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
+                .ThenInclude(a => a.User).ProjectTo<StorageGetIdViewModel>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync();
 
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
             if (result.OrderId != null)

@@ -11,7 +11,8 @@ namespace RSSMS.DataService.AutoMapper
     {
         public static void ConfigStorageModule(this IMapperConfigurationExpression mc)
         {
-            mc.CreateMap<Storage, StorageViewModel>();
+            mc.CreateMap<Storage, StorageViewModel>()
+                 .ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffManageStorages.FirstOrDefault().User.Name)); ;
             mc.CreateMap<StorageViewModel, Storage>();
 
 
