@@ -38,7 +38,13 @@ namespace RSSMS.DataService.Services
                 {
                     if (managerAssigned.Count() > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "More than 1 manager assigned to this storage");
                     var managerInStorage = Get(x => x.StorageId == model.StorageId && x.RoleName == "Manager").FirstOrDefault();
-                    if (managerInStorage != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "This storage has assigned manager");
+                    if (managerInStorage != null)
+                    {
+                        if(managerInStorage.UserId != managerAssigned.FirstOrDefault().UserId)
+                        {
+                            throw new ErrorResponse((int)HttpStatusCode.BadRequest, "This storage has assigned manager");
+                        }
+                    }
                 }
 
                 foreach (var staff in staffAssigned)
