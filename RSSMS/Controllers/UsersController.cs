@@ -34,6 +34,21 @@ namespace RSSMS.API.Controllers
             return Ok(await _userService.Login(model));
         }
         /// <summary>
+        /// Change password
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPost("changepassword")]
+        [MapToApiVersion("1")]
+        //[Authorize]
+        [ProducesResponseType(typeof(UserViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> ChangePassword(UserChangePasswordViewModel model)
+        {
+            return Ok(await _userService.ChangePassword(model));
+        }
+        /// <summary>
         /// Get all users
         /// </summary>
         /// <param name="model"></param>

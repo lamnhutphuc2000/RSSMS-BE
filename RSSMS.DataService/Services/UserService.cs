@@ -26,6 +26,7 @@ namespace RSSMS.DataService.Services
     public interface IUserService : IBaseService<User>
     {
         Task<TokenViewModel> Login(UserLoginViewModel model);
+        Task<UserViewModel> ChangePassword(UserChangePasswordViewModel model);
         Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, int? storageId, string[] fields, int page, int size);
         Task<UserViewModel> GetById(int id);
         Task<UserViewModel> Create(UserCreateViewModel model);
@@ -189,6 +190,15 @@ namespace RSSMS.DataService.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        public async Task<UserViewModel> ChangePassword(UserChangePasswordViewModel model)
+        {
+            if(!model.ConfirmPassword.Equals(model.Password)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Confirm password not matched");
+            var user = await Get(x => x.Id == model.Id && x.IsActive == true).FirstOrDefaultAsync();
+            if (user == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User not found");
+            user.Password = model.Password;
+            await UpdateAsync(user);
+            return _mapper.Map<UserViewModel>(user);
+        }
     }
 
 }
