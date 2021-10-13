@@ -28,6 +28,9 @@ namespace RSSMS.DataService.DI
 
             services.AddScoped<IAreaRepository, AreaRepository>();
             services.AddScoped<IAreaService, AreaService>();
+
+            services.AddScoped<IShelfRepository, ShelfRepository>();
+            services.AddScoped<IShelfService, ShelfService>();
         }
     }
 }
