@@ -15,6 +15,7 @@ namespace RSSMS.DataService.Models
         public int Id { get; set; }
         public int? AreaId { get; set; }
         public int? Type { get; set; }
+        public string Name { get; set; }
         public string Note { get; set; }
         public int? Status { get; set; }
         public int? BoxesInWidth { get; set; }

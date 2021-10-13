@@ -38,11 +38,13 @@ namespace RSSMS.DataService.Services
 
         public async Task<ShelfViewModel> Create(ShelfCreateViewModel model)
         {
-            var shelf = _mapper.Map<Shelf>(model);
-            await CreateAsync(shelf);
+            var shelf = Get(x => x.Name == model.Name && x.AreaId == model.AreaId && x.IsActive == true).FirstOrDefault();
+            if (shelf != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf name is existed");
+            var shelfToCreate = _mapper.Map<Shelf>(model);
+            await CreateAsync(shelfToCreate);
             int numberOfShelve = model.BoxesInHeight * model.BoxesInWidth;
-            await _boxService.CreateNumberOfBoxes(shelf.Id, numberOfShelve, model.BoxSize);
-            return _mapper.Map<ShelfViewModel>(shelf); ;
+            await _boxService.CreateNumberOfBoxes(shelfToCreate.Id, numberOfShelve, model.BoxSize);
+            return _mapper.Map<ShelfViewModel>(shelfToCreate);
         }
 
         public async Task<ShelfViewModel> Delete(int id)
@@ -67,6 +69,8 @@ namespace RSSMS.DataService.Services
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf Id not matched");
 
             var entity = await GetAsync(id);
+            var shelf = Get(x => x.Name == model.Name && x.AreaId == entity.AreaId && x.Id != id && x.IsActive == true).FirstOrDefault();
+            if (shelf != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf name is existed");
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf not found");
 
             var updateEntity = _mapper.Map(model, entity);
