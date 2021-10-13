@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace RSSMS.DataService.ViewModels.Areas
 {
-    public partial class  AreaViewModel
+    public partial class AreaViewModel
     {
 
         public static string[] Fields = {

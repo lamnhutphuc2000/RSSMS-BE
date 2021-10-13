@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.StaffManageUser;
-using RSSMS.DataService.ViewModels.Storages;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -34,6 +32,6 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _staffManageStorage.AssignStaffToStorage(model));
         }
-        
+
     }
 }

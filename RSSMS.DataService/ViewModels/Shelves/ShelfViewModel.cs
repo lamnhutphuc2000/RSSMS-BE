@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System;
+using RSSMS.DataService.ViewModels.Boxes;
 using System.Collections.Generic;
-using System.Text;
 
 namespace RSSMS.DataService.ViewModels.Shelves
 {
@@ -21,5 +20,6 @@ namespace RSSMS.DataService.ViewModels.Shelves
         [BindNever]
         public int? BoxesInHeight { get; set; }
 
+        public virtual ICollection<BoxViewModel> Boxes { get; set; }
     }
 }

@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Areas;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace RSSMS.API.Controllers
 {
@@ -36,9 +33,23 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(DynamicModelResponse<AreaViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetAreaByStorageID([FromQuery]int storageid, [FromQuery] AreaViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
+        public async Task<IActionResult> GetAreaByStorageID([FromQuery] int storageid, [FromQuery] AreaViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
         {
             return Ok(await _areaService.GetByStorageId(storageid, model, fields, page, size));
+        }
+        /// <summary>
+        /// Get Area By ID
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("{id}")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(AreaDetailViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetById(int id)
+        {
+            return Ok(await _areaService.GetById(id));
         }
         /// <summary>
         /// Create Area by Storage Id

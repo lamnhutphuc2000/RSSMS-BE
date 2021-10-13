@@ -5,11 +5,8 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.ViewModels.StaffManageUser;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
@@ -34,13 +31,13 @@ namespace RSSMS.DataService.Services
             if (staffAssigned != null)
             {
                 var managerAssigned = staffAssigned.Where(a => a.RoleName == "Manager");
-                if(managerAssigned != null)
+                if (managerAssigned != null)
                 {
                     if (managerAssigned.Count() > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "More than 1 manager assigned to this storage");
                     var managerInStorage = Get(x => x.StorageId == model.StorageId && x.RoleName == "Manager").FirstOrDefault();
                     if (managerInStorage != null)
                     {
-                        if(managerInStorage.UserId != managerAssigned.FirstOrDefault().UserId)
+                        if (managerInStorage.UserId != managerAssigned.FirstOrDefault().UserId)
                         {
                             throw new ErrorResponse((int)HttpStatusCode.BadRequest, "This storage has assigned manager");
                         }
@@ -50,18 +47,18 @@ namespace RSSMS.DataService.Services
                 foreach (var staff in staffAssigned)
                 {
                     var staffManageStorage = await Get(x => x.UserId == staff.UserId && x.RoleName != "Manager").FirstOrDefaultAsync();
-                    if(staffManageStorage != null)
+                    if (staffManageStorage != null)
                     {
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Staff has assigned to a storage before");
                     }
-                    
+
                 }
 
 
 
                 if (staffUnAssigned != null)
                 {
-                    var staffs =  Get(x => x.StorageId == model.StorageId).ToList().Where(x => staffUnAssigned.Any(a => a.UserId == x.UserId)).ToList();
+                    var staffs = Get(x => x.StorageId == model.StorageId).ToList().Where(x => staffUnAssigned.Any(a => a.UserId == x.UserId)).ToList();
 
                     foreach (var staff in staffs)
                     {
@@ -69,10 +66,10 @@ namespace RSSMS.DataService.Services
                     }
                 }
 
-                
 
 
-                
+
+
 
                 foreach (var staff in staffAssigned)
                 {
@@ -91,9 +88,9 @@ namespace RSSMS.DataService.Services
                 }
             }
 
-            
-            
-            
+
+
+
             return null;
         }
 

@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using AutoMapper;
+﻿using AutoMapper;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.Orders;
+using System;
 
 namespace RSSMS.DataService.AutoMapper
 {
@@ -14,7 +12,7 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<Order, OrderStorageViewModel>()
                 .ForMember(des => des.RemainingTime, opt => opt.MapFrom(src => (src.ReturnDate - DateTime.Now).Value.Days));
             mc.CreateMap<OrderStorageViewModel, Order>();
-                
+
 
         }
     }

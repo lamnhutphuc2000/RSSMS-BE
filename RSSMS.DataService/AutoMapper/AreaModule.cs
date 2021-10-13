@@ -20,6 +20,8 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<Area, AreaUpdateViewModel>();
             mc.CreateMap<AreaUpdateViewModel, Area>();
+
+            mc.CreateMap<Area, AreaDetailViewModel>();
         }
     }
 }

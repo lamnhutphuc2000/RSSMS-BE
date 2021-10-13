@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RSSMS.DataService.ViewModels.Orders
+﻿namespace RSSMS.DataService.ViewModels.Orders
 {
     public partial class OrderStorageViewModel
     {

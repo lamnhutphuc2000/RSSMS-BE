@@ -1,5 +1,4 @@
 ﻿using RSSMS.DataService.ViewModels.Images;
-using RSSMS.DataService.ViewModels.StaffManageUser;
 using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Users

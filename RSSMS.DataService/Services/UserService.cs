@@ -55,9 +55,9 @@ namespace RSSMS.DataService.Services
             if (user != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email is existed");
             var userCreate = _mapper.Map<User>(model);
             await CreateAsync(userCreate);
-            if(model.StorageIds != null)
+            if (model.StorageIds != null)
             {
-                for(int i = 0; i < model.StorageIds.Count; i ++)
+                for (int i = 0; i < model.StorageIds.Count; i++)
                 {
                     var staffAssignModel = _mapper.Map<StaffManageStorageCreateViewModel>(userCreate);
                     staffAssignModel.StorageId = model.StorageIds.ElementAt(i);
@@ -84,8 +84,8 @@ namespace RSSMS.DataService.Services
             {
                 users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer") && x.StaffManageStorages.Count == 0).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model);
-            } 
-            if(storageId != null && storageId != 0)
+            }
+            if (storageId != null && storageId != 0)
             {
                 users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
                     .Where(x => x.StaffManageStorages.Any(a => a.StorageId == storageId)).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
@@ -192,7 +192,7 @@ namespace RSSMS.DataService.Services
 
         public async Task<UserViewModel> ChangePassword(UserChangePasswordViewModel model)
         {
-            if(!model.ConfirmPassword.Equals(model.Password)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Confirm password not matched");
+            if (!model.ConfirmPassword.Equals(model.Password)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Confirm password not matched");
             var user = await Get(x => x.Id == model.Id && x.IsActive == true).FirstOrDefaultAsync();
             if (user == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User not found");
             user.Password = model.Password;

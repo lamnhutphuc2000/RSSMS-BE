@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
@@ -11,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
@@ -23,20 +23,25 @@ namespace RSSMS.DataService.Services
         Task<ShelfViewModel> Create(ShelfCreateViewModel model);
         Task<ShelfViewModel> Delete(int id);
         Task<ShelfViewModel> Update(int id, ShelfUpdateViewModel model);
+        Dictionary<string, double> GetBoxUsageByAreaId(int areaId);
     }
     public class ShelfService : BaseService<Shelf>, IShelfService
 
     {
         private readonly IMapper _mapper;
-        public ShelfService(IUnitOfWork unitOfWork, IShelfRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IBoxService _boxService;
+        public ShelfService(IUnitOfWork unitOfWork, IBoxService boxService, IShelfRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
+            _boxService = boxService;
         }
 
         public async Task<ShelfViewModel> Create(ShelfCreateViewModel model)
         {
             var shelf = _mapper.Map<Shelf>(model);
             await CreateAsync(shelf);
+            int numberOfShelve = model.BoxesInHeight * model.BoxesInWidth;
+            await _boxService.CreateNumberOfBoxes(shelf.Id, numberOfShelve, model.BoxSize);
             return _mapper.Map<ShelfViewModel>(shelf); ;
         }
 
@@ -86,6 +91,45 @@ namespace RSSMS.DataService.Services
                 Data = shelves.Item2.ToList()
             };
             return rs;
+        }
+
+        public Dictionary<string, double> GetBoxUsageByAreaId(int areaId)
+        {
+            var shelves = Get(x => x.AreaId == areaId && x.IsActive == true).Include(x => x.Boxes).ToList();
+
+            double totalBox = 0;
+            double boxRemaining = 0;
+            double usage = 0;
+            var result = new Dictionary<string, double>();
+            result["Total"] = totalBox;
+            result["BoxRemaining"] = boxRemaining;
+            result["Usage"] = usage;
+            if (shelves == null)
+            {
+                return result;
+            }
+            foreach (var shelf in shelves)
+            {
+                if (shelf.Boxes != null)
+                {
+                    var boxes = shelf.Boxes;
+                    totalBox += boxes.Count;
+
+                    var boxesNotUsed = boxes.Where(x => x.Status == 0).ToList().Count;
+                    boxRemaining += boxesNotUsed;
+                }
+            }
+
+            if (totalBox - boxRemaining != 0)
+            {
+                usage = Math.Ceiling((totalBox - boxRemaining) / totalBox * 100);
+            }
+
+
+            result["Total"] = totalBox;
+            result["BoxRemaining"] = boxRemaining;
+            result["Usage"] = usage;
+            return result;
         }
     }
 }

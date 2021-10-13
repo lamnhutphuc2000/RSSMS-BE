@@ -2,9 +2,6 @@
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.StaffManageUser;
 using RSSMS.DataService.ViewModels.Users;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace RSSMS.DataService.AutoMapper
 {
@@ -22,7 +19,7 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<StaffManageStorageUpdateViewModel, StaffManageStorage>();
 
 
-            
+
         }
     }
 }

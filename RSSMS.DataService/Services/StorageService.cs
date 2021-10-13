@@ -47,7 +47,7 @@ namespace RSSMS.DataService.Services
         {
             var storage = _mapper.Map<Storage>(model);
             await CreateAsync(storage);
-            
+
             foreach (UserListStaffViewModel staffAssigned in model.ListStaff)
             {
                 var staffAssignModel = _mapper.Map<StaffManageStorageCreateViewModel>(storage);
@@ -71,12 +71,12 @@ namespace RSSMS.DataService.Services
         public async Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, string[] fields, int page, int size)
         {
 
-            var storages =  Get(x => x.IsActive == true)
+            var storages = Get(x => x.IsActive == true)
                     .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
                     .ThenInclude(a => a.User).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider)
                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
 
-               
+
             if (storages.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
             var rs = new DynamicModelResponse<StorageViewModel>
             {
