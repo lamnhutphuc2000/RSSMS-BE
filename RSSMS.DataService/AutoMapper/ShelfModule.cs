@@ -9,6 +9,7 @@ namespace RSSMS.DataService.AutoMapper
         public static void ConfigShelfModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Shelf, ShelfViewModel>();
+
             mc.CreateMap<ShelfViewModel, Shelf>();
 
             mc.CreateMap<Shelf, ShelfCreateViewModel>();

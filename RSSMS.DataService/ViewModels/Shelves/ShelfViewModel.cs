@@ -22,7 +22,7 @@ namespace RSSMS.DataService.ViewModels.Shelves
         public int? BoxesInWidth { get; set; }
         [BindNever]
         public int? BoxesInHeight { get; set; }
-
+        [BindNever]
         public virtual ICollection<BoxViewModel> Boxes { get; set; }
     }
 }
