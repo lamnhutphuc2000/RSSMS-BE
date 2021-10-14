@@ -58,7 +58,7 @@ namespace RSSMS.DataService.Services
 
         public async Task<ShelfViewModel> GetById(int id)
         {
-            var shelf = await GetAsync(id);
+            var shelf = await Get(x => x.IsActive == true).Include(x => x.Boxes.Where(a => a.IsActive == true)).FirstOrDefaultAsync();
             if (shelf == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf id not found");
             var result = _mapper.Map<ShelfViewModel>(shelf);
             return result;
@@ -69,18 +69,24 @@ namespace RSSMS.DataService.Services
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf Id not matched");
 
             var entity = await GetAsync(id);
-            var shelf = Get(x => x.Name == model.Name && x.AreaId == entity.AreaId && x.Id != id && x.IsActive == true).FirstOrDefault();
+            var shelf = Get(x => x.Name == model.Name && x.AreaId == entity.AreaId && x.Id != id && x.IsActive == true).Include(x => x.Boxes.Where(x => x.IsActive == true)).FirstOrDefault();
             if (shelf != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf name is existed");
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf not found");
 
+            if (entity.BoxesInHeight != model.BoxesInHeight || entity.BoxesInWidth != model.BoxesInWidth)
+            {
+                await _boxService.Delete(id);
+                await _boxService.CreateNumberOfBoxes(id, model.BoxesInWidth * model.BoxesInHeight, model.BoxSize);
+            }
+
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);
-
+            await _boxService.UpdateBoxType(model.BoxSize, id);
             return _mapper.Map<ShelfViewModel>(updateEntity);
         }
         public async Task<DynamicModelResponse<ShelfViewModel>> GetAll(ShelfViewModel model, string[] fields, int page, int size)
         {
-            var shelves = Get(x => x.IsActive == true).ProjectTo<ShelfViewModel>(_mapper.ConfigurationProvider)
+            var shelves = Get(x => x.IsActive == true).Include(x => x.Boxes.Where(a => a.IsActive == true)).ProjectTo<ShelfViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             var rs = new DynamicModelResponse<ShelfViewModel>
