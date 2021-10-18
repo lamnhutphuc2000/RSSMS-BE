@@ -22,6 +22,7 @@ namespace RSSMS.DataService.Services
         Task<OrderCreateViewModel> Create(OrderCreateViewModel model);
         Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, string[] fields, int page, int size);
         Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
+        Task<OrderViewModel> GetById(int id);
     }
     class OrderService : BaseService<Order>, IOrderService
     {
@@ -32,7 +33,15 @@ namespace RSSMS.DataService.Services
             _mapper = mapper;
             _orderDetailService = orderDetailService;
         }
+        public async Task<OrderViewModel> GetById(int id)
+        {
+            var result = await Get(x => x.Id == id && x.IsActive == true)
+                .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync();
 
+            if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
+            return result;
+        }
         public async Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, string[] fields, int page, int size)
         {
 
@@ -93,6 +102,9 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<OrderUpdateViewModel>(updateEntity);
         }
 
+
+
+
         public async Task<OrderStorageViewModel> GetSelfStorageOrderInfo(int id)
         {
             var orderSelfStorageInfo = await Get(x => x.Id == id).ProjectTo<OrderStorageViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
@@ -111,5 +123,7 @@ namespace RSSMS.DataService.Services
             return orderSelfStorageInfo;
 
         }
+
+
     }
 }

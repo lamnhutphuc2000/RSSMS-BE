@@ -21,6 +21,7 @@ namespace RSSMS.API.Controllers
         {
             _orderService = orderService;
         }
+
         /// <summary>
         /// Get All Order
         /// </summary>
@@ -36,6 +37,20 @@ namespace RSSMS.API.Controllers
         public async Task<IActionResult> GetAll([FromQuery] OrderViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
         {
             return Ok(await _orderService.GetAll(model, fields, page, size));
+        }
+        /// <summary>
+        /// Get Order By ID
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("{id}")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetById(int id)
+        {
+            return Ok(await _orderService.GetById(id));
         }
         /// <summary>
         /// Create Order

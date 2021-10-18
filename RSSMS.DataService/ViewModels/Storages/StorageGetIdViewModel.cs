@@ -7,8 +7,6 @@ namespace RSSMS.DataService.ViewModels.Storages
 {
     public partial class StorageGetIdViewModel
     {
-
-
         public string Name { get; set; }
         public string ManagerName { get; set; }
         public string Size { get; set; }
