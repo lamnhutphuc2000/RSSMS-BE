@@ -24,7 +24,7 @@ namespace RSSMS.DataService.Services
         Task<StorageViewModel> Create(StorageCreateViewModel model);
         Task<StorageUpdateViewModel> Update(int id, StorageUpdateViewModel model);
         Task<StorageViewModel> Delete(int id);
-        Task<int> Count(List<StorageViewModel> shelves);
+        //Task<int> Count(List<StorageViewModel> shelves);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -38,10 +38,10 @@ namespace RSSMS.DataService.Services
             _staffManageStorageService = staffManageStorageService;
         }
 
-        public Task<int> Count(List<StorageViewModel> shelves)
-        {
-            throw new NotImplementedException();
-        }
+       // public Task<int> Count(List<StorageViewModel> shelves)
+       // {
+       //    throw new NotImplementedException();
+       // }
 
         public async Task<StorageViewModel> Create(StorageCreateViewModel model)
         {

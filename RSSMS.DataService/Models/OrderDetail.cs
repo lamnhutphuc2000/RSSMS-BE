@@ -1,4 +1,7 @@
-﻿#nullable disable
+﻿using System;
+using System.Collections.Generic;
+
+#nullable disable
 
 namespace RSSMS.DataService.Models
 {
@@ -7,7 +10,7 @@ namespace RSSMS.DataService.Models
         public int OrderId { get; set; }
         public int ProductId { get; set; }
         public int? Amount { get; set; }
-        public string TotalPrice { get; set; }
+        public double? TotalPrice { get; set; }
 
         public virtual Order Order { get; set; }
         public virtual Product Product { get; set; }
