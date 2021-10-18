@@ -34,6 +34,8 @@ namespace RSSMS.DataService.ViewModels.Orders
         [BindNever]
         public DateTime? DeliveryDate { get; set; }
         [BindNever]
+        public string DeliveryTime { get; set; }
+        [BindNever]
         public DateTime? ReturnDate { get; set; }
         [BindNever]
         public int? Duration { get; set; }

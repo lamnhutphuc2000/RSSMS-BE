@@ -16,6 +16,7 @@ namespace RSSMS.DataService.ViewModels.Orders
         public int? PaymentMethod { get; set; }
         public bool? IsUserDelivery { get; set; }
         public DateTime? DeliveryDate { get; set; }
+        public string DeliveryTime { get; set; }
         public int? Duration { get; set; }
 
 

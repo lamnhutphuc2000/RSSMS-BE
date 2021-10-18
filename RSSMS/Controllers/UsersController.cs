@@ -76,6 +76,20 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _userService.GetById(id));
         }
+        /// <summary>
+        /// Get User By Phone Number
+        /// </summary>
+        /// <param name="phone"></param>
+        /// <returns></returns>
+        [HttpGet("user/{phone}")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(UserViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetByPhone(string phone)
+        {
+            return Ok(await _userService.GetByPhone(phone));
+        }
 
         [HttpPost]
         [MapToApiVersion("1")]

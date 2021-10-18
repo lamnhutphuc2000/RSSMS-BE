@@ -29,6 +29,7 @@ namespace RSSMS.DataService.Models
         public int? PaymentMethod { get; set; }
         public bool? IsUserDelivery { get; set; }
         public DateTime? DeliveryDate { get; set; }
+        public string DeliveryTime { get; set; }
         public DateTime? ReturnDate { get; set; }
         public int? Status { get; set; }
         public bool? IsActive { get; set; }

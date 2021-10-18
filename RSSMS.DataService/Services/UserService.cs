@@ -29,6 +29,7 @@ namespace RSSMS.DataService.Services
         Task<UserViewModel> ChangePassword(UserChangePasswordViewModel model);
         Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, int? storageId, string[] fields, int page, int size);
         Task<UserViewModel> GetById(int id);
+        Task<UserViewModel> GetByPhone(string phone);
         Task<UserViewModel> Create(UserCreateViewModel model);
         Task<UserViewModel> Update(int id, UserUpdateViewModel model);
         Task<UserViewModel> Delete(int id);
@@ -198,6 +199,13 @@ namespace RSSMS.DataService.Services
             user.Password = model.Password;
             await UpdateAsync(user);
             return _mapper.Map<UserViewModel>(user);
+        }
+
+        public async Task<UserViewModel> GetByPhone(string phone)
+        {
+            var result = await Get(x => x.Phone == phone && x.IsActive == true).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
+            if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id not found");
+            return result;
         }
     }
 

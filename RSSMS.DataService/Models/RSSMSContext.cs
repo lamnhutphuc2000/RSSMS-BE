@@ -131,6 +131,10 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.DeliveryDate).HasColumnType("datetime");
 
+                entity.Property(e => e.DeliveryTime)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.ReturnDate).HasColumnType("datetime");
