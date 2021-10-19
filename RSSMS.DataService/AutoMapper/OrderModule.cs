@@ -15,10 +15,12 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<Order, OrderCreateViewModel>();
             mc.CreateMap<OrderCreateViewModel, Order>()
-                  .ForMember(des => des.Status, opt => opt.MapFrom(src => 1));
+                  .ForMember(des => des.Status, opt => opt.MapFrom(src => 1))
+                  .ForMember(des => des.IsActive, opt => opt.MapFrom(src => 1));
 
             mc.CreateMap<Order, OrderViewModel>()
-                 .ForMember(des => des.Duration, opt => opt.MapFrom(src => src.TypeOrder == 0? ((src.ReturnDate - DateTime.Now).Value.Days): ((src.ReturnDate - DateTime.Now).Value.Days /30)));
+                 .ForMember(des => des.Duration, opt => opt.MapFrom(src => src.TypeOrder == 0 ? ((src.ReturnDate - DateTime.Now).Value.Days) : ((src.ReturnDate - DateTime.Now).Value.Days / 30)));
+            
             mc.CreateMap<OrderViewModel, Order>();
 
             mc.CreateMap<Order, OrderUpdateViewModel>();
