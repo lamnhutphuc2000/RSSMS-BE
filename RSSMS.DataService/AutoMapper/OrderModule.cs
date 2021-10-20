@@ -19,8 +19,8 @@ namespace RSSMS.DataService.AutoMapper
                   .ForMember(des => des.IsActive, opt => opt.MapFrom(src => 1));
 
             mc.CreateMap<Order, OrderViewModel>()
-                .ForMember(des => des.DurationDays, opt => opt.MapFrom(src => (src.ReturnDate - DateTime.Now).Value.Days + 1))
-                .ForMember(des => des.DurationMonths, opt => opt.MapFrom(src => ((src.ReturnDate - DateTime.Now).Value.Days + 1) / 30));
+                .ForMember(des => des.DurationDays, opt => opt.MapFrom(src => (src.ReturnDate - src.DeliveryDate).Value.Days))
+                .ForMember(des => des.DurationMonths, opt => opt.MapFrom(src => ((src.ReturnDate - src.DeliveryDate).Value.Days) / 30));
 
             mc.CreateMap<OrderViewModel, Order>();
 

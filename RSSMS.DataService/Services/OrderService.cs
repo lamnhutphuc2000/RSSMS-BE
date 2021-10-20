@@ -23,6 +23,7 @@ namespace RSSMS.DataService.Services
         Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, string[] fields, int page, int size);
         Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
         Task<OrderViewModel> GetById(int id);
+        Task<OrderViewModel> Cancel(int id);
     }
     class OrderService : BaseService<Order>, IOrderService
     {
@@ -125,6 +126,13 @@ namespace RSSMS.DataService.Services
 
         }
 
-
+        public async Task<OrderViewModel> Cancel(int id)
+        {
+            var entity = await GetAsync(id);
+            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+            entity.Status = 0;
+            await UpdateAsync(entity);
+            return _mapper.Map<OrderViewModel>(entity);
+        }
     }
 }

@@ -78,5 +78,19 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _orderService.Update(id, model));
         }
+        /// <summary>
+        /// Cancel order
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPut("cancel/{id}")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            return Ok(await _orderService.Cancel(id));
+        }
     }
 }
