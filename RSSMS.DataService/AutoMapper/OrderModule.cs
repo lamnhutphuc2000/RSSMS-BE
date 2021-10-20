@@ -20,7 +20,7 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<Order, OrderViewModel>()
                  .ForMember(des => des.Duration, opt => opt.MapFrom(src => src.TypeOrder == 0 ? ((src.ReturnDate - DateTime.Now).Value.Days) : ((src.ReturnDate - DateTime.Now).Value.Days / 30)));
-            
+
             mc.CreateMap<OrderViewModel, Order>();
 
             mc.CreateMap<Order, OrderUpdateViewModel>();

@@ -11,7 +11,6 @@ using RSSMS.DataService.ViewModels.StaffManageUser;
 using RSSMS.DataService.ViewModels.Storages;
 using RSSMS.DataService.ViewModels.Users;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -38,10 +37,10 @@ namespace RSSMS.DataService.Services
             _staffManageStorageService = staffManageStorageService;
         }
 
-       // public Task<int> Count(List<StorageViewModel> shelves)
-       // {
-       //    throw new NotImplementedException();
-       // }
+        // public Task<int> Count(List<StorageViewModel> shelves)
+        // {
+        //    throw new NotImplementedException();
+        // }
 
         public async Task<StorageViewModel> Create(StorageCreateViewModel model)
         {

@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.ViewModels.Products;
+using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
 {
@@ -24,7 +21,7 @@ namespace RSSMS.DataService.Services
             _mapper = mapper;
         }
 
-        public async Task<ProductOrderViewModel> Create(ProductOrderViewModel model,int orderID)
+        public async Task<ProductOrderViewModel> Create(ProductOrderViewModel model, int orderID)
         {
             var orderDetails = _mapper.Map<OrderDetail>(model);
 

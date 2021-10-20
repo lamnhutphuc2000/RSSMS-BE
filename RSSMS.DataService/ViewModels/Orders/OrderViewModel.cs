@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using RSSMS.DataService.Models;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using RSSMS.DataService.ViewModels.OrderDetails;
-using RSSMS.DataService.ViewModels.Products;
+using System;
+using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Orders
 {
@@ -20,7 +17,7 @@ namespace RSSMS.DataService.ViewModels.Orders
         [BindNever]
         public string? CustomerName { get; set; }
         [BindNever]
-        public string? CustomerPhone{ get; set; }
+        public string? CustomerPhone { get; set; }
         [BindNever]
         public string DeliveryAddress { get; set; }
         [BindNever]

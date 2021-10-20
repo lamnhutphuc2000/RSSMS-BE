@@ -1,7 +1,6 @@
-﻿using System;
+﻿using RSSMS.DataService.ViewModels.Products;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using RSSMS.DataService.ViewModels.Products;
 
 namespace RSSMS.DataService.ViewModels.Orders
 {

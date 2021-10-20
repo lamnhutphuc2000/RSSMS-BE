@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RSSMS.DataService.ViewModels.Products
+﻿namespace RSSMS.DataService.ViewModels.Products
 {
     class ProductViewModel
     {
@@ -11,6 +7,6 @@ namespace RSSMS.DataService.ViewModels.Products
         public decimal? Price { get; set; }
 
         public int? Type { get; set; }
- 
+
     }
 }
