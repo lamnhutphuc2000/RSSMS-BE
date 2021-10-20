@@ -10,14 +10,13 @@ namespace RSSMS.DataService.ViewModels.Orders
 
         public static string[] Fields = {
             "Id","CustomerName","CustomerPhone","DeliveryAddress","AddressReturn","TotalPrice","TypeOrder"
-                ,"IsUserDelivery","DeliveryDate","ReturnDate","Duration","Status","IsPaid"
+                ,"IsUserDelivery","DeliveryDate","ReturnDate","DurationDays","DurationMonths","Status","IsPaid"
         };
+        public int? Id { get; set; }
         [BindNever]
-        public int Id { get; set; }
+        public string CustomerName { get; set; }
         [BindNever]
-        public string? CustomerName { get; set; }
-        [BindNever]
-        public string? CustomerPhone { get; set; }
+        public string CustomerPhone { get; set; }
         [BindNever]
         public string DeliveryAddress { get; set; }
         [BindNever]
@@ -35,7 +34,9 @@ namespace RSSMS.DataService.ViewModels.Orders
         [BindNever]
         public DateTime? ReturnDate { get; set; }
         [BindNever]
-        public int? Duration { get; set; }
+        public int? DurationDays { get; set; }
+        [BindNever]
+        public int? DurationMonths { get; set; }
         [BindNever]
         public int? Status { get; set; }
         [BindNever]

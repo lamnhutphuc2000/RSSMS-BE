@@ -47,6 +47,7 @@ namespace RSSMS.DataService.Services
 
             var order = Get(x => x.IsActive == true)
                 .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
+                .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (order.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
 
