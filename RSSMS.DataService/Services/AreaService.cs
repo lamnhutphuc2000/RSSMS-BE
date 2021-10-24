@@ -58,10 +58,8 @@ namespace RSSMS.DataService.Services
             var area = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
             if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
             var result = _mapper.Map<AreaDetailViewModel>(area);
-            var box = _shelfService.GetBoxUsageByAreaId(id);
-            result.BoxRemaining = (int)box["BoxRemaining"];
-            result.Usage = box["Usage"];
-            result.TotalBox = (int)box["Total"];
+            var boxUsage = _shelfService.GetBoxUsageByAreaId(id);
+            result.BoxUsage = boxUsage;
             return result;
         }
 

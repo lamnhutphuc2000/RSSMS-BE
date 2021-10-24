@@ -7,6 +7,7 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
+using RSSMS.DataService.ViewModels.Boxes;
 using RSSMS.DataService.ViewModels.Shelves;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace RSSMS.DataService.Services
         Task<ShelfViewModel> Create(ShelfCreateViewModel model);
         Task<ShelfViewModel> Delete(int id);
         Task<ShelfViewModel> Update(int id, ShelfUpdateViewModel model);
-        Dictionary<string, double> GetBoxUsageByAreaId(int areaId);
+        List<BoxUsageViewModel> GetBoxUsageByAreaId(int areaId);
     }
     public class ShelfService : BaseService<Shelf>, IShelfService
 
@@ -104,17 +105,36 @@ namespace RSSMS.DataService.Services
             return rs;
         }
 
-        public Dictionary<string, double> GetBoxUsageByAreaId(int areaId)
+        public List<BoxUsageViewModel> GetBoxUsageByAreaId(int areaId)
         {
             var shelves = Get(x => x.AreaId == areaId && x.IsActive == true).Include(x => x.Boxes).ToList();
 
-            double totalBox = 0;
-            double boxRemaining = 0;
+            var result = new List<BoxUsageViewModel>();
+
+            result.Add(GetBoxUsageBySizeType(0, shelves));
+            result.Add(GetBoxUsageBySizeType(1, shelves));
+            result.Add(GetBoxUsageBySizeType(2, shelves));
+            result.Add(GetBoxUsageBySizeType(3, shelves));
+            result.Add(GetBoxUsageBySizeType(4, shelves));
+            result.Add(GetBoxUsageBySizeType(5, shelves));
+            result.Add(GetBoxUsageBySizeType(6, shelves));
+            result.Add(GetBoxUsageBySizeType(7, shelves));
+            result.Add(GetBoxUsageBySizeType(8, shelves));
+
+            return result;
+        }
+
+        private BoxUsageViewModel GetBoxUsageBySizeType(int sizeType, List<Shelf> shelves)
+        {
+            int totalBox = 0;
+            int boxRemaining = 0;
             double usage = 0;
-            var result = new Dictionary<string, double>();
-            result["Total"] = totalBox;
-            result["BoxRemaining"] = boxRemaining;
-            result["Usage"] = usage;
+            BoxUsageViewModel result = new BoxUsageViewModel();
+            result.SizeType = sizeType;
+            result.TotalBox = 0;
+            result.Usage = 0;
+            result.BoxRemaining = 0;
+
             if (shelves == null)
             {
                 return result;
@@ -123,8 +143,8 @@ namespace RSSMS.DataService.Services
             {
                 if (shelf.Boxes != null)
                 {
-                    var boxes = shelf.Boxes;
-                    totalBox += boxes.Count;
+                    var boxes = shelf.Boxes.Where(x => x.IsActive == true && x.SizeType == sizeType);
+                    totalBox += boxes.ToList().Count;
 
                     var boxesNotUsed = boxes.Where(x => x.Status == 0).ToList().Count;
                     boxRemaining += boxesNotUsed;
@@ -133,13 +153,13 @@ namespace RSSMS.DataService.Services
 
             if (totalBox - boxRemaining != 0)
             {
-                usage = Math.Ceiling((totalBox - boxRemaining) / totalBox * 100);
+                usage = Math.Ceiling((double)(totalBox - boxRemaining) / totalBox * 100);
             }
 
 
-            result["Total"] = totalBox;
-            result["BoxRemaining"] = boxRemaining;
-            result["Usage"] = usage;
+            result.TotalBox = totalBox;
+            result.BoxRemaining = boxRemaining;
+            result.Usage = usage;
             return result;
         }
     }

@@ -25,6 +25,7 @@ namespace RSSMS.DataService.Models
         public string AddressReturn { get; set; }
         public decimal? TotalPrice { get; set; }
         public int? TypeOrder { get; set; }
+        public string RejectedReason { get; set; }
         public bool? IsPaid { get; set; }
         public int? PaymentMethod { get; set; }
         public bool? IsUserDelivery { get; set; }

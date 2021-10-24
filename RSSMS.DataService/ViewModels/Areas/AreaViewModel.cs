@@ -6,11 +6,13 @@ namespace RSSMS.DataService.ViewModels.Areas
     {
 
         public static string[] Fields = {
-            "Id","Name","Usage","Status","IsActive"};
+            "Id","Name","Usage","Status","Description","IsActive"};
         [BindNever]
         public int? Id { get; set; }
         [BindNever]
         public string Name { get; set; }
+        [BindNever]
+        public string Description { get; set; }
         [BindNever]
         public int? Usage { get; set; }
         [BindNever]

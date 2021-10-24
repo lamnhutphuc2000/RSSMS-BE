@@ -15,6 +15,7 @@ namespace RSSMS.DataService.Models
         public int Id { get; set; }
         public int? StorageId { get; set; }
         public string Name { get; set; }
+        public string Description { get; set; }
         public int? Usage { get; set; }
         public int? Status { get; set; }
         public bool? IsActive { get; set; }

@@ -85,12 +85,12 @@ namespace RSSMS.API.Controllers
         /// <returns></returns>
         [HttpPut("cancel/{id}")]
         [MapToApiVersion("1")]
-        [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Cancel(int id)
+        public async Task<IActionResult> Cancel(int id, OrderCancelViewModel model)
         {
-            return Ok(await _orderService.Cancel(id));
+            return Ok(await _orderService.Cancel(id, model));
         }
     }
 }

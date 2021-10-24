@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
@@ -48,6 +50,8 @@ namespace RSSMS.DataService.Models
                 entity.ToTable("Area");
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.Property(e => e.Description).HasMaxLength(100);
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
 
@@ -132,6 +136,8 @@ namespace RSSMS.DataService.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+
+                entity.Property(e => e.RejectedReason).HasMaxLength(100);
 
                 entity.Property(e => e.ReturnDate).HasColumnType("datetime");
 
