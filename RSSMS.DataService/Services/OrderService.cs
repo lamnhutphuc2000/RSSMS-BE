@@ -71,11 +71,11 @@ namespace RSSMS.DataService.Services
             var order = _mapper.Map<Order>(model);
 
             //Check Type of Order
-            if (order.TypeOrder == 0)
+            if (order.TypeOrder == 1)
             {
                 order.ReturnDate = order.DeliveryDate.Value.AddDays((double)model.Duration);
             }
-            else if (order.TypeOrder == 1)
+            else if (order.TypeOrder == 0)
             {
                 order.ReturnDate = order.DeliveryDate.Value.AddMonths((int)model.Duration);
             }
