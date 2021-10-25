@@ -9,7 +9,7 @@ namespace RSSMS.DataService.ViewModels.Orders
     {
 
         public static string[] Fields = {
-            "Id","CustomerName","CustomerPhone","DeliveryAddress","AddressReturn","TotalPrice","TypeOrder"
+            "Id","CustomerName","CustomerPhone","DeliveryAddress","AddressReturn","TotalPrice","TypeOrder","RejectedReason"
                 ,"IsUserDelivery","DeliveryDate","ReturnDate","DurationDays","DurationMonths","Status","IsPaid"
         };
         public int? Id { get; set; }
@@ -23,6 +23,8 @@ namespace RSSMS.DataService.ViewModels.Orders
         public string AddressReturn { get; set; }
         [BindNever]
         public decimal? TotalPrice { get; set; }
+        [BindNever]
+        public string RejectedReason { get; set; }
         [BindNever]
         public int? TypeOrder { get; set; }
         [BindNever]
