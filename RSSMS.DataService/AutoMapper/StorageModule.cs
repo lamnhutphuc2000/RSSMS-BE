@@ -27,6 +27,7 @@ namespace RSSMS.DataService.AutoMapper
 
 
             mc.CreateMap<Storage, StorageGetIdViewModel>()
+                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.OrderStorageDetails.Where(x => x.IsActive == true).FirstOrDefault().OrderId))
                 .ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffManageStorages.FirstOrDefault().User.Name));
             mc.CreateMap<StorageGetIdViewModel, Storage>();
 

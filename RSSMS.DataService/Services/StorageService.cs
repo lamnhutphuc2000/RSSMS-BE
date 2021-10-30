@@ -94,6 +94,7 @@ namespace RSSMS.DataService.Services
         public async Task<StorageGetIdViewModel> GetById(int id)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
+                .Include(a => a.OrderStorageDetails.Where(s => s.IsActive == true))
                 .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
                 .ThenInclude(a => a.User).ProjectTo<StorageGetIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
