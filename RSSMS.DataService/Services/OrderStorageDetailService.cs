@@ -36,7 +36,7 @@ namespace RSSMS.DataService.Services
             if (storages != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
             var order = await _orderService.Get(x => x.Id == model.OrderId  && x.IsActive == true).FirstOrDefaultAsync();
             if(order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-            if(order.Status != 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order had assigned to storage");
+            if(order.Status == 4) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order had assigned to storage");
             foreach (var storageId in storageIds)
             {
                 var storage = await _storageService.Get(x => x.Id == storageId).FirstOrDefaultAsync();
@@ -47,7 +47,7 @@ namespace RSSMS.DataService.Services
                 entity.IsActive = true;
                 await CreateAsync(entity);
             }
-            order.Status = 1;
+            order.Status = 4;
             await _orderService.UpdateAsync(order);
             return model;
         }
