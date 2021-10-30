@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using RSSMS.DataService.Enums;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
@@ -40,7 +41,7 @@ namespace RSSMS.DataService.Services
             foreach (var storageId in storageIds)
             {
                 var storage = await _storageService.Get(x => x.Id == storageId).FirstOrDefaultAsync();
-                storage.Status = 1;
+                storage.Status = (int)StorageStatus.Renting;
                 await _storageService.UpdateAsync(storage);
                 var entity = _mapper.Map<OrderStorageDetail>(model);
                 entity.StorageId = storageId;
