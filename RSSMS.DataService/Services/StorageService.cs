@@ -72,7 +72,7 @@ namespace RSSMS.DataService.Services
 
             var storages = Get(x => x.IsActive == true)
                     .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
-                    .ThenInclude(a => a.User).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider)
+                    .ThenInclude(a => a.User).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model)
                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
 
 

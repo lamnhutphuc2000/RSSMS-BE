@@ -43,6 +43,12 @@ namespace RSSMS.DataService.DI
 
             services.AddScoped<IOrderStorageDetailRepository, OrderStorageDetailRepository>();
             services.AddScoped<IOrderStorageDetailService, OrderStorageDetailService>();
+
+            services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IProductService, ProductService>();
+
+            services.AddScoped<IRequestRepository, RequestRepository>();
+            services.AddScoped<IRequestService, RequestService>();
         }
     }
 }
