@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using RSSMS.DataService.Enums;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
@@ -38,7 +39,7 @@ namespace RSSMS.DataService.Services
             foreach (var boxId in listBoxesId)
             {
                 var box = await _boxService.Get(x => x.Id == boxId && x.IsActive == true).FirstOrDefaultAsync();
-                box.Status = 1;
+                box.Status = (int)StorageStatus.Available;
                 _boxService.Update(box);
                 var entity = _mapper.Map<OrderBoxDetail>(model);
                 entity.BoxId = boxId;

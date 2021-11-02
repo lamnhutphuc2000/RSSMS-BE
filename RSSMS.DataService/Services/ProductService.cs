@@ -9,6 +9,7 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Products;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -17,7 +18,7 @@ namespace RSSMS.DataService.Services
 {
     public interface IProductService : IBaseService<Product>
     {
-        Task<DynamicModelResponse<ProductViewAllModel>> GetAll(ProductViewAllModel model, string[] fields, int page, int size);
+        Task<Dictionary<string, List<ProductViewAllModel>>> GetAll(ProductViewAllModel model);
         Task<ProductViewAllModel> GetById(int id);
         Task<ProductCreateViewModel> Create(ProductCreateViewModel model);
         Task<ProductUpdateViewModel> Update(int id, ProductUpdateViewModel model);
@@ -49,28 +50,23 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<ProductViewAllModel>(entity);
         }
 
-        public async Task<DynamicModelResponse<ProductViewAllModel>> GetAll(ProductViewAllModel model, string[] fields, int page, int size)
+        public async Task<Dictionary<string, List<ProductViewAllModel>>> GetAll(ProductViewAllModel model)
         {
-            var products = Get(x => x.IsActive == true)
-                    .ProjectTo<ProductViewAllModel>(_mapper.ConfigurationProvider)
-                    .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+            var products = Get(x => x.IsActive == true).OrderBy(x => x.Type)
+                    .ProjectTo<ProductViewAllModel>(_mapper.ConfigurationProvider);
+            if(products.ToList().Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Products not found");
+            
 
-
-            if (products.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
-           
-
-            var rs = new DynamicModelResponse<ProductViewAllModel>
+            Dictionary<string, List<ProductViewAllModel>> result = new Dictionary<string, List<ProductViewAllModel>>();
+            var distinctProductList = products.ToList()
+                .GroupBy(m => new { m.Type })
+                .Select(group => group.First())
+                .ToList();
+            foreach(var distinctProduct in distinctProductList)
             {
-                Metadata = new PagingMetaData
-                {
-                    Page = page,
-                    Size = size,
-                    Total = products.Item1,
-                    TotalPage = (int)Math.Ceiling((double)products.Item1 / size)
-                },
-                Data = products.Item2.ToList()
-            };
-           return rs;
+                result.Add(distinctProduct.Type.ToString(), products.Where(x => x.Type == distinctProduct.Type).ToList());
+            }
+            return result;
         }
 
         public async Task<ProductViewAllModel> GetById(int id)
