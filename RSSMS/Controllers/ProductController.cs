@@ -35,9 +35,9 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(DynamicModelResponse<ProductViewAllModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Get([FromQuery] ProductViewAllModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
+        public async Task<IActionResult> Get([FromQuery] ProductViewAllModel model)
         {
-            return Ok(await _productsService.GetAll(model, fields, page, size));
+            return Ok(await _productsService.GetAll(model));
         }
         /// <summary>
         /// Get Product By Id
