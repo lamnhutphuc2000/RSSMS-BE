@@ -13,6 +13,9 @@ namespace RSSMS.DataService.AutoMapper
         {
             mc.CreateMap<Product, ProductViewAllModel>();
             mc.CreateMap<ProductViewAllModel, Product>();
+            
+            mc.CreateMap<Product, ProductViewModel>();
+            mc.CreateMap<ProductViewModel, Product>();
 
             mc.CreateMap<Product, ProductCreateViewModel>();
             mc.CreateMap<ProductCreateViewModel, Product>()
