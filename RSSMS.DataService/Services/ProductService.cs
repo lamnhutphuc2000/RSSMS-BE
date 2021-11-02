@@ -20,7 +20,7 @@ namespace RSSMS.DataService.Services
     {
         Task<Dictionary<string, List<ProductViewAllModel>>> GetAll(ProductViewAllModel model);
         Task<ProductViewAllModel> GetById(int id);
-        Task<ProductCreateViewModel> Create(ProductCreateViewModel model);
+        Task<ProductViewModel> Create(ProductCreateViewModel model);
         Task<ProductUpdateViewModel> Update(int id, ProductUpdateViewModel model);
         Task<ProductViewAllModel> Delete(int id);
     }
@@ -34,11 +34,11 @@ namespace RSSMS.DataService.Services
             _productRepository = repository;
         }
 
-        public async Task<ProductCreateViewModel> Create(ProductCreateViewModel model)
+        public async Task<ProductViewModel> Create(ProductCreateViewModel model)
         {
             var storage = _mapper.Map<Product>(model);
             await CreateAsync(storage);
-            return _mapper.Map<ProductCreateViewModel>(storage);
+            return _mapper.Map<ProductViewModel>(storage);
         }
 
         public async Task<ProductViewAllModel> Delete(int id)

@@ -1,6 +1,9 @@
-﻿namespace RSSMS.DataService.ViewModels.Products
+﻿using System.Collections.Generic;
+using RSSMS.DataService.ViewModels.Images;
+
+namespace RSSMS.DataService.ViewModels.Products
 {
-    class ProductViewModel
+    public class ProductViewModel
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -9,6 +12,6 @@
         public string Description { get; set; }
         public int? Tooltip { get; set; }
         public int? Type { get; set; }
-
+        public virtual ICollection<AvatarImageViewModel> Images { get; set; }
     }
 }
