@@ -57,6 +57,8 @@ namespace RSSMS.DataService.Services
 
 
             if (products.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+           
+
             var rs = new DynamicModelResponse<ProductViewAllModel>
             {
                 Metadata = new PagingMetaData
