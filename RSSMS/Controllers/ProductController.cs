@@ -12,7 +12,7 @@ using RSSMS.DataService.ViewModels.Products;
 namespace RSSMS.API.Controllers
 {
 
-    [Route("api/v{version:apiVersion}/controllers")]
+    [Route("api/v{version:apiVersion}/products")]
     [ApiController]
     [ApiVersion("1")]
     public class ProductController : Controller
