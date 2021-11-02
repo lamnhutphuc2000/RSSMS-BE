@@ -128,7 +128,7 @@ namespace RSSMS.DataService.Services
 
         public async Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model)
         {
-            if(id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id not matched");
+            if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id not matched");
             var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
             entity.Status = 0;

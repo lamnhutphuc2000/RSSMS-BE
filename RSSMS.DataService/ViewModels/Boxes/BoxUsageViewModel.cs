@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RSSMS.DataService.ViewModels.Boxes
+﻿namespace RSSMS.DataService.ViewModels.Boxes
 {
     public class BoxUsageViewModel
     {
