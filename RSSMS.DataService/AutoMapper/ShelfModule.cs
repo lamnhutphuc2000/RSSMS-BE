@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.Shelves;
+using System.Linq;
 
 namespace RSSMS.DataService.AutoMapper
 {
@@ -8,7 +9,8 @@ namespace RSSMS.DataService.AutoMapper
     {
         public static void ConfigShelfModule(this IMapperConfigurationExpression mc)
         {
-            mc.CreateMap<Shelf, ShelfViewModel>();
+            mc.CreateMap<Shelf, ShelfViewModel>()
+                .ForMember(des => des.ProductId, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).FirstOrDefault().ProductId));
 
             mc.CreateMap<ShelfViewModel, Shelf>();
 
