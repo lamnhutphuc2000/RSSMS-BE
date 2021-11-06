@@ -59,7 +59,10 @@ namespace RSSMS.DataService.Services
 
         public async Task<ShelfViewModel> GetById(int id)
         {
-            var shelf = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.Boxes.Where(a => a.IsActive == true))
+            var shelf = await Get(x => x.Id == id && x.IsActive == true)
+                .Include(x => x.Boxes.Where(a => a.IsActive == true))
+                .ThenInclude(x => x.Product)
+                .Include(x => x.Boxes.Where(a => a.IsActive == true))
                 .ThenInclude(x => x.OrderBoxDetails.Where(a => a.IsActive == true)).FirstOrDefaultAsync();
             if (shelf == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf id not found");
             var result = _mapper.Map<ShelfViewModel>(shelf);

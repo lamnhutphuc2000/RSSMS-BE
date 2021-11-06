@@ -28,7 +28,9 @@ namespace RSSMS.DataService.Models
         public DateTime? ModifiedDate { get; set; }
         public int? ModifiedBy { get; set; }
         public int? OrderId { get; set; }
+        public int? ProductId { get; set; }
 
+        public virtual Product Product { get; set; }
         public virtual ICollection<Area> Areas { get; set; }
         public virtual ICollection<Image> Images { get; set; }
         public virtual ICollection<OrderStorageDetail> OrderStorageDetails { get; set; }

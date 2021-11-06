@@ -5,6 +5,6 @@
         public int Id { get; set; }
         public int? OrderId { get; set; }
         public int? ShelfId { get; set; }
-        public int? SizeType { get; set; }
+        public string SizeType { get; set; }
     }
 }

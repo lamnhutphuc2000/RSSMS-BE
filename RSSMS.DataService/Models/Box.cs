@@ -23,8 +23,10 @@ namespace RSSMS.DataService.Models
         public int? CreatedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
         public int? ModifiedBy { get; set; }
+        public int? ProductId { get; set; }
 
         public virtual Order Order { get; set; }
+        public virtual Product Product { get; set; }
         public virtual Shelf Shelf { get; set; }
         public virtual ICollection<OrderBoxDetail> OrderBoxDetails { get; set; }
         public virtual ICollection<RequestDetail> RequestDetails { get; set; }

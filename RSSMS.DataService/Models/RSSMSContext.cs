@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
@@ -36,8 +38,6 @@ namespace RSSMS.DataService.Models
         {
             if (!optionsBuilder.IsConfigured)
             {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=localhost;Database=RSSMS;Trusted_Connection=True;");
             }
         }
 
@@ -75,6 +75,11 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.Boxes)
                     .HasForeignKey(d => d.OrderId)
                     .HasConstraintName("FK_Box_Order");
+
+                entity.HasOne(d => d.Product)
+                    .WithMany(p => p.Boxes)
+                    .HasForeignKey(d => d.ProductId)
+                    .HasConstraintName("FK_Box_Product");
 
                 entity.HasOne(d => d.Shelf)
                     .WithMany(p => p.Boxes)
@@ -221,7 +226,9 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Price).HasColumnType("decimal(18, 3)");
 
-                entity.Property(e => e.Tooltip).HasColumnType("text");
+                entity.Property(e => e.Size).HasMaxLength(100);
+
+                entity.Property(e => e.ToolTip).HasColumnType("text");
 
                 entity.Property(e => e.Unit).HasMaxLength(100);
 
@@ -371,6 +378,11 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Name).HasMaxLength(100);
 
                 entity.Property(e => e.Size).HasMaxLength(100);
+
+                entity.HasOne(d => d.Product)
+                    .WithMany(p => p.Storages)
+                    .HasForeignKey(d => d.ProductId)
+                    .HasConstraintName("FK_Storage_Product");
             });
 
             modelBuilder.Entity<User>(entity =>

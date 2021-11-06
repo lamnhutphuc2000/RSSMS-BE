@@ -71,6 +71,7 @@ namespace RSSMS.DataService.Services
         {
 
             var storages = Get(x => x.IsActive == true)
+                    .Include(a => a.Product)
                     .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
                     .ThenInclude(a => a.User).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model)
                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
@@ -95,6 +96,7 @@ namespace RSSMS.DataService.Services
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
                 .Include(a => a.OrderStorageDetails.Where(s => s.IsActive == true))
+                .Include(a => a.Product)
                 .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
                 .ThenInclude(a => a.User).ProjectTo<StorageGetIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
