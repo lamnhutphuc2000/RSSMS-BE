@@ -91,7 +91,10 @@ namespace RSSMS.DataService.Services
         }
         public async Task<DynamicModelResponse<ShelfViewModel>> GetAll(ShelfViewModel model, string[] fields, int page, int size)
         {
-            var shelves = Get(x => x.IsActive == true).Include(x => x.Boxes.Where(a => a.IsActive == true))
+            var shelves = Get(x => x.IsActive == true)
+                .Include(x => x.Boxes.Where(a => a.IsActive == true))
+                .ThenInclude(x => x.Product)
+                .Include(x => x.Boxes.Where(a => a.IsActive == true))
                 .ThenInclude(x => x.OrderBoxDetails.Where(a => a.IsActive == true))
                 .ProjectTo<ShelfViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)

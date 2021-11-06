@@ -10,6 +10,7 @@ namespace RSSMS.DataService.AutoMapper
         public static void ConfigShelfModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Shelf, ShelfViewModel>()
+                .ForMember(des => des.Boxes, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true)))
                 .ForMember(des => des.SizeType, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).FirstOrDefault().Product.Size))
                 .ForMember(des => des.ProductId, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).FirstOrDefault().ProductId));
 
