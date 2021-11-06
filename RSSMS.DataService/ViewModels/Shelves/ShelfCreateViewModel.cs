@@ -9,6 +9,6 @@
         public int BoxesInWidth { get; set; }
         public int BoxesInHeight { get; set; }
         public int BoxSize { get; set; }
-
+        public int ProductId { get; set; }
     }
 }

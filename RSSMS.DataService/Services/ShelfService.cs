@@ -44,7 +44,7 @@ namespace RSSMS.DataService.Services
             var shelfToCreate = _mapper.Map<Shelf>(model);
             await CreateAsync(shelfToCreate);
             int numberOfShelve = model.BoxesInHeight * model.BoxesInWidth;
-            await _boxService.CreateNumberOfBoxes(shelfToCreate.Id, numberOfShelve, model.BoxSize);
+            await _boxService.CreateNumberOfBoxes(shelfToCreate.Id, numberOfShelve, model.ProductId);
             return _mapper.Map<ShelfViewModel>(shelfToCreate);
         }
 
@@ -81,12 +81,12 @@ namespace RSSMS.DataService.Services
             if (entity.BoxesInHeight != model.BoxesInHeight || entity.BoxesInWidth != model.BoxesInWidth)
             {
                 await _boxService.Delete(id);
-                await _boxService.CreateNumberOfBoxes(id, model.BoxesInWidth * model.BoxesInHeight, model.BoxSize);
+                await _boxService.CreateNumberOfBoxes(id, model.BoxesInWidth * model.BoxesInHeight, model.ProductId);
             }
 
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);
-            await _boxService.UpdateBoxType(model.BoxSize, id);
+            await _boxService.UpdateBoxSize(model.ProductId, id);
             return _mapper.Map<ShelfViewModel>(updateEntity);
         }
         public async Task<DynamicModelResponse<ShelfViewModel>> GetAll(ShelfViewModel model, string[] fields, int page, int size)

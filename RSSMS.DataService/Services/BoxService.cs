@@ -9,9 +9,9 @@ namespace RSSMS.DataService.Services
 {
     public interface IBoxService : IBaseService<Box>
     {
-        Task CreateNumberOfBoxes(int shelfId, int num, int size);
+        Task CreateNumberOfBoxes(int shelfId, int num, int productId);
         Task Delete(int shelfId);
-        Task UpdateBoxType(int boxSize, int shelfId);
+        Task UpdateBoxSize(int productId, int shelfId);
     }
     public class BoxService : BaseService<Box>, IBoxService
     {
@@ -21,13 +21,13 @@ namespace RSSMS.DataService.Services
             _mapper = mapper;
         }
 
-        public async Task CreateNumberOfBoxes(int shelfId, int num, int size)
+        public async Task CreateNumberOfBoxes(int shelfId, int num, int productId)
         {
             for (int i = 0; i < num; i++)
             {
                 Box box = new Box();
                 box.IsActive = true;
-                box.SizeType = size;
+                box.ProductId = productId;
                 box.ShelfId = shelfId;
                 box.Status = 0;
                 await CreateAsync(box);
@@ -45,13 +45,13 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public async Task UpdateBoxType(int boxSize, int shelfId)
+        public async Task UpdateBoxSize(int productId, int shelfId)
         {
-            var listBoxes = await Get(x => x.ShelfId == shelfId && x.IsActive == true && x.SizeType != boxSize).ToListAsync();
+            var listBoxes = await Get(x => x.ShelfId == shelfId && x.IsActive == true && x.ProductId != productId).ToListAsync();
             if (listBoxes == null) return;
             foreach (var box in listBoxes)
             {
-                box.SizeType = boxSize;
+                box.ProductId = productId;
                 await UpdateAsync(box);
             }
         }

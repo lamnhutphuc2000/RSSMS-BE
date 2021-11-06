@@ -12,7 +12,7 @@ namespace RSSMS.DataService.ViewModels.Products
             "Id","Name","Price","Name","Size","Description","Type","Status","Unit","Tooltip"
         };
         [BindNever]
-        public int Id { get; set; }
+        public int? Id { get; set; }
         [BindNever]
         public string Name { get; set; }
         [BindNever]
@@ -21,7 +21,6 @@ namespace RSSMS.DataService.ViewModels.Products
         public string Size { get; set; }
         [BindNever]
         public string Description { get; set; }
-        [BindNever]
         public int? Type { get; set; }
         [BindNever]
         public string Unit { get; set; }

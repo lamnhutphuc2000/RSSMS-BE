@@ -46,7 +46,7 @@ namespace RSSMS.DataService.Services
 
                 foreach (var staff in staffAssigned)
                 {
-                    var staffManageStorage = await Get(x => x.UserId == staff.UserId && x.RoleName != "Manager").FirstOrDefaultAsync();
+                    var staffManageStorage = await Get(x => x.UserId == staff.UserId && x.RoleName != "Manager" && x.StorageId != model.StorageId).FirstOrDefaultAsync();
                     if (staffManageStorage != null)
                     {
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Staff has assigned to a storage before");

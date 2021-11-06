@@ -53,7 +53,8 @@ namespace RSSMS.DataService.Services
         public async Task<Dictionary<string, List<ProductViewAllModel>>> GetAll(ProductViewAllModel model)
         {
             var products = Get(x => x.IsActive == true).OrderBy(x => x.Type)
-                    .ProjectTo<ProductViewAllModel>(_mapper.ConfigurationProvider);
+                    .ProjectTo<ProductViewAllModel>(_mapper.ConfigurationProvider)
+                    .DynamicFilter(model);
             if(products.ToList().Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Products not found");
             
 
@@ -86,7 +87,12 @@ namespace RSSMS.DataService.Services
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Product not found");
 
             var updateEntity = _mapper.Map(model, entity);
+            updateEntity.IsActive = false;
             await UpdateAsync(updateEntity);
+
+            updateEntity.Id = 0;
+            updateEntity.IsActive = true;
+            await CreateAsync(updateEntity);
 
             return _mapper.Map<ProductUpdateViewModel>(updateEntity);
         }

@@ -9,6 +9,7 @@ namespace RSSMS.DataService.ViewModels.Products
     {
         public string Name { get; set; }
         public decimal? Price { get; set; }
+        public string Size { get; set; }
         public string Description { get; set; }
         public int? Type { get; set; }
         public string Unit { get; set; }
