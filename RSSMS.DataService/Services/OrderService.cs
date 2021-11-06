@@ -47,6 +47,8 @@ namespace RSSMS.DataService.Services
         {
 
             var order = Get(x => x.IsActive == true)
+                .Include(x => x.OrderDetails)
+                .ThenInclude(orderDetail => orderDetail.Product)
                 .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);

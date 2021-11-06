@@ -1,4 +1,7 @@
-﻿namespace RSSMS.DataService.ViewModels.OrderDetails
+﻿using RSSMS.DataService.ViewModels.Images;
+using System.Collections.Generic;
+
+namespace RSSMS.DataService.ViewModels.OrderDetails
 {
     public class OrderDetailsViewModel
     {
@@ -7,6 +10,7 @@
         public decimal? Price { get; set; }
         public int? Amount { get; set; }
         public int? ProductType { get; set; }
+        public virtual ICollection<AvatarImageViewModel> Images { get; set; }
 
     }
 }
