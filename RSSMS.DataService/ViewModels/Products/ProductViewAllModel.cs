@@ -18,7 +18,7 @@ namespace RSSMS.DataService.ViewModels.Products
         [BindNever]
         public decimal? Price { get; set; }
         [BindNever]
-        public int? Size { get; set; }
+        public string Size { get; set; }
         [BindNever]
         public string Description { get; set; }
         [BindNever]
