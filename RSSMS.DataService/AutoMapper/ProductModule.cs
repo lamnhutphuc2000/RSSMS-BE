@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using AutoMapper;
+﻿using AutoMapper;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.Products;
+using System;
 
 namespace RSSMS.DataService.AutoMapper
 {
@@ -13,7 +11,7 @@ namespace RSSMS.DataService.AutoMapper
         {
             mc.CreateMap<Product, ProductViewAllModel>();
             mc.CreateMap<ProductViewAllModel, Product>();
-            
+
             mc.CreateMap<Product, ProductViewModel>();
             mc.CreateMap<ProductViewModel, Product>();
 

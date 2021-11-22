@@ -1,7 +1,5 @@
-﻿using System;
+﻿using RSSMS.DataService.ViewModels.Images;
 using System.Collections.Generic;
-using System.Text;
-using RSSMS.DataService.ViewModels.Images;
 
 namespace RSSMS.DataService.ViewModels.Products
 {

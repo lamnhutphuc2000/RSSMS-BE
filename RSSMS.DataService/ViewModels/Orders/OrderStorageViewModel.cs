@@ -1,6 +1,6 @@
 ﻿namespace RSSMS.DataService.ViewModels.Orders
 {
-    public partial class OrderStorageViewModel
+    public partial class OrderAreaViewModel
     {
         public static string[] Fields = {
             "Id","CustomerId","CustomerName","CustomerPhone","DurationDays","DurationMonths"};

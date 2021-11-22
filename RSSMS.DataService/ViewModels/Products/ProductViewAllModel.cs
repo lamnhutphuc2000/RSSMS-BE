@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using RSSMS.DataService.ViewModels.Images;
+using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Products
 {

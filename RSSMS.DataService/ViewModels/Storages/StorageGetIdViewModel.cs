@@ -14,7 +14,7 @@ namespace RSSMS.DataService.ViewModels.Storages
         public int? Usage { get; set; }
         public int? Type { get; set; }
         public int? OrderId { get; set; }
-        public OrderStorageViewModel OrderInfo { get; set; }
+        public OrderAreaViewModel OrderInfo { get; set; }
 
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
         public virtual ICollection<UserListStaffViewModel> ListUser { get; set; }

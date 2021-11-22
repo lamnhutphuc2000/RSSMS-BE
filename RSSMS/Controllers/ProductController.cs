@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using RSSMS.DataService.Constants;
+﻿using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Products;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace RSSMS.API.Controllers
 {

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Models;
 
 namespace RSSMS.DataService.Repositories
@@ -10,7 +7,7 @@ namespace RSSMS.DataService.Repositories
     {
 
     }
-    class RequestRepository:  BaseRepository<Request>,IRequestRepository
+    class RequestRepository : BaseRepository<Request>, IRequestRepository
     {
         public RequestRepository(DbContext dbContext) : base(dbContext)
         {

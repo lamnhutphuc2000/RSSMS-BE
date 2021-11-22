@@ -1,14 +1,12 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
-using RSSMS.DataService.Constants;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Products;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -28,7 +26,7 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IProductRepository _productRepository;
-        public ProductService(IUnitOfWork unitOfWork, IProductRepository repository,  IMapper mapper) : base(unitOfWork, repository)
+        public ProductService(IUnitOfWork unitOfWork, IProductRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _productRepository = repository;
@@ -55,15 +53,15 @@ namespace RSSMS.DataService.Services
             var products = Get(x => x.IsActive == true).OrderBy(x => x.Type)
                     .ProjectTo<ProductViewAllModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model);
-            if(products.ToList().Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Products not found");
-            
+            if (products.ToList().Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Products not found");
+
 
             Dictionary<string, List<ProductViewAllModel>> result = new Dictionary<string, List<ProductViewAllModel>>();
             var distinctProductList = products.ToList()
                 .GroupBy(m => new { m.Type })
                 .Select(group => group.First())
                 .ToList();
-            foreach(var distinctProduct in distinctProductList)
+            foreach (var distinctProduct in distinctProductList)
             {
                 result.Add(distinctProduct.Type.ToString(), products.Where(x => x.Type == distinctProduct.Type).ToList());
             }

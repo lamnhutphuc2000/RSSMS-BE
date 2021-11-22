@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
@@ -14,10 +8,14 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Requests;
+using System;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
 {
-    public interface IRequestService: IBaseService<Request>
+    public interface IRequestService : IBaseService<Request>
     {
         Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, string[] fields, int page, int size);
         Task<RequestViewModel> GetById(int id);
@@ -30,7 +28,7 @@ namespace RSSMS.DataService.Services
     public class RequestService : BaseService<Request>, IRequestService
     {
         private readonly IMapper _mapper;
-        public RequestService(IUnitOfWork unitOfWork,  IRequestRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
         }

@@ -1,7 +1,5 @@
-﻿using System;
+﻿using RSSMS.DataService.ViewModels.RequestDetails;
 using System.Collections.Generic;
-using System.Text;
-using RSSMS.DataService.ViewModels.RequestDetails;
 
 namespace RSSMS.DataService.ViewModels.Requests
 {

@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using RSSMS.DataService.Models;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using RSSMS.DataService.ViewModels.RequestDetails;
+using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Requests
 {

@@ -18,9 +18,9 @@ namespace RSSMS.DataService.Services
 {
     public interface IOrderService : IBaseService<Order>
     {
-        Task<OrderStorageViewModel> GetSelfStorageOrderInfo(int id);
+        Task<OrderAreaViewModel> GetSelfStorageOrderInfo(int id);
         Task<OrderCreateViewModel> Create(OrderCreateViewModel model);
-        Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, string[] fields, int page, int size);
+        Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size);
         Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
         Task<OrderViewModel> GetById(int id);
         Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model);
@@ -43,16 +43,24 @@ namespace RSSMS.DataService.Services
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
             return result;
         }
-        public async Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, string[] fields, int page, int size)
+        public async Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size)
         {
-
+            
             var order = Get(x => x.IsActive == true)
                 .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.Product)
+                .ThenInclude(orderDetail => orderDetail.Product);
+            if(dateFrom != null && dateTo != null)
+            {
+                order = Get(x => x.IsActive == true)
+                    .Where(x => (x.ReturnDate >= dateFrom && x.ReturnDate <= dateTo) || (x.DeliveryDate >= dateFrom && x.DeliveryDate <= dateTo))
+                .Include(x => x.OrderDetails)
+                .ThenInclude(orderDetail => orderDetail.Product);
+            }
+            var result = order
                 .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-            if (order.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
 
             var rs = new DynamicModelResponse<OrderViewModel>
             {
@@ -60,10 +68,10 @@ namespace RSSMS.DataService.Services
                 {
                     Page = page,
                     Size = size,
-                    Total = order.Item1,
-                    TotalPage = (int)Math.Ceiling((double)order.Item1 / size)
+                    Total = result.Item1,
+                    TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
                 },
-                Data = order.Item2.ToList()
+                Data = result.Item2.ToList()
             };
             return rs;
         }
@@ -109,9 +117,9 @@ namespace RSSMS.DataService.Services
 
 
 
-        public async Task<OrderStorageViewModel> GetSelfStorageOrderInfo(int id)
+        public async Task<OrderAreaViewModel> GetSelfStorageOrderInfo(int id)
         {
-            var orderSelfStorageInfo = await Get(x => x.Id == id).ProjectTo<OrderStorageViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
+            var orderSelfStorageInfo = await Get(x => x.Id == id).ProjectTo<OrderAreaViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
             if (orderSelfStorageInfo == null) return null;
 
             //Count Remaining Time
