@@ -18,7 +18,6 @@ namespace RSSMS.DataService.Services
 {
     public interface IOrderService : IBaseService<Order>
     {
-        Task<OrderAreaViewModel> GetSelfStorageOrderInfo(int id);
         Task<OrderCreateViewModel> Create(OrderCreateViewModel model);
         Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size);
         Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
@@ -116,25 +115,6 @@ namespace RSSMS.DataService.Services
 
 
 
-
-        public async Task<OrderAreaViewModel> GetSelfStorageOrderInfo(int id)
-        {
-            var orderSelfStorageInfo = await Get(x => x.Id == id).ProjectTo<OrderAreaViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
-            if (orderSelfStorageInfo == null) return null;
-
-            //Count Remaining Time
-            /* if (DateTime.Compare((DateTime)order.ReturnDate, DateTime.Now) > 0)
-             {
-                 TimeSpan difference = (DateTime)order.ReturnDate - DateTime.Now;
-                 orderSelfStorageInfo.RemainingTime = difference.Days;
-             }
-             else
-             {
-                 orderSelfStorageInfo.RemainingTime = 0;
-             }*/
-            return orderSelfStorageInfo;
-
-        }
 
         public async Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model)
         {

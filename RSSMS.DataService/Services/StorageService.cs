@@ -23,24 +23,16 @@ namespace RSSMS.DataService.Services
         Task<StorageViewModel> Create(StorageCreateViewModel model);
         Task<StorageUpdateViewModel> Update(int id, StorageUpdateViewModel model);
         Task<StorageViewModel> Delete(int id);
-        //Task<int> Count(List<StorageViewModel> shelves);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
         private readonly IMapper _mapper;
-        private readonly IOrderService _orderService;
         private readonly IStaffManageStorageService _staffManageStorageService;
         public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IOrderService orderService, IStaffManageStorageService staffManageStorageService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
-            _orderService = orderService;
             _staffManageStorageService = staffManageStorageService;
         }
-
-        // public Task<int> Count(List<StorageViewModel> shelves)
-        // {
-        //    throw new NotImplementedException();
-        // }
 
         public async Task<StorageViewModel> Create(StorageCreateViewModel model)
         {
@@ -102,10 +94,6 @@ namespace RSSMS.DataService.Services
                 .FirstOrDefaultAsync();
 
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
-            if (result.OrderId != null)
-            {
-                result.OrderInfo = await _orderService.GetSelfStorageOrderInfo((int)result.OrderId);
-            }
 
             return result;
         }
