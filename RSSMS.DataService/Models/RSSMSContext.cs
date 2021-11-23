@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
+﻿using Microsoft.EntityFrameworkCore;
 
 #nullable disable
 
@@ -302,13 +300,15 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
+                entity.Property(e => e.DeliveryTime)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.Note).HasMaxLength(100);
 
-                entity.Property(e => e.TimeFrom).HasColumnType("datetime");
-
-                entity.Property(e => e.TimeTo).HasColumnType("datetime");
+                entity.Property(e => e.SheduleDay).HasColumnType("datetime");
 
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.Schedules)

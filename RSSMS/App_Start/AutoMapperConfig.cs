@@ -24,6 +24,7 @@ namespace RSSMS.API.App_Start
                 mc.ConfigProductModule();
                 mc.ConfigRequestModule();
                 mc.ConfigRequestDetailsModule();
+                mc.ConfigScheduleModule();
             });
             IMapper mapper = mappingConfig.CreateMapper();
             services.AddSingleton(mapper);

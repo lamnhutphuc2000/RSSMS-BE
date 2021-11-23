@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 #nullable disable
 
@@ -12,8 +11,6 @@ namespace RSSMS.DataService.Models
         public int? UserId { get; set; }
         public int? RequestId { get; set; }
         public string Address { get; set; }
-        public DateTime? TimeFrom { get; set; }
-        public DateTime? TimeTo { get; set; }
         public string Note { get; set; }
         public int? Status { get; set; }
         public bool? IsActive { get; set; }
@@ -21,6 +18,8 @@ namespace RSSMS.DataService.Models
         public int? CreatedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
         public int? ModifiedBy { get; set; }
+        public DateTime? SheduleDay { get; set; }
+        public string DeliveryTime { get; set; }
 
         public virtual Order Order { get; set; }
         public virtual Request Request { get; set; }

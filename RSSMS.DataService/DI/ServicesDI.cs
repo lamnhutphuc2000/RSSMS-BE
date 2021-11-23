@@ -49,6 +49,9 @@ namespace RSSMS.DataService.DI
 
             services.AddScoped<IRequestRepository, RequestRepository>();
             services.AddScoped<IRequestService, RequestService>();
+
+            services.AddScoped<IScheduleRepository, ScheduleRepository>();
+            services.AddScoped<IScheduleService, ScheduleService>();
         }
     }
 }

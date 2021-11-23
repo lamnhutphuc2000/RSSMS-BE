@@ -44,11 +44,11 @@ namespace RSSMS.DataService.Services
         }
         public async Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size)
         {
-            
+
             var order = Get(x => x.IsActive == true)
                 .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.Product);
-            if(dateFrom != null && dateTo != null)
+            if (dateFrom != null && dateTo != null)
             {
                 order = Get(x => x.IsActive == true)
                     .Where(x => (x.ReturnDate >= dateFrom && x.ReturnDate <= dateTo) || (x.DeliveryDate >= dateFrom && x.DeliveryDate <= dateTo))
