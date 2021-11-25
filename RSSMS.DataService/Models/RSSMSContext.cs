@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
@@ -143,6 +145,10 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.RejectedReason).HasMaxLength(100);
 
                 entity.Property(e => e.ReturnDate).HasColumnType("datetime");
+
+                entity.Property(e => e.ReturnTime)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 3)");
 
