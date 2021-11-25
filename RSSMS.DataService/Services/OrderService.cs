@@ -50,7 +50,7 @@ namespace RSSMS.DataService.Services
                 .ThenInclude(orderDetail => orderDetail.Product);
             if (dateFrom != null && dateTo != null)
             {
-                order = Get(x => x.IsActive == true && x.TypeOrder == 0)
+                order = Get(x => x.IsActive == true && x.TypeOrder == 1)
                     .Where(x => (x.ReturnDate >= dateFrom && x.ReturnDate <= dateTo) || (x.DeliveryDate >= dateFrom && x.DeliveryDate <= dateTo))
                 .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.Product);
