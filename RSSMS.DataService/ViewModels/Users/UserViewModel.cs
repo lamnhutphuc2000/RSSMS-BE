@@ -22,7 +22,7 @@ namespace RSSMS.DataService.ViewModels.Users
         public string Address { get; set; }
         [BindNever]
         public string Phone { get; set; }
-        [BindNever]
+        [String]
         public string RoleName { get; set; }
         [BindNever]
         public bool? IsActive { get; set; }

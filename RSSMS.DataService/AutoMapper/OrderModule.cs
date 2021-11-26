@@ -12,6 +12,7 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<Order, OrderCreateViewModel>();
             mc.CreateMap<OrderCreateViewModel, Order>()
+                .ForMember(des => des.PaymentMethod, opt => opt.MapFrom(src => 0))
                   .ForMember(des => des.Status, opt => opt.MapFrom(src => 1))
                   .ForMember(des => des.IsActive, opt => opt.MapFrom(src => 1));
 

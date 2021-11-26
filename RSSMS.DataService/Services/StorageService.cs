@@ -28,7 +28,7 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IStaffManageStorageService _staffManageStorageService;
-        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IOrderService orderService, IStaffManageStorageService staffManageStorageService) : base(unitOfWork, repository)
+        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffManageStorageService = staffManageStorageService;
@@ -63,7 +63,6 @@ namespace RSSMS.DataService.Services
         {
 
             var storages = Get(x => x.IsActive == true)
-                    .Include(a => a.Product)
                     .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
                     .ThenInclude(a => a.User).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model)
                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
@@ -87,8 +86,6 @@ namespace RSSMS.DataService.Services
         public async Task<StorageGetIdViewModel> GetById(int id)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
-                .Include(a => a.OrderStorageDetails.Where(s => s.IsActive == true))
-                .Include(a => a.Product)
                 .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
                 .ThenInclude(a => a.User).ProjectTo<StorageGetIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
