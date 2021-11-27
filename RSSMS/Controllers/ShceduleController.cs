@@ -31,7 +31,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(DynamicModelResponse<ScheduleViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Gets([FromQuery] ScheduleViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
+        public async Task<IActionResult> Gets([FromQuery] ScheduleSearchViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
         {
             return Ok(await _scheduleService.Get(model, fields, page, size));
         }

@@ -1,10 +1,17 @@
-﻿using System;
+﻿using RSSMS.DataService.ViewModels.Users;
+using System;
+using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Schedules
 {
     public class ScheduleViewModel
     {
-        public DateTime? DateFrom { get; set; }
-        public DateTime? DateTo { get; set; }
+        public int? OrderId { get; set; }
+
+        public string Address { get; set; }
+        public string Note { get; set; }
+        public int? Status { get; set; }
+        public bool? IsActive { get; set; }
+        public List<UserViewModel> Users { get; set; }
     }
 }
