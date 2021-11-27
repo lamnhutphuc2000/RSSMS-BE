@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.UnitOfWorks;
@@ -15,10 +14,8 @@ namespace RSSMS.DataService.Services
     }
     public class BoxService : BaseService<Box>, IBoxService
     {
-        private readonly IMapper _mapper;
-        public BoxService(IUnitOfWork unitOfWork, IBoxRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public BoxService(IUnitOfWork unitOfWork, IBoxRepository repository) : base(unitOfWork, repository)
         {
-            _mapper = mapper;
         }
 
         public async Task CreateNumberOfBoxes(int shelfId, int num, int productId)

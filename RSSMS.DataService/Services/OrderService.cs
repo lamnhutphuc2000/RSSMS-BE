@@ -10,6 +10,7 @@ using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Orders;
 using RSSMS.DataService.ViewModels.Products;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -18,8 +19,8 @@ namespace RSSMS.DataService.Services
 {
     public interface IOrderService : IBaseService<Order>
     {
-        Task<OrderCreateViewModel> Create(OrderCreateViewModel model);
-        Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size);
+        Task<OrderCreateViewModel> Create(OrderCreateViewModel model, string accessToken);
+        Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken);
         Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
         Task<OrderViewModel> GetById(int id);
         Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model);
@@ -28,10 +29,12 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IOrderDetailService _orderDetailService;
-        public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository, IOrderDetailService orderDetailService, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IStaffManageStorageService _staffmanageStorageService;
+        public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository, IOrderDetailService orderDetailService, IStaffManageStorageService staffmanageStorageService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _orderDetailService = orderDetailService;
+            _staffmanageStorageService = staffmanageStorageService;
         }
         public async Task<OrderViewModel> GetById(int id)
         {
@@ -42,12 +45,34 @@ namespace RSSMS.DataService.Services
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
             return result;
         }
-        public async Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size)
+        public async Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken)
         {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
             var order = Get(x => x.IsActive == true)
+                .Include(x => x.OrderStorageDetails)
                 .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.Product);
+
+            if (role == "Manager")
+            {
+                order = order.Where(x => x.ManagerId == userId || x.ManagerId.HasValue == false)
+                    .Include(x => x.OrderStorageDetails)
+                    .Include(x => x.OrderDetails)
+                    .ThenInclude(orderDetail => orderDetail.Product);
+            }
+
+            if (role == "Office staff")
+            {
+                var storageId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
+                order = order.Where(x => x.OrderStorageDetails.Any(a => a.StorageId == storageId) || x.OrderStorageDetails.Count == 0)
+                    .Include(x => x.OrderStorageDetails)
+                    .Include(x => x.OrderDetails)
+                    .ThenInclude(orderDetail => orderDetail.Product);
+            }
+
             if (dateFrom != null && dateTo != null)
             {
                 order = Get(x => x.IsActive == true && x.TypeOrder == 1)
@@ -75,9 +100,25 @@ namespace RSSMS.DataService.Services
             return rs;
         }
 
-        public async Task<OrderCreateViewModel> Create(OrderCreateViewModel model)
+        public async Task<OrderCreateViewModel> Create(OrderCreateViewModel model, string accessToken)
         {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+            int storageId = -1;
             var order = _mapper.Map<Order>(model);
+
+            if (role == "Manager")
+            {
+                order.ManagerId = userId;
+            }
+
+            if (role == "Office staff")
+            {
+                storageId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
+                var managerId = _staffmanageStorageService.Get(x => x.StorageId == storageId && x.RoleName == "Manager").Select(x => x.UserId).FirstOrDefault();
+                if (managerId != 0) order.ManagerId = managerId;
+            }
 
             //Check Type of Order
             if (order.TypeOrder == 1)
@@ -90,6 +131,20 @@ namespace RSSMS.DataService.Services
             }
 
             await CreateAsync(order);
+
+            if (role == "Office staff")
+            {
+                OrderStorageDetail orderStorage = new OrderStorageDetail();
+                orderStorage.IsActive = true;
+                orderStorage.OrderId = order.Id = order.Id;
+                if (storageId != -1)
+                {
+                    orderStorage.StorageId = storageId;
+                    order.Status = 2;
+                    order.OrderStorageDetails.Add(orderStorage);
+                    await UpdateAsync(order);
+                }
+            }
 
             //Create order detail
             foreach (ProductOrderViewModel product in model.ListProduct)

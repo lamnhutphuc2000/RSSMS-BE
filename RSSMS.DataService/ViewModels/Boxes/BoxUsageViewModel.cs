@@ -2,7 +2,7 @@
 {
     public class BoxUsageViewModel
     {
-        public int SizeType { get; set; }
+        public string SizeType { get; set; }
         public double? Usage { get; set; }
 
         public int TotalBox { get; set; }

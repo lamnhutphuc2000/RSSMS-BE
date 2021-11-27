@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
@@ -29,12 +31,14 @@ namespace RSSMS.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
+        [Authorize(Roles = "Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetAll([FromQuery] OrderViewModel model, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
         {
-            return Ok(await _orderService.GetAll(model, dateFrom, dateTo, fields, page, size));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _orderService.GetAll(model, dateFrom, dateTo, fields, page, size, accessToken));
         }
         /// <summary>
         /// Get Order By ID
@@ -56,12 +60,14 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
+        [Authorize(Roles = "Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderCreateViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Add(OrderCreateViewModel model)
         {
-            return Ok(await _orderService.Create(model));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _orderService.Create(model, accessToken));
         }
 
         /// <summary>

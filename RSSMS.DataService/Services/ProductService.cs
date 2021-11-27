@@ -25,11 +25,9 @@ namespace RSSMS.DataService.Services
     public class ProductService : BaseService<Product>, IProductService
     {
         private readonly IMapper _mapper;
-        private readonly IProductRepository _productRepository;
         public ProductService(IUnitOfWork unitOfWork, IProductRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
-            _productRepository = repository;
         }
 
         public async Task<ProductViewModel> Create(ProductCreateViewModel model)

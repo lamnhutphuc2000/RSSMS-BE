@@ -27,7 +27,7 @@ namespace RSSMS.DataService.Services
     {
         Task<TokenViewModel> Login(UserLoginViewModel model);
         Task<UserViewModel> ChangePassword(UserChangePasswordViewModel model);
-        Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, int? storageId, string[] fields, int page, int size);
+        Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, int? storageId, int? orderId, string[] fields, int page, int size, string accessToken);
         Task<UserViewModel> GetById(int id);
         Task<UserViewModel> GetByPhone(string phone);
         Task<UserViewModel> Create(UserCreateViewModel model);
@@ -77,8 +77,13 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<UserViewModel>(entity);
         }
 
-        public async Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, int? storageId, string[] fields, int page, int size)
+        public async Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, int? storageId, int? orderId, string[] fields, int page, int size, string accessToken)
         {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
+
+            var user = Get(x => x.Id == Int32.Parse(uid)).Include(x => x.Role).FirstOrDefault();
+
             var users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin")).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model);
             if (storageId == 0)
@@ -91,6 +96,17 @@ namespace RSSMS.DataService.Services
                 users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
                     .Where(x => x.StaffManageStorages.Any(a => a.StorageId == storageId)).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model);
+            }
+            if (orderId != null && orderId != 0)
+            {
+                users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
+                    .Where(x => x.Schedules.Any(a => a.OrderId == orderId && x.IsActive == true) || x.Schedules.Count == 0).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                    .DynamicFilter(model);
+            }
+            if (user.Role.Name == "Manager")
+            {
+                var storageIds = _staffManageStorageService.Get(x => x.UserId == user.Id).Select(x => x.StorageId).ToList();
+                users = users.Where(x => x.StaffManageStorages.Any(x => storageIds.Contains((int)x.StorageId)) || x.StaffManageStorages.Count == 0);
             }
             var result = users.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
@@ -143,10 +159,13 @@ namespace RSSMS.DataService.Services
 
         private TokenGenerateModel GenerateToken(User user)
         {
+            var storageId = user.StaffManageStorages.FirstOrDefault()?.StorageId.ToString();
+            if (storageId == null) storageId = "-1";
             var authClaims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.Name),
                     new Claim("user_id",user.Id.ToString()),
+                    new Claim("storage_id",storageId),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 };
             authClaims.Add(new Claim(ClaimTypes.Role, user.Role.Name));
@@ -171,10 +190,13 @@ namespace RSSMS.DataService.Services
         }
         private string GenerateRefreshToken(User user)
         {
+            var storageId = user.StaffManageStorages.FirstOrDefault()?.StorageId.ToString();
+            if (storageId == null) storageId = "-1";
             var authClaims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.Name),
                     new Claim("user_id",user.Id.ToString()),
+                    new Claim("storage_id",storageId),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 };
             authClaims.Add(new Claim(ClaimTypes.Role, user.Role.Name));

@@ -31,10 +31,12 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IBoxService _boxService;
-        public ShelfService(IUnitOfWork unitOfWork, IBoxService boxService, IShelfRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IProductService _productService;
+        public ShelfService(IUnitOfWork unitOfWork, IBoxService boxService, IShelfRepository repository, IProductService productService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _boxService = boxService;
+            _productService = productService;
         }
 
         public async Task<ShelfViewModel> Create(ShelfCreateViewModel model)
@@ -115,30 +117,27 @@ namespace RSSMS.DataService.Services
 
         public List<BoxUsageViewModel> GetBoxUsageByAreaId(int areaId)
         {
-            var shelves = Get(x => x.AreaId == areaId && x.IsActive == true).Include(x => x.Boxes).ToList();
+            var shelves = Get(x => x.AreaId == areaId && x.IsActive == true).Include(x => x.Boxes).ThenInclude(x => x.Product).ToList();
 
             var result = new List<BoxUsageViewModel>();
 
-            result.Add(GetBoxUsageBySizeType(0, shelves));
-            result.Add(GetBoxUsageBySizeType(1, shelves));
-            result.Add(GetBoxUsageBySizeType(2, shelves));
-            result.Add(GetBoxUsageBySizeType(3, shelves));
-            result.Add(GetBoxUsageBySizeType(4, shelves));
-            result.Add(GetBoxUsageBySizeType(5, shelves));
-            result.Add(GetBoxUsageBySizeType(6, shelves));
-            result.Add(GetBoxUsageBySizeType(7, shelves));
-            result.Add(GetBoxUsageBySizeType(8, shelves));
+            var products = _productService.Get(x => x.Type == 2 && x.IsActive == true).ToList();
+
+            foreach (var product in products)
+            {
+                result.Add(GetBoxUsageBySizeType(product.Name, shelves));
+            }
 
             return result;
         }
 
-        private BoxUsageViewModel GetBoxUsageBySizeType(int sizeType, List<Shelf> shelves)
+        private BoxUsageViewModel GetBoxUsageBySizeType(string sizeName, List<Shelf> shelves)
         {
             int totalBox = 0;
             int boxRemaining = 0;
             double usage = 0;
             BoxUsageViewModel result = new BoxUsageViewModel();
-            result.SizeType = sizeType;
+            result.SizeType = sizeName;
             result.TotalBox = 0;
             result.Usage = 0;
             result.BoxRemaining = 0;
@@ -151,7 +150,7 @@ namespace RSSMS.DataService.Services
             {
                 if (shelf.Boxes != null)
                 {
-                    var boxes = shelf.Boxes.Where(x => x.IsActive == true && x.SizeType == sizeType);
+                    var boxes = shelf.Boxes.Where(x => x.IsActive == true && x.Product.Name == sizeName);
                     totalBox += boxes.ToList().Count;
 
                     var boxesNotUsed = boxes.Where(x => x.Status == 0).ToList().Count;

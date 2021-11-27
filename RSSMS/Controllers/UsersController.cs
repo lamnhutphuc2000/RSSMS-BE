@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
@@ -58,16 +60,18 @@ namespace RSSMS.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [MapToApiVersion("1")]
-        //[Authorize]
+        [Authorize(Roles = "Admin,Manager")]
         [ProducesResponseType(typeof(DynamicModelResponse<UserViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Get([FromQuery] UserViewModel model, [FromQuery] int? storageId, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
+        public async Task<IActionResult> Get([FromQuery] UserViewModel model, [FromQuery] int? storageId, [FromQuery] int? orderId, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
         {
-            return Ok(await _userService.GetAll(model, storageId, fields, page, size));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _userService.GetAll(model, storageId, orderId, fields, page, size, accessToken));
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(UserViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -92,6 +96,7 @@ namespace RSSMS.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(UserCreateViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -102,6 +107,7 @@ namespace RSSMS.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -112,6 +118,7 @@ namespace RSSMS.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Manager")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]

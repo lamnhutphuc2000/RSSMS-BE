@@ -11,6 +11,8 @@ using RSSMS.DataService.ViewModels.StaffManageUser;
 using RSSMS.DataService.ViewModels.Storages;
 using RSSMS.DataService.ViewModels.Users;
 using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -18,7 +20,7 @@ namespace RSSMS.DataService.Services
 {
     public interface IStorageService : IBaseService<Storage>
     {
-        Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, string[] fields, int page, int size);
+        Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, List<int> types, string[] fields, int page, int size, string accessToken);
         Task<StorageGetIdViewModel> GetById(int id);
         Task<StorageViewModel> Create(StorageCreateViewModel model);
         Task<StorageUpdateViewModel> Update(int id, StorageUpdateViewModel model);
@@ -59,26 +61,43 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<StorageViewModel>(entity);
         }
 
-        public async Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, string[] fields, int page, int size)
+        public async Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, List<int> types, string[] fields, int page, int size, string accessToken)
         {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-            var storages = Get(x => x.IsActive == true)
-                    .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
-                    .ThenInclude(a => a.User).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model)
-                    .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+            var storages = Get(x => x.IsActive == true).Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
+                .ThenInclude(a => a.User).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model);
 
 
-            if (storages.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+
+            if (types.Count > 0)
+            {
+                storages = storages.Where(x => types.Contains((int)x.Type));
+            }
+
+
+            if (role == "Manager")
+            {
+                var storagesManagerManage = _staffManageStorageService.Get(x => x.UserId == userId).Select(x => x.StorageId).ToList();
+                storages = storages.Where(x => storagesManagerManage.Contains((int)x.Id));
+            }
+
+
+            var result = storages.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+
+            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
             var rs = new DynamicModelResponse<StorageViewModel>
             {
                 Metadata = new PagingMetaData
                 {
                     Page = page,
                     Size = size,
-                    Total = storages.Item1,
-                    TotalPage = (int)Math.Ceiling((double)storages.Item1 / size)
+                    Total = result.Item1,
+                    TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
                 },
-                Data = storages.Item2.ToList()
+                Data = result.Item2.ToList()
             };
             return rs;
         }
