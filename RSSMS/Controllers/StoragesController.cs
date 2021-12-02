@@ -46,14 +46,15 @@ namespace RSSMS.API.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin,Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(StorageGetIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetById(int id)
         {
-            return Ok(await _storagesService.GetById(id));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _storagesService.GetById(id, accessToken));
         }
         /// <summary>
         /// Create Storage

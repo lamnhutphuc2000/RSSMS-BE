@@ -21,7 +21,7 @@ namespace RSSMS.DataService.Services
     public interface IStorageService : IBaseService<Storage>
     {
         Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, List<int> types, string[] fields, int page, int size, string accessToken);
-        Task<StorageGetIdViewModel> GetById(int id);
+        Task<StorageGetIdViewModel> GetById(int id, string accessToken);
         Task<StorageViewModel> Create(StorageCreateViewModel model);
         Task<StorageUpdateViewModel> Update(int id, StorageUpdateViewModel model);
         Task<StorageViewModel> Delete(int id);
@@ -102,12 +102,30 @@ namespace RSSMS.DataService.Services
             return rs;
         }
 
-        public async Task<StorageGetIdViewModel> GetById(int id)
+        public async Task<StorageGetIdViewModel> GetById(int id, string accessToken)
         {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+
             var result = await Get(x => x.Id == id && x.IsActive == true)
                 .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
                 .ThenInclude(a => a.User).ProjectTo<StorageGetIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
+
+            if (role == "Office staff")
+            {
+                result = await Get(x => x.Id == id && x.IsActive == true)
+                .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Office staff"))
+                .ThenInclude(a => a.User).ProjectTo<StorageGetIdViewModel>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync();
+                if(result.StaffManageStorages.Where(x => x.UserId == userId).FirstOrDefault() == null)
+                {
+                    throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office staff not manage this storage");
+                }
+            }
+
+            
 
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
 
