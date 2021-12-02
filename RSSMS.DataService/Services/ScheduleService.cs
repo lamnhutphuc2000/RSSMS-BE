@@ -49,13 +49,14 @@ namespace RSSMS.DataService.Services
             var schedules = Get(x => x.IsActive == true)
                         .Where(x => x.SheduleDay >= model.DateFrom && x.SheduleDay <= model.DateTo)
                         .AsEnumerable().GroupBy(p => (int)p.OrderId)
-                                    .Select(g => new ScheduleViewModel { 
-                                    OrderId = g.Key,
-                                    Address = g.First().Address,
-                                    Note = g.First().Note,
-                                    Status = g.First().Status,
-                                    IsActive = g.First().IsActive,
-                                    Users = Get(x => x.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
+                                    .Select(g => new ScheduleViewModel
+                                    {
+                                        OrderId = g.Key,
+                                        Address = g.First().Address,
+                                        Note = g.First().Note,
+                                        Status = g.First().Status,
+                                        IsActive = g.First().IsActive,
+                                        Users = Get(x => x.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
                                     }).AsQueryable();
 
             var result = schedules.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);

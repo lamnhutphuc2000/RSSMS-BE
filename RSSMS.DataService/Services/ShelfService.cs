@@ -118,11 +118,13 @@ namespace RSSMS.DataService.Services
         public List<BoxUsageViewModel> GetBoxUsageByAreaId(int areaId)
         {
             var shelves = Get(x => x.AreaId == areaId && x.IsActive == true).Include(x => x.Boxes).ThenInclude(x => x.Product).ToList();
-
             var result = new List<BoxUsageViewModel>();
-
+            var shelfSelfStorage = shelves.Where(x => x.Type == 2).FirstOrDefault();
             var products = _productService.Get(x => x.Type == 2 && x.IsActive == true).ToList();
-
+            if (shelfSelfStorage != null)
+            {
+                products = _productService.Get(x => x.Type == 0 && x.IsActive == true).ToList();
+            }
             foreach (var product in products)
             {
                 result.Add(GetBoxUsageBySizeType(product.Name, shelves));

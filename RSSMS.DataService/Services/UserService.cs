@@ -140,6 +140,12 @@ namespace RSSMS.DataService.Services
             var refreshToken = GenerateRefreshToken(user);
             token.RefreshToken = refreshToken;
             result = _mapper.Map(token, result);
+            result.StorageId = null;
+            var storageId = user.StaffManageStorages.FirstOrDefault()?.StorageId;
+            if (storageId != null && user.Role.Name == "Office staff")
+            {
+                result.StorageId = storageId;
+            }
             return result;
         }
 

@@ -91,10 +91,10 @@ namespace RSSMS.DataService.Services
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area Id not matched");
 
-            var entity = await GetAsync(id);
+            var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area not found");
 
-            var area = Get(x => x.Id != id && x.Name == model.Name && x.StorageId == entity.StorageId && x.IsActive == true);
+            var area = Get(x => x.Id != id && x.Name == model.Name && x.StorageId == entity.StorageId && x.IsActive == true).FirstOrDefault();
             if (area != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area name existed");
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);

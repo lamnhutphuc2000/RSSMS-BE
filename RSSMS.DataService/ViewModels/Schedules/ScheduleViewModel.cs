@@ -1,5 +1,4 @@
 ﻿using RSSMS.DataService.ViewModels.Users;
-using System;
 using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Schedules
