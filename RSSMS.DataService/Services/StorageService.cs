@@ -119,10 +119,14 @@ namespace RSSMS.DataService.Services
                 .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Office staff"))
                 .ThenInclude(a => a.User).ProjectTo<StorageGetIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
-                if(result.StaffManageStorages.Where(x => x.UserId == userId).FirstOrDefault() == null)
+                if(result != null && result.StaffManageStorages != null)
                 {
-                    throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office staff not manage this storage");
+                    if (result.StaffManageStorages.Where(x => x.UserId == userId).FirstOrDefault() == null)
+                    {
+                        throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office staff not manage this storage");
+                    }
                 }
+                
             }
 
             
