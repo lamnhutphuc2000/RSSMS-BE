@@ -88,7 +88,9 @@ namespace RSSMS.DataService.Services
                 .DynamicFilter(model);
             if (storageId == 0)
             {
-                users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer") && x.StaffManageStorages.Count == 0).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                var staff = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer") && !x.Role.Name.Equals("Manager") && x.StaffManageStorages.Count == 0);
+                var manager = Get(x => x.IsActive == true && x.Role.Name.Equals("Manager"));
+                users = staff.Union(manager).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model);
             }
             if (storageId != null && storageId != 0)
@@ -100,13 +102,13 @@ namespace RSSMS.DataService.Services
             if (orderId != null && orderId != 0)
             {
                 users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
-                    .Where(x => x.Schedules.Any(a => a.OrderId == orderId && x.IsActive == true) || x.Schedules.Count == 0).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                    .Where(x => x.Schedules.Any(a => a.OrderId == orderId && x.IsActive == true) || x.Schedules.Count == 0 ).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model);
             }
             if (user.Role.Name == "Manager")
             {
                 var storageIds = _staffManageStorageService.Get(x => x.UserId == user.Id).Select(x => x.StorageId).ToList();
-                users = users.Where(x => x.StaffManageStorages.Any(x => storageIds.Contains((int)x.StorageId)) || x.StaffManageStorages.Count == 0);
+                users = users.Where(x => x.StaffManageStorages.Any(x => storageIds.Contains((int)x.StorageId)) || x.StaffManageStorages.Count == 0 || x.RoleName.Equals("Manager"));
             }
             var result = users.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");

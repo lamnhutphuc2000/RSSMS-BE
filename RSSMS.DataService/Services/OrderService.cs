@@ -80,7 +80,7 @@ namespace RSSMS.DataService.Services
                 .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.Product);
             }
-            var result = order
+            var result = order.OrderByDescending(x => x.DeliveryDate)
                 .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
