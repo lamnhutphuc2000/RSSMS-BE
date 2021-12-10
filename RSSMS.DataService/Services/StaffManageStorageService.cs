@@ -55,7 +55,6 @@ namespace RSSMS.DataService.Services
                 }
 
 
-
                 if (staffUnAssigned != null)
                 {
                     var staffs = Get(x => x.StorageId == model.StorageId).ToList().Where(x => staffUnAssigned.Any(a => a.UserId == x.UserId)).ToList();
@@ -65,10 +64,6 @@ namespace RSSMS.DataService.Services
                         await DeleteAsync(staff);
                     }
                 }
-
-
-
-
 
 
                 foreach (var staff in staffAssigned)

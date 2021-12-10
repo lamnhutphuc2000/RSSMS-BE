@@ -45,7 +45,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ScheduleOrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Add(ScheduleOrderViewModel model)
+        public async Task<IActionResult> Add(ScheduleCreateViewModel model)
         {
             return Ok(await _scheduleService.Create(model));
         }

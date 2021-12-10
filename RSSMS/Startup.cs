@@ -33,6 +33,7 @@ namespace RSSMS
             services.ConfigureDI();
 
             services.AddSwaggerGenNewtonsoftSupport();
+
             services.ConfigureSwagger();
 
             services.ConfigJwtBearer();

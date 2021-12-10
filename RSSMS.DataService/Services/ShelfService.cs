@@ -120,7 +120,7 @@ namespace RSSMS.DataService.Services
             var shelves = Get(x => x.AreaId == areaId && x.IsActive == true).Include(x => x.Boxes).ThenInclude(x => x.Product).ToList();
             var result = new List<BoxUsageViewModel>();
             var shelfSelfStorage = shelves.Where(x => x.Type == 2).FirstOrDefault();
-            var products = _productService.Get(x => x.Type == 2 && x.IsActive == true).ToList();
+            var products = _productService.Get(x => (x.Type == 2 || x.Type == 4 )&& x.IsActive == true).ToList();
             if (shelfSelfStorage != null)
             {
                 products = _productService.Get(x => x.Type == 0 && x.IsActive == true).ToList();

@@ -9,6 +9,7 @@ using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Schedules;
 using RSSMS.DataService.ViewModels.Users;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -18,30 +19,43 @@ namespace RSSMS.DataService.Services
     public interface IScheduleService : IBaseService<Schedule>
     {
         Task<DynamicModelResponse<ScheduleViewModel>> Get(ScheduleSearchViewModel model, string[] fields, int page, int size);
-        Task<ScheduleOrderViewModel> Create(ScheduleOrderViewModel model);
+        Task<List<ScheduleOrderViewModel>> Create(ScheduleCreateViewModel model);
     }
     public class ScheduleService : BaseService<Schedule>, IScheduleService
 
     {
         private readonly IMapper _mapper;
-        private readonly IUserService _userService;
-        public ScheduleService(IUnitOfWork unitOfWork, IUserService userService, IScheduleRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public ScheduleService(IUnitOfWork unitOfWork,IScheduleRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
-            _userService = userService;
         }
 
-        public async Task<ScheduleOrderViewModel> Create(ScheduleOrderViewModel model)
+        public async Task<List<ScheduleOrderViewModel>> Create(ScheduleCreateViewModel model)
         {
             var userIds = model.UserIds;
             if (userIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id null");
+            var schedules = Get(x => x.OrderId == model.OrderId && x.IsActive == true).ToList();
+            foreach(var schedule in schedules)
+            {
+                schedule.IsActive = false;
+                await UpdateAsync(schedule);
+            }
             foreach (var userId in userIds)
             {
                 var scheduleToCreate = _mapper.Map<Schedule>(model);
                 scheduleToCreate.UserId = userId;
                 await CreateAsync(scheduleToCreate);
             }
-            return model;
+            var result = Get(x => x.OrderId == model.OrderId && x.IsActive == true)
+                        .AsEnumerable().GroupBy(p => (int)p.OrderId)
+                                    .Select(g => new ScheduleOrderViewModel
+                                    {
+                                        OrderId = g.Key,
+                                        DeliveryTime = model.DeliveryTime,
+                                        SheduleDay = model.SheduleDay,
+                                        Users = Get(x => x.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
+                                    }).ToList();
+            return result;
         }
 
         public async Task<DynamicModelResponse<ScheduleViewModel>> Get(ScheduleSearchViewModel model, string[] fields, int page, int size)

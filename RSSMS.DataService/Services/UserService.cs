@@ -39,10 +39,12 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IStaffManageStorageService _staffManageStorageService;
-        public UserService(IUnitOfWork unitOfWork, IUserRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService) : base(unitOfWork, repository)
+        private readonly IOrderService _orderService;
+        public UserService(IUnitOfWork unitOfWork, IUserRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService, IOrderService orderService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffManageStorageService = staffManageStorageService;
+            _orderService = orderService;
         }
 
         public Task<int> Count(List<UserViewModel> shelves)
@@ -101,8 +103,11 @@ namespace RSSMS.DataService.Services
             }
             if (orderId != null && orderId != 0)
             {
+                var order = _orderService.Get(a => a.Id == orderId).FirstOrDefault();
+                var deliveryTime = order.DeliveryTime;
+                var deliveryDate = order.DeliveryDate;
                 users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
-                    .Where(x => x.Schedules.Any(a => a.OrderId == orderId && x.IsActive == true) || x.Schedules.Count == 0 ).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                    .Where(x => x.Schedules.Any(a => a.OrderId == orderId && a.IsActive == true) || x.Schedules.Count == 0 || !x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == deliveryTime && a.SheduleDay == deliveryDate)).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model);
             }
             if (user.Role.Name == "Manager")
