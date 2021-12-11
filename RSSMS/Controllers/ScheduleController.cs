@@ -11,10 +11,10 @@ namespace RSSMS.API.Controllers
     [Route("api/v{version:apiVersion}/schedules")]
     [ApiController]
     [ApiVersion("1")]
-    public class ShceduleController : ControllerBase
+    public class ScheduleController : ControllerBase
     {
         private readonly IScheduleService _scheduleService;
-        public ShceduleController(IScheduleService scheduleService)
+        public ScheduleController(IScheduleService scheduleService)
         {
             _scheduleService = scheduleService;
         }

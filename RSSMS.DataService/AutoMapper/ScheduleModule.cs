@@ -11,6 +11,10 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<Schedule, ScheduleOrderViewModel>();
             mc.CreateMap<ScheduleOrderViewModel, Schedule>()
                 .ForMember(des => des.IsActive, opt => opt.MapFrom(src => true));
+
+            mc.CreateMap<Schedule, ScheduleCreateViewModel>();
+            mc.CreateMap<ScheduleCreateViewModel, Schedule>()
+                .ForMember(des => des.IsActive, opt => opt.MapFrom(src => true));
         }
     }
 }

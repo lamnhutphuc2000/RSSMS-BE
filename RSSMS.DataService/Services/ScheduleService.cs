@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
@@ -46,7 +47,7 @@ namespace RSSMS.DataService.Services
                 scheduleToCreate.UserId = userId;
                 await CreateAsync(scheduleToCreate);
             }
-            var result = Get(x => x.OrderId == model.OrderId && x.IsActive == true)
+            var result = Get(x => x.OrderId == model.OrderId && x.IsActive == true).Include(x => x.User).ThenInclude(x => x.Images)
                         .AsEnumerable().GroupBy(p => (int)p.OrderId)
                                     .Select(g => new ScheduleOrderViewModel
                                     {
@@ -61,7 +62,7 @@ namespace RSSMS.DataService.Services
         public async Task<DynamicModelResponse<ScheduleViewModel>> Get(ScheduleSearchViewModel model, string[] fields, int page, int size)
         {
             var schedules = Get(x => x.IsActive == true)
-                        .Where(x => x.SheduleDay >= model.DateFrom && x.SheduleDay <= model.DateTo)
+                        .Where(x => x.SheduleDay >= model.DateFrom && x.SheduleDay <= model.DateTo).Include(x => x.User).ThenInclude(x => x.Images)
                         .AsEnumerable().GroupBy(p => (int)p.OrderId)
                                     .Select(g => new ScheduleViewModel
                                     {

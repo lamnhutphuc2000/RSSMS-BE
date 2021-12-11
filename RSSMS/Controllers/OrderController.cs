@@ -6,6 +6,7 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Orders;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -35,10 +36,10 @@ namespace RSSMS.API.Controllers
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetAll([FromQuery] OrderViewModel model, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
+        public async Task<IActionResult> GetAll([FromQuery] OrderViewModel model, [FromQuery] IList<int> OrderStatuses, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            return Ok(await _orderService.GetAll(model, dateFrom, dateTo, fields, page, size, accessToken));
+            return Ok(await _orderService.GetAll(model, OrderStatuses, dateFrom, dateTo, fields, page, size, accessToken));
         }
         /// <summary>
         /// Get Order By ID

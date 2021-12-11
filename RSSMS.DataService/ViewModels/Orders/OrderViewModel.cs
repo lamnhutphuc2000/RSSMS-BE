@@ -48,6 +48,7 @@ namespace RSSMS.DataService.ViewModels.Orders
         [BindNever]
         public bool? IsPaid { get; set; }
 
+
         public virtual ICollection<OrderDetailsViewModel> OrderDetails { get; set; }
     }
 }

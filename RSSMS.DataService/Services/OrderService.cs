@@ -10,6 +10,7 @@ using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Orders;
 using RSSMS.DataService.ViewModels.Products;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
@@ -20,7 +21,7 @@ namespace RSSMS.DataService.Services
     public interface IOrderService : IBaseService<Order>
     {
         Task<OrderCreateViewModel> Create(OrderCreateViewModel model, string accessToken);
-        Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken);
+        Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, IList<int> OrderStatuses, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken);
         Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
         Task<OrderViewModel> GetById(int id);
         Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model);
@@ -45,16 +46,24 @@ namespace RSSMS.DataService.Services
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
             return result;
         }
-        public async Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken)
+        public async Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, IList<int> OrderStatuses, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
+            
             var order = Get(x => x.IsActive == true)
                 .Include(x => x.OrderStorageDetails)
                 .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.Product);
+
+            if (OrderStatuses.Count > 0)
+            {
+                order = Get(x => x.IsActive == true).Where(x => OrderStatuses.Contains((int)x.Status)).Include(x => x.OrderStorageDetails)
+                .Include(x => x.OrderDetails)
+                .ThenInclude(orderDetail => orderDetail.Product);
+            }
 
             if (role == "Manager")
             {
