@@ -65,6 +65,13 @@ namespace RSSMS.DataService.Services
                 .ThenInclude(orderDetail => orderDetail.Product);
             }
 
+            if (dateFrom != null && dateTo != null)
+            {
+                order = order
+                    .Where(x => (x.ReturnDate >= dateFrom && x.ReturnDate <= dateTo) || (x.DeliveryDate >= dateFrom && x.DeliveryDate <= dateTo))
+                .Include(x => x.OrderDetails)
+                .ThenInclude(orderDetail => orderDetail.Product);
+            }
             if (role == "Manager")
             {
                 order = order.Where(x => x.ManagerId == userId || x.ManagerId.HasValue == false)
@@ -82,13 +89,7 @@ namespace RSSMS.DataService.Services
                     .ThenInclude(orderDetail => orderDetail.Product);
             }
 
-            if (dateFrom != null && dateTo != null)
-            {
-                order = Get(x => x.IsActive == true && x.TypeOrder == 1)
-                    .Where(x => (x.ReturnDate >= dateFrom && x.ReturnDate <= dateTo) || (x.DeliveryDate >= dateFrom && x.DeliveryDate <= dateTo))
-                .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.Product);
-            }
+            
             var result = order.OrderByDescending(x => x.DeliveryDate)
                 .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)

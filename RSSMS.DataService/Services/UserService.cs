@@ -107,7 +107,7 @@ namespace RSSMS.DataService.Services
                 var deliveryTime = order.DeliveryTime;
                 var deliveryDate = order.DeliveryDate;
                 users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
-                    .Where(x => x.Schedules.Any(a => a.OrderId == orderId && a.IsActive == true) || x.Schedules.Count == 0 || !x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == deliveryTime && a.SheduleDay == deliveryDate)).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                    .Where(x => !x.Schedules.Any(a => a.OrderId == orderId && a.IsActive == true) &&( x.Schedules.Count == 0 || !x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == deliveryTime && a.SheduleDay == deliveryDate))).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model);
             }
             if (user.Role.Name == "Manager")
