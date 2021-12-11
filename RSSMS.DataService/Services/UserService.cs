@@ -109,7 +109,7 @@ namespace RSSMS.DataService.Services
                 var returnDate = order.ReturnDate;
                 var returnTime = order.ReturnTime;
                 users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
-                    .Where(x => x.Schedules.Count == 0 || (!x.Schedules.Any(a => a.OrderId == orderId && a.IsActive == true)  && (!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == deliveryTime && a.SheduleDay == deliveryDate)||(!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == returnTime && a.SheduleDay == returnDate))))).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                    .Where(x => x.Schedules.Count == 0 || (!x.Schedules.Any(a => a.OrderId == orderId && a.IsActive == true) && (!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == deliveryTime && a.SheduleDay == deliveryDate) && (!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == returnTime && a.SheduleDay == returnDate))))).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model);
             }
             if (user.Role.Name == "Manager")
