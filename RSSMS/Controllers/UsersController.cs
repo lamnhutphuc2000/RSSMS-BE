@@ -96,7 +96,7 @@ namespace RSSMS.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
+        //[Authorize(Roles = "Admin,Manager")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(UserCreateViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]

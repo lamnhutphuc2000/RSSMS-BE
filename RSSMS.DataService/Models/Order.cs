@@ -32,13 +32,13 @@ namespace RSSMS.DataService.Models
         public DateTime? DeliveryDate { get; set; }
         public string DeliveryTime { get; set; }
         public DateTime? ReturnDate { get; set; }
-        public string ReturnTime { get; set; }
         public int? Status { get; set; }
         public bool? IsActive { get; set; }
         public DateTime? CreatedDate { get; set; }
         public int? CreatedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
         public int? ModifiedBy { get; set; }
+        public string ReturnTime { get; set; }
 
         public virtual User Customer { get; set; }
         public virtual User Manager { get; set; }

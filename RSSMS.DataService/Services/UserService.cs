@@ -20,10 +20,11 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Firebase.Auth;
 
 namespace RSSMS.DataService.Services
 {
-    public interface IUserService : IBaseService<User>
+    public interface IUserService : IBaseService<Models.User>
     {
         Task<TokenViewModel> Login(UserLoginViewModel model);
         Task<UserViewModel> ChangePassword(UserChangePasswordViewModel model);
@@ -35,11 +36,12 @@ namespace RSSMS.DataService.Services
         Task<UserViewModel> Delete(int id);
         Task<int> Count(List<UserViewModel> shelves);
     }
-    public class UserService : BaseService<User>, IUserService
+    public class UserService : BaseService<Models.User>, IUserService
     {
         private readonly IMapper _mapper;
         private readonly IStaffManageStorageService _staffManageStorageService;
         private readonly IOrderService _orderService;
+        private static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
         public UserService(IUnitOfWork unitOfWork, IUserRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService, IOrderService orderService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -54,9 +56,25 @@ namespace RSSMS.DataService.Services
 
         public async Task<UserViewModel> Create(UserCreateViewModel model)
         {
+            var autho = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
+            Firebase.Auth.User us = null;
+            try
+            {
+                var a = await autho.CreateUserWithEmailAndPasswordAsync(model.Email, model.Password, model.Name, false);
+                 us = a.User;
+                
+            }
+            catch(Exception e)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, e.Message);
+            }
+           
+            
+
             var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
             if (user != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email is existed");
-            var userCreate = _mapper.Map<User>(model);
+            var userCreate = _mapper.Map<Models.User>(model);
+            userCreate.FirebaseId = us.LocalId;
             await CreateAsync(userCreate);
             if (model.StorageIds != null)
             {
@@ -142,16 +160,30 @@ namespace RSSMS.DataService.Services
 
         public async Task<TokenViewModel> Login(UserLoginViewModel model)
         {
-            var user = await Get(x => x.Email == model.Email && x.Password == model.Password && x.IsActive == true).Include(x => x.Role).Include(x => x.Images).Include(x => x.StaffManageStorages).FirstOrDefaultAsync();
-            if (user == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
-            var result = _mapper.Map<TokenViewModel>(user);
-            var token = GenerateToken(user);
-            var refreshToken = GenerateRefreshToken(user);
+            Firebase.Auth.User us = null;
+            try
+            { 
+                    var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
+                    var a = await auth.SignInWithEmailAndPasswordAsync(model.Email, model.Password);
+                    string tok = a.FirebaseToken;
+                    us = a.User;  
+                    //var info = auth.GetUserAsync(tok);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
+            }
+
+            var acc = await Get(x => x.Email == model.Email && us.LocalId == x.FirebaseId && x.Password == model.Password && x.IsActive == true).Include(x => x.Role).Include(x => x.Images).Include(x => x.StaffManageStorages).FirstOrDefaultAsync();
+            if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
+            var result = _mapper.Map<TokenViewModel>(acc);
+            var token = GenerateToken(acc);
+            var refreshToken = GenerateRefreshToken(acc);
             token.RefreshToken = refreshToken;
             result = _mapper.Map(token, result);
             result.StorageId = null;
-            var storageId = user.StaffManageStorages.FirstOrDefault()?.StorageId;
-            if (storageId != null && user.Role.Name == "Office staff")
+            var storageId = acc.StaffManageStorages.FirstOrDefault()?.StorageId;
+            if (storageId != null && acc.Role.Name == "Office staff")
             {
                 result.StorageId = storageId;
             }
@@ -172,7 +204,7 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<UserViewModel>(updateEntity);
         }
 
-        private TokenGenerateModel GenerateToken(User user)
+        private TokenGenerateModel GenerateToken(Models.User user)
         {
             var storageId = user.StaffManageStorages.FirstOrDefault()?.StorageId.ToString();
             if (storageId == null) storageId = "-1";
@@ -203,7 +235,7 @@ namespace RSSMS.DataService.Services
                 TokenType = "Bearer",
             };
         }
-        private string GenerateRefreshToken(User user)
+        private string GenerateRefreshToken(Models.User user)
         {
             var storageId = user.StaffManageStorages.FirstOrDefault()?.StorageId.ToString();
             if (storageId == null) storageId = "-1";
