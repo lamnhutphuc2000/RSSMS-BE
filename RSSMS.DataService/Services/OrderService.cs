@@ -31,11 +31,15 @@ namespace RSSMS.DataService.Services
         private readonly IMapper _mapper;
         private readonly IOrderDetailService _orderDetailService;
         private readonly IStaffManageStorageService _staffmanageStorageService;
-        public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository, IOrderDetailService orderDetailService, IStaffManageStorageService staffmanageStorageService, IMapper mapper) : base(unitOfWork, repository)
+        private readonly INotificationService _notificationService;
+        private readonly INotificationDetailService _notificationDetailService;
+        public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository, IOrderDetailService orderDetailService, IStaffManageStorageService staffmanageStorageService, INotificationService notificationService, INotificationDetailService notificationDetailService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _orderDetailService = orderDetailService;
             _staffmanageStorageService = staffmanageStorageService;
+            _notificationService = notificationService;
+            _notificationDetailService = notificationDetailService;
         }
         public async Task<OrderViewModel> GetById(int id)
         {
@@ -52,7 +56,7 @@ namespace RSSMS.DataService.Services
             var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-            
+
             var order = Get(x => x.IsActive == true)
                 .Include(x => x.OrderStorageDetails)
                 .Include(x => x.OrderDetails)
@@ -89,7 +93,7 @@ namespace RSSMS.DataService.Services
                     .ThenInclude(orderDetail => orderDetail.Product);
             }
 
-            
+
             var result = order.OrderByDescending(x => x.DeliveryDate)
                 .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
@@ -161,6 +165,17 @@ namespace RSSMS.DataService.Services
             {
                 await _orderDetailService.Create(product, order.Id);
             }
+
+            Notification noti = new Notification
+            {
+                Description = "New order arrive!",
+                CreateDate = DateTime.Now,
+                IsActive = true,
+                Type = 0
+            };
+            await _notificationService.CreateAsync(noti);
+
+            await _notificationDetailService.PushOrderNoti("New order arrive!", userId, noti.Id);
 
             return model;
         }

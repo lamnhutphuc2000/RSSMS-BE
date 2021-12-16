@@ -10,6 +10,7 @@ namespace RSSMS.DataService.Models
         public User()
         {
             Images = new HashSet<Image>();
+            NotificationDetails = new HashSet<NotificationDetail>();
             OrderCustomers = new HashSet<Order>();
             OrderManagers = new HashSet<Order>();
             ProductCreatedByNavigations = new HashSet<Product>();
@@ -33,9 +34,11 @@ namespace RSSMS.DataService.Models
         public DateTime? ModifiedDate { get; set; }
         public int? ModifiedBy { get; set; }
         public string FirebaseId { get; set; }
+        public string DeviceTokenId { get; set; }
 
         public virtual Role Role { get; set; }
         public virtual ICollection<Image> Images { get; set; }
+        public virtual ICollection<NotificationDetail> NotificationDetails { get; set; }
         public virtual ICollection<Order> OrderCustomers { get; set; }
         public virtual ICollection<Order> OrderManagers { get; set; }
         public virtual ICollection<Product> ProductCreatedByNavigations { get; set; }

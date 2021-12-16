@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
+﻿using Microsoft.EntityFrameworkCore;
 
 #nullable disable
 
@@ -20,6 +18,8 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<Area> Areas { get; set; }
         public virtual DbSet<Box> Boxes { get; set; }
         public virtual DbSet<Image> Images { get; set; }
+        public virtual DbSet<Notification> Notifications { get; set; }
+        public virtual DbSet<NotificationDetail> NotificationDetails { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<OrderBoxDetail> OrderBoxDetails { get; set; }
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
@@ -38,8 +38,6 @@ namespace RSSMS.DataService.Models
         {
             if (!optionsBuilder.IsConfigured)
             {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=DESKTOP-RL8FVB7\\SQLEXPRESS;Database=RSSMS;Trusted_Connection=True;");
             }
         }
 
@@ -124,6 +122,34 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.Images)
                     .HasForeignKey(d => d.UserId)
                     .HasConstraintName("FK_Image_User1");
+            });
+
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.ToTable("Notification");
+
+                entity.Property(e => e.CreateDate).HasColumnType("datetime");
+
+                entity.Property(e => e.Description).HasMaxLength(255);
+
+                entity.Property(e => e.Note).HasMaxLength(255);
+            });
+
+            modelBuilder.Entity<NotificationDetail>(entity =>
+            {
+                entity.ToTable("NotificationDetail");
+
+                entity.Property(e => e.CreateDate).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Notification)
+                    .WithMany(p => p.NotificationDetails)
+                    .HasForeignKey(d => d.NotificationId)
+                    .HasConstraintName("FK_NotificationDetail_Notification");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.NotificationDetails)
+                    .HasForeignKey(d => d.UserId)
+                    .HasConstraintName("FK_NotificationDetail_User");
             });
 
             modelBuilder.Entity<Order>(entity =>
@@ -400,6 +426,8 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Address).HasMaxLength(100);
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.Property(e => e.DeviceTokenId).HasMaxLength(255);
 
                 entity.Property(e => e.Email).HasMaxLength(100);
 

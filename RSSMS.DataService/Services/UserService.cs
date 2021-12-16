@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Firebase.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using RSSMS.DataService.Constants;
-using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
@@ -20,7 +20,6 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using Firebase.Auth;
 
 namespace RSSMS.DataService.Services
 {
@@ -61,16 +60,12 @@ namespace RSSMS.DataService.Services
             try
             {
                 var a = await autho.CreateUserWithEmailAndPasswordAsync(model.Email, model.Password, model.Name, false);
-                 us = a.User;
-                
+                us = a.User;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, e.Message);
             }
-           
-            
-
             var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
             if (user != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email is existed");
             var userCreate = _mapper.Map<Models.User>(model);
@@ -162,12 +157,12 @@ namespace RSSMS.DataService.Services
         {
             Firebase.Auth.User us = null;
             try
-            { 
-                    var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
-                    var a = await auth.SignInWithEmailAndPasswordAsync(model.Email, model.Password);
-                    string tok = a.FirebaseToken;
-                    us = a.User;  
-                    //var info = auth.GetUserAsync(tok);
+            {
+                var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
+                var a = await auth.SignInWithEmailAndPasswordAsync(model.Email, model.Password);
+                string tok = a.FirebaseToken;
+                us = a.User;
+                //var info = auth.GetUserAsync(tok);
             }
             catch (Exception ex)
             {
@@ -187,6 +182,8 @@ namespace RSSMS.DataService.Services
             {
                 result.StorageId = storageId;
             }
+            acc.DeviceTokenId = model.DeviceToken;
+            await UpdateAsync(acc);
             return result;
         }
 

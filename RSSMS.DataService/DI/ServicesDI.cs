@@ -52,6 +52,12 @@ namespace RSSMS.DataService.DI
 
             services.AddScoped<IScheduleRepository, ScheduleRepository>();
             services.AddScoped<IScheduleService, ScheduleService>();
+
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<INotificationService, NotificationService>();
+
+            services.AddScoped<INotificationDetailRepository, NotificationDetailRepository>();
+            services.AddScoped<INotificationDetailService, NotificationDetailService>();
         }
     }
 }

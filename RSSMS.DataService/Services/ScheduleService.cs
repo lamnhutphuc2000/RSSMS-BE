@@ -26,7 +26,7 @@ namespace RSSMS.DataService.Services
 
     {
         private readonly IMapper _mapper;
-        public ScheduleService(IUnitOfWork unitOfWork,IScheduleRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public ScheduleService(IUnitOfWork unitOfWork, IScheduleRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
         }
@@ -36,7 +36,7 @@ namespace RSSMS.DataService.Services
             var userIds = model.UserIds;
             if (userIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id null");
             var schedules = Get(x => x.OrderId == model.OrderId && x.IsActive == true).ToList();
-            foreach(var schedule in schedules)
+            foreach (var schedule in schedules)
             {
                 schedule.IsActive = false;
                 await UpdateAsync(schedule);
