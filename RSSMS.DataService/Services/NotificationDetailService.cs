@@ -13,7 +13,7 @@ namespace RSSMS.DataService.Services
 {
     public interface INotificationDetailService : IBaseService<NotificationDetail>
     {
-        Task<ResponseContent> PushOrderNoti(string description, int SenderId, int NotificationId);
+        Task<ResponseContent> PushOrderNoti(string description, int SenderId, int NotificationId, int orderId, int? requestId);
     }
     public class NotificationDetailService : BaseService<NotificationDetail>, INotificationDetailService
     {
@@ -22,7 +22,7 @@ namespace RSSMS.DataService.Services
         {
             _staffManageStorageService = staffManageStorageService;
         }
-        public async Task<ResponseContent> PushOrderNoti(string description, int senderId, int notificationId)
+        public async Task<ResponseContent> PushOrderNoti(string description, int senderId, int notificationId, int orderId, int? requestId)
         {
             var managers = _staffManageStorageService.Get(x => x.RoleName == "Manager").Include(x => x.User).Select(x => x.User).ToList();
             if (managers.Count == 0) return null;
@@ -67,6 +67,12 @@ namespace RSSMS.DataService.Services
                     {
                         Title = "From RSSMS",
                         Body = description
+                    },
+                    Data = new
+                    {
+                        Content = description,
+                        OrderId = orderId,
+                        RequestId = requestId
                     }
                 };
                 var result = await sender.SendAsync(message);
