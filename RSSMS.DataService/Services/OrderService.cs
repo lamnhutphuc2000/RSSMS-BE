@@ -171,7 +171,8 @@ namespace RSSMS.DataService.Services
                 Description = "New order arrive!",
                 CreateDate = DateTime.Now,
                 IsActive = true,
-                Type = 0
+                Type = 0,
+                OrderId = order.Id
             };
             await _notificationService.CreateAsync(noti);
 

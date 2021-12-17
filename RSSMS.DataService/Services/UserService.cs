@@ -104,9 +104,12 @@ namespace RSSMS.DataService.Services
             if (storageId == 0)
             {
                 var staff = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer") && !x.Role.Name.Equals("Manager") && x.StaffManageStorages.Count == 0);
-                var manager = Get(x => x.IsActive == true && x.Role.Name.Equals("Manager"));
-                users = staff.Union(manager).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
-                .DynamicFilter(model);
+                if(user.Role.Name == "Admin")
+                {
+                    var manager = Get(x => x.IsActive == true && x.Role.Name.Equals("Manager"));
+                    users = staff.Union(manager).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                    .DynamicFilter(model);
+                }
             }
             if (storageId != null && storageId != 0)
             {

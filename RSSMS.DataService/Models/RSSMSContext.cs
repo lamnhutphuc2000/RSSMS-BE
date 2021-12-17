@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
@@ -133,6 +135,16 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Description).HasMaxLength(255);
 
                 entity.Property(e => e.Note).HasMaxLength(255);
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.Notifications)
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_Notification_Order");
+
+                entity.HasOne(d => d.Request)
+                    .WithMany(p => p.Notifications)
+                    .HasForeignKey(d => d.RequestId)
+                    .HasConstraintName("FK_Notification_Request");
             });
 
             modelBuilder.Entity<NotificationDetail>(entity =>
