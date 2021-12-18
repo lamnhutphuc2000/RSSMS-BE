@@ -29,6 +29,7 @@ namespace RSSMS.DataService.Services
 
             List<string> registrationIds = managers.Where(x => x.DeviceTokenId != null && x.IsActive == true).Select(a => a.DeviceTokenId).ToList();
             if (registrationIds.Count == 0) return null;
+            registrationIds = registrationIds.Distinct().ToList();
             var managerIds = managers.Where(x => x.DeviceTokenId != null && x.IsActive == true).Select(a => a.Id).ToList();
             DateTime now = DateTime.Now;
 
