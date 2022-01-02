@@ -49,6 +49,10 @@
               "target": "Package",
               "version": "[8.1.1, )"
             },
+            "FCM.Net.Core": {
+              "target": "Package",
+              "version": "[1.0.1, )"
+            },
             "Firebase.Auth": {
               "target": "Package",
               "version": "[1.0.0, )"

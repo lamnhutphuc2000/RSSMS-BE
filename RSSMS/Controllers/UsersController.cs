@@ -35,6 +35,23 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _userService.Login(model));
         }
+
+        /// <summary>
+        /// Check login
+        /// </summary>
+        /// <param name="firebaseID"></param>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPost("checklogin")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(TokenViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> checkLogin(UserCreateViewModel model, string firebaseID)
+        {
+            return Ok(await _userService.checkLogin(model, firebaseID));
+        }
+
         /// <summary>
         /// Change password
         /// </summary>

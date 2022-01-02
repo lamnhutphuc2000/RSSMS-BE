@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Firebase.Auth;
+using FirebaseAdmin.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -34,6 +35,9 @@ namespace RSSMS.DataService.Services
         Task<UserViewModel> Update(int id, UserUpdateViewModel model);
         Task<UserViewModel> Delete(int id);
         Task<int> Count(List<UserViewModel> shelves);
+        Task<TokenViewModel> checkLogin(UserCreateViewModel model,String FirebaseId);
+        /*Task<TokenViewModel> loginWithoutFirebase(UserLoginViewModel model);*/
+        Task<TokenViewModel> loginWithFirebaseID(string firebaseID);
     }
     public class UserService : BaseService<Models.User>, IUserService
     {
@@ -70,6 +74,24 @@ namespace RSSMS.DataService.Services
             if (user != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email is existed");
             var userCreate = _mapper.Map<Models.User>(model);
             userCreate.FirebaseId = us.LocalId;
+            await CreateAsync(userCreate);
+            if (model.StorageIds != null)
+            {
+                for (int i = 0; i < model.StorageIds.Count; i++)
+                {
+                    var staffAssignModel = _mapper.Map<StaffManageStorageCreateViewModel>(userCreate);
+                    staffAssignModel.StorageId = model.StorageIds.ElementAt(i);
+                    await _staffManageStorageService.Create(staffAssignModel);
+                }
+            }
+            return await GetById(userCreate.Id);
+        }
+
+        public async Task<UserViewModel> createWithoutFirebase(UserCreateViewModel model, string fireBaseID)
+        {
+            var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
+            var userCreate = _mapper.Map<Models.User>(model);
+            userCreate.FirebaseId = fireBaseID;
             await CreateAsync(userCreate);
             if (model.StorageIds != null)
             {
@@ -164,10 +186,13 @@ namespace RSSMS.DataService.Services
             Firebase.Auth.User us = null;
             try
             {
+               
                 var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
                 var a = await auth.SignInWithEmailAndPasswordAsync(model.Email, model.Password);
+                
                 string tok = a.FirebaseToken;
                 us = a.User;
+                
                 //var info = auth.GetUserAsync(tok);
             }
             catch (Exception ex)
@@ -192,6 +217,52 @@ namespace RSSMS.DataService.Services
             await UpdateAsync(acc);
             return result;
         }
+
+
+        public async Task<TokenViewModel> loginWithFirebaseID(string firebaseID)
+        {
+            var acc = await Get(x => x.FirebaseId == firebaseID && x.IsActive == true).Include(x => x.Role).Include(x => x.Images).Include(x => x.StaffManageStorages).FirstOrDefaultAsync();
+            //  if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
+            var result = _mapper.Map<TokenViewModel>(acc);
+            var token = GenerateToken(acc);
+            var refreshToken = GenerateRefreshToken(acc);
+            token.RefreshToken = refreshToken;
+            result = _mapper.Map(token, result);
+            result.StorageId = null;
+            var storageId = acc.StaffManageStorages.FirstOrDefault()?.StorageId;
+            if (storageId != null && acc.Role.Name == "Office staff")
+            {
+                result.StorageId = storageId;
+            }
+            //acc.DeviceTokenId = model.DeviceToken;
+            await UpdateAsync(acc);
+            return result;
+        }
+
+
+
+      /*  public async Task<TokenViewModel> loginWithoutFirebase(UserLoginViewModel model)
+        { 
+            var acc = await Get(x => x.Email == model.Email &&  x.Password == model.Password && x.IsActive == true).Include(x => x.Role).Include(x => x.Images).Include(x => x.StaffManageStorages).FirstOrDefaultAsync();
+          //  if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
+            var result = _mapper.Map<TokenViewModel>(acc);
+            var token = GenerateToken(acc);
+            var refreshToken = GenerateRefreshToken(acc);
+            token.RefreshToken = refreshToken;
+            result = _mapper.Map(token, result);
+            result.StorageId = null;
+            var storageId = acc.StaffManageStorages.FirstOrDefault()?.StorageId;
+            if (storageId != null && acc.Role.Name == "Office staff")
+            {
+                result.StorageId = storageId;
+            }
+            acc.DeviceTokenId = model.DeviceToken;
+            await UpdateAsync(acc);
+            return result;
+        }*/
+
+
+
 
         public async Task<UserViewModel> Update(int id, UserUpdateViewModel model)
         {
@@ -278,6 +349,26 @@ namespace RSSMS.DataService.Services
             var result = await Get(x => x.Phone == phone && x.IsActive == true).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id not found");
             return result;
+        }
+
+
+        public async Task<TokenViewModel> checkLogin(UserCreateViewModel model,String firebaseID)
+        {
+
+           // var convert = _mapper.Map<UserLoginViewModel>(model);
+            var checkLocalID = await Get(x => x.FirebaseId == firebaseID).FirstOrDefaultAsync();
+            if(checkLocalID == null)
+            {
+                await createWithoutFirebase(model, firebaseID);
+                await loginWithFirebaseID(firebaseID);
+       
+            }
+            else
+            {
+                await loginWithFirebaseID(firebaseID);
+            }
+            
+            return await loginWithFirebaseID(firebaseID);
         }
     }
 

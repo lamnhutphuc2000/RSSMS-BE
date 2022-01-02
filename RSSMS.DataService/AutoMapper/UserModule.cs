@@ -30,6 +30,8 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<User, StaffManageStorageCreateViewModel>()
                 .ForMember(des => des.UserId, opt => opt.MapFrom(src => src.Id));
+
+            mc.CreateMap<UserCreateViewModel, UserLoginViewModel>();
         }
     }
 }
