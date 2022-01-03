@@ -1,7 +1,8 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Firebase.Auth;
-using FirebaseAdmin.Auth;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -33,11 +34,12 @@ namespace RSSMS.DataService.Services
         Task<UserViewModel> GetByPhone(string phone);
         Task<UserViewModel> Create(UserCreateViewModel model);
         Task<UserViewModel> Update(int id, UserUpdateViewModel model);
-        Task<UserViewModel> Delete(int id);
+        Task<UserViewModel> Delete(int id, string firebaseID);
         Task<int> Count(List<UserViewModel> shelves);
-        Task<TokenViewModel> checkLogin(UserCreateViewModel model,String FirebaseId);
+        Task<TokenViewModel> checkLogin( string firebaseID, string deviceToken);
         /*Task<TokenViewModel> loginWithoutFirebase(UserLoginViewModel model);*/
         Task<TokenViewModel> loginWithFirebaseID(string firebaseID);
+        Task<UserViewModel> createWithoutFirebase(UserCreateThirdPartyViewModel model, string fireBaseID);
     }
     public class UserService : BaseService<Models.User>, IUserService
     {
@@ -87,13 +89,15 @@ namespace RSSMS.DataService.Services
             return await GetById(userCreate.Id);
         }
 
-        public async Task<UserViewModel> createWithoutFirebase(UserCreateViewModel model, string fireBaseID)
+        public async Task<UserViewModel> createWithoutFirebase(UserCreateThirdPartyViewModel model, string fireBaseID)
         {
             var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
             var userCreate = _mapper.Map<Models.User>(model);
+            userCreate.IsActive = true;
             userCreate.FirebaseId = fireBaseID;
+            userCreate.RoleId = 3 ;
             await CreateAsync(userCreate);
-            if (model.StorageIds != null)
+           /* if (model.StorageIds != null)
             {
                 for (int i = 0; i < model.StorageIds.Count; i++)
                 {
@@ -101,12 +105,15 @@ namespace RSSMS.DataService.Services
                     staffAssignModel.StorageId = model.StorageIds.ElementAt(i);
                     await _staffManageStorageService.Create(staffAssignModel);
                 }
-            }
+            }*/
             return await GetById(userCreate.Id);
         }
 
-        public async Task<UserViewModel> Delete(int id)
+        public async Task<UserViewModel> Delete(int id, string firebaseID)
         {
+           /* UserRecord userRecord = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.GetUserByEmailAsync(firebaseID);
+            await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.DeleteUserAsync(userRecord.Uid);*/
+           /* await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.DeleteUserAsync("xXbuMh1jNxQa3bynb0hCTqbrKha2");*/
             var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
             entity.IsActive = false;
@@ -352,22 +359,37 @@ namespace RSSMS.DataService.Services
         }
 
 
-        public async Task<TokenViewModel> checkLogin(UserCreateViewModel model,String firebaseID)
+        public async Task<TokenViewModel> checkLogin(string firebaseID, string deviceToken)
+            //
         {
-
-           // var convert = _mapper.Map<UserLoginViewModel>(model);
-            var checkLocalID = await Get(x => x.FirebaseId == firebaseID).FirstOrDefaultAsync();
-            if(checkLocalID == null)
+            // var convert = _mapper.Map<UserLoginViewModel>(model);
+            FirebaseApp.Create(new AppOptions()
             {
-                await createWithoutFirebase(model, firebaseID);
-                await loginWithFirebaseID(firebaseID);
-       
+                Credential = GoogleCredential.FromFile("privatekey.json"),
+            });
+            if(firebaseID == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "FirebaseID null");
+            var checkFirebase = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.GetUserAsync(firebaseID);
+            
+            if(checkFirebase == null)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.NotFound, "FirebaseID not found");
             }
             else
             {
-                await loginWithFirebaseID(firebaseID);
-            }
-            
+                var checkLocalID = await Get(x => x.FirebaseId == firebaseID).FirstOrDefaultAsync();
+
+                if (checkLocalID == null)
+                {
+                    UserCreateThirdPartyViewModel model = new UserCreateThirdPartyViewModel(checkFirebase.DisplayName, "", checkFirebase.Email,
+                        checkFirebase.PhotoUrl,checkFirebase.PhoneNumber, deviceToken);
+                    await createWithoutFirebase(model, firebaseID);
+                    await loginWithFirebaseID(firebaseID);
+                }
+                else
+                {
+                    await loginWithFirebaseID(firebaseID);
+                }
+            } 
             return await loginWithFirebaseID(firebaseID);
         }
     }

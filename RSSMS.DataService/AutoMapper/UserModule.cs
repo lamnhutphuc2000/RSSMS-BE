@@ -13,6 +13,8 @@ namespace RSSMS.DataService.AutoMapper
         {
             mc.CreateMap<User, UserViewModel>();
             mc.CreateMap<UserViewModel, User>();
+            mc.CreateMap<UserCreateThirdPartyViewModel,User>();
+            mc.CreateMap<User, UserCreateThirdPartyViewModel>();
 
             mc.CreateMap<UserCreateViewModel, User>()
                 .ForMember(des => des.IsActive, opt => opt.MapFrom(src => true))

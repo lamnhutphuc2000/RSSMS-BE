@@ -37,19 +37,20 @@ namespace RSSMS.API.Controllers
         }
 
         /// <summary>
-        /// Check login
+        /// Login third party
         /// </summary>
         /// <param name="firebaseID"></param>
-        /// <param name="model"></param>
+        /// <param name="deviceToken"></param>
         /// <returns></returns>
-        [HttpPost("checklogin")]
+        [HttpPost("thirdparty")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(TokenViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> checkLogin(UserCreateViewModel model, string firebaseID)
+        public async Task<IActionResult> checkLogin(string firebaseID, string deviceToken)
         {
-            return Ok(await _userService.checkLogin(model, firebaseID));
+            //UserCreateThirdPartyViewModel model, 
+            return Ok(await _userService.checkLogin(firebaseID, deviceToken));
         }
 
         /// <summary>
@@ -140,9 +141,9 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, string firebaseID)
         {
-            await _userService.Delete(id);
+            await _userService.Delete(id, firebaseID);
             return Ok("Deleted successfully");
         }
     }
