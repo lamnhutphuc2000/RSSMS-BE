@@ -93,6 +93,7 @@ namespace RSSMS.DataService.Services
         {
             var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
             var userCreate = _mapper.Map<Models.User>(model);
+            userCreate.DeviceTokenId = model.DeviceToken;
             userCreate.IsActive = true;
             userCreate.FirebaseId = fireBaseID;
             userCreate.RoleId = 3 ;
@@ -363,10 +364,14 @@ namespace RSSMS.DataService.Services
             //
         {
             // var convert = _mapper.Map<UserLoginViewModel>(model);
-            FirebaseApp.Create(new AppOptions()
+            if (FirebaseApp.DefaultInstance == null)
             {
-                Credential = GoogleCredential.FromFile("privatekey.json"),
-            });
+                FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromFile("privatekey.json"),
+                });
+            }
+              
             if(firebaseID == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "FirebaseID null");
             var checkFirebase = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.GetUserAsync(firebaseID);
             
