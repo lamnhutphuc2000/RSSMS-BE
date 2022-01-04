@@ -129,7 +129,7 @@ namespace RSSMS.API.Controllers
         /// <returns></returns>
         [HttpPost]
         [MapToApiVersion("1")]
-        [ProducesResponseType(typeof(UserCreateViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(TokenViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Add(UserCreateViewModel model)

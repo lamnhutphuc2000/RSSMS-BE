@@ -33,7 +33,7 @@ namespace RSSMS.DataService.Services
         Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, int? storageId, int? orderId, string[] fields, int page, int size, string accessToken);
         Task<UserViewModel> GetById(int id);
         Task<UserViewModel> GetByPhone(string phone);
-        Task<UserViewModel> Create(UserCreateViewModel model);
+        Task<TokenViewModel> Create(UserCreateViewModel model);
         Task<UserViewModel> Update(int id, UserUpdateViewModel model);
         Task<UserViewModel> Delete(int id, string firebaseID);
         Task<int> Count(List<UserViewModel> shelves);
@@ -59,7 +59,7 @@ namespace RSSMS.DataService.Services
             return Count();
         }
 
-        public async Task<UserViewModel> Create(UserCreateViewModel model)
+        public async Task<TokenViewModel> Create(UserCreateViewModel model)
         {
             var autho = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
             Firebase.Auth.User us = null;
@@ -76,6 +76,7 @@ namespace RSSMS.DataService.Services
             if (user != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email is existed");
             var userCreate = _mapper.Map<Models.User>(model);
             userCreate.FirebaseId = us.LocalId;
+            userCreate.DeviceTokenId = model.DeviceToken;
             await CreateAsync(userCreate);
             if (model.StorageIds != null)
             {
@@ -86,7 +87,21 @@ namespace RSSMS.DataService.Services
                     await _staffManageStorageService.Create(staffAssignModel);
                 }
             }
-            return await GetById(userCreate.Id);
+            var newUser = await Get(x => x.Email == model.Email && us.LocalId == x.FirebaseId && x.Password == model.Password && x.IsActive == true).Include(x => x.Role).Include(x => x.Images).Include(x => x.StaffManageStorages).FirstOrDefaultAsync();
+            var result = _mapper.Map<TokenViewModel>(newUser);
+            var token = GenerateToken(newUser);
+            var refreshToken = GenerateRefreshToken(newUser);
+            token.RefreshToken = refreshToken;
+            result = _mapper.Map(token, result);
+            result.StorageId = null;
+            var storageId = userCreate.StaffManageStorages.FirstOrDefault()?.StorageId;
+            if (storageId != null && userCreate.Role.Name == "Office staff")
+            {
+                result.StorageId = storageId;
+            }
+            userCreate.DeviceTokenId = model.DeviceToken;
+            await UpdateAsync(userCreate);
+            return result;
         }
 
         public async Task<UserViewModel> CreateWithoutFirebase(UserCreateThirdPartyViewModel model, string fireBaseID)
