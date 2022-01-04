@@ -2748,10 +2748,7 @@
         },
         "runtime": {
           "bin/placeholder/RSSMS.DataService.dll": {}
-        },
-        "frameworkReferences": [
-          "Microsoft.AspNetCore.App"
-        ]
+        }
       }
     }
   },
@@ -8846,23 +8843,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\ADMIN\\.nuget\\packages\\": {},
-    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
+    "C:\\Users\\ASUS\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\FPT University\\Capstone\\RSSMS-BE\\RSSMS\\RSSMS.API.csproj",
+      "projectUniqueName": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\RSSMS.API.csproj",
       "projectName": "RSSMS.API",
-      "projectPath": "D:\\FPT University\\Capstone\\RSSMS-BE\\RSSMS\\RSSMS.API.csproj",
-      "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-      "outputPath": "D:\\FPT University\\Capstone\\RSSMS-BE\\RSSMS\\obj\\",
+      "projectPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\RSSMS.API.csproj",
+      "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
+      "outputPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
-      ],
       "configFilePaths": [
-        "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -8875,8 +8868,8 @@
       "frameworks": {
         "netcoreapp3.1": {
           "projectReferences": {
-            "D:\\FPT University\\Capstone\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj": {
-              "projectPath": "D:\\FPT University\\Capstone\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj"
+            "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj": {
+              "projectPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj"
             }
           }
         }

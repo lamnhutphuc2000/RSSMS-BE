@@ -78,7 +78,7 @@ namespace RSSMS.DataService.Services
             }
             if (role == "Manager")
             {
-                order = order.Where(x => x.ManagerId == userId || x.ManagerId.HasValue == false)
+                order = order.Where(x => x.OrderStorageDetails.Count == 0 || x.ManagerId.HasValue == false || x.ManagerId == userId)
                     .Include(x => x.OrderStorageDetails)
                     .Include(x => x.OrderDetails)
                     .ThenInclude(orderDetail => orderDetail.Product);

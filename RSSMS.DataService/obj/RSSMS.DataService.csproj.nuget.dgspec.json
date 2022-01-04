@@ -1,23 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\FPT University\\Capstone\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj": {}
+    "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj": {}
   },
   "projects": {
-    "D:\\FPT University\\Capstone\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj": {
+    "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FPT University\\Capstone\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj",
+        "projectUniqueName": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj",
         "projectName": "RSSMS.DataService",
-        "projectPath": "D:\\FPT University\\Capstone\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj",
-        "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-        "outputPath": "D:\\FPT University\\Capstone\\RSSMS-BE\\RSSMS.DataService\\obj\\",
+        "projectPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj",
+        "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
+        "outputPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
-        ],
         "configFilePaths": [
-          "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
