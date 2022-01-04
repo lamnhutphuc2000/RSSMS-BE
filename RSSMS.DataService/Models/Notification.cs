@@ -20,7 +20,7 @@ namespace RSSMS.DataService.Models
         public DateTime? CreateDate { get; set; }
         public int? Status { get; set; }
         public int? Type { get; set; }
-        public int? IsActive { get; set; }
+        public bool? IsActive { get; set; }
 
         public virtual ICollection<NotificationDetail> NotificationDetails { get; set; }
     }

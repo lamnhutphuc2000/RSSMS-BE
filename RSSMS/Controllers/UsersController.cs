@@ -49,7 +49,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> CheckLogin(string firebaseID, string deviceToken)
         {
-            return Ok(await _userService.checkLogin(firebaseID, deviceToken));
+            return Ok(await _userService.CheckLogin(firebaseID, deviceToken));
         }
 
         /// <summary>

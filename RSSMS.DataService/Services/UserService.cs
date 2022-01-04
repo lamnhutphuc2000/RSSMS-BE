@@ -366,15 +366,15 @@ namespace RSSMS.DataService.Services
                 {
                     UserCreateThirdPartyViewModel model = new UserCreateThirdPartyViewModel(checkFirebase.DisplayName, "", checkFirebase.Email,
                         checkFirebase.PhotoUrl, checkFirebase.PhoneNumber, deviceToken);
-                    await createWithoutFirebase(model, firebaseID);
-                    await loginWithFirebaseID(firebaseID);
+                    await CreateWithoutFirebase(model, firebaseID);
+                    await LoginWithFirebaseID(firebaseID);
                 }
                 else
                 {
-                    await loginWithFirebaseID(firebaseID);
+                    await LoginWithFirebaseID(firebaseID);
                 }
             }
-            return await loginWithFirebaseID(firebaseID);
+            return await LoginWithFirebaseID(firebaseID);
         }
     }
 
