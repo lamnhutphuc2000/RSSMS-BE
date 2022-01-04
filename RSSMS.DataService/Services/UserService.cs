@@ -37,10 +37,9 @@ namespace RSSMS.DataService.Services
         Task<UserViewModel> Update(int id, UserUpdateViewModel model);
         Task<UserViewModel> Delete(int id, string firebaseID);
         Task<int> Count(List<UserViewModel> shelves);
-        Task<TokenViewModel> checkLogin(string firebaseID, string deviceToken);
-        /*Task<TokenViewModel> loginWithoutFirebase(UserLoginViewModel model);*/
-        Task<TokenViewModel> loginWithFirebaseID(string firebaseID);
-        Task<UserViewModel> createWithoutFirebase(UserCreateThirdPartyViewModel model, string fireBaseID);
+        Task<TokenViewModel> CheckLogin(string firebaseID, string deviceToken);
+        Task<TokenViewModel> LoginWithFirebaseID(string firebaseID);
+        Task<UserViewModel> CreateWithoutFirebase(UserCreateThirdPartyViewModel model, string fireBaseID);
     }
     public class UserService : BaseService<Models.User>, IUserService
     {
@@ -90,7 +89,7 @@ namespace RSSMS.DataService.Services
             return await GetById(userCreate.Id);
         }
 
-        public async Task<UserViewModel> createWithoutFirebase(UserCreateThirdPartyViewModel model, string fireBaseID)
+        public async Task<UserViewModel> CreateWithoutFirebase(UserCreateThirdPartyViewModel model, string fireBaseID)
         {
             var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
             var userCreate = _mapper.Map<Models.User>(model);
@@ -213,7 +212,7 @@ namespace RSSMS.DataService.Services
             await UpdateAsync(acc);
             return result;
         }
-        public async Task<TokenViewModel> loginWithFirebaseID(string firebaseID)
+        public async Task<TokenViewModel> LoginWithFirebaseID(string firebaseID)
         {
             var acc = await Get(x => x.FirebaseId == firebaseID && x.IsActive == true).Include(x => x.Role).Include(x => x.Images).Include(x => x.StaffManageStorages).FirstOrDefaultAsync();
             //  if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
