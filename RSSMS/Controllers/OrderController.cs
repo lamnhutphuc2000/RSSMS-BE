@@ -24,15 +24,18 @@ namespace RSSMS.API.Controllers
         }
 
         /// <summary>
-        /// Get All Order
+        /// Get list orders
         /// </summary>
         /// <param name="model"></param>
+        /// <param name="OrderStatuses"></param>
+        /// <param name="dateFrom"></param>
+        /// <param name="dateTo"></param>
         /// <param name="fields"></param>
         /// <param name="page"></param>
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
-        [Authorize(Roles = "Manager,Office staff")]
+        [Authorize(Roles = "Admin,Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
@@ -42,11 +45,12 @@ namespace RSSMS.API.Controllers
             return Ok(await _orderService.GetAll(model, OrderStatuses, dateFrom, dateTo, fields, page, size, accessToken));
         }
         /// <summary>
-        /// Get Order By ID
+        /// Get order by Id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -56,12 +60,12 @@ namespace RSSMS.API.Controllers
             return Ok(await _orderService.GetById(id));
         }
         /// <summary>
-        /// Create Order
+        /// Create new order
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
-        //[Authorize(Roles = "Manager,Office staff")]
+        [Authorize(Roles = "Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderCreateViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
@@ -72,12 +76,13 @@ namespace RSSMS.API.Controllers
         }
 
         /// <summary>
-        /// Update Order
+        /// Update order by Id
         /// </summary>
         /// <param name="id"></param>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -87,9 +92,10 @@ namespace RSSMS.API.Controllers
             return Ok(await _orderService.Update(id, model));
         }
         /// <summary>
-        /// Cancel order
+        /// Cancel order by Id
         /// </summary>
         /// <param name="id"></param>
+        /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut("cancel/{id}")]
         [MapToApiVersion("1")]

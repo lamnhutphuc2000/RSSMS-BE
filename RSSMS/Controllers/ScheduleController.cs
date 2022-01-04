@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
@@ -19,7 +20,7 @@ namespace RSSMS.API.Controllers
             _scheduleService = scheduleService;
         }
         /// <summary>
-        /// Get schedule by date from and date to
+        /// Get list schedules by date from and date to
         /// </summary>
         /// <param name="model"></param>
         /// <param name="fields"></param>
@@ -27,6 +28,7 @@ namespace RSSMS.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
+        [Authorize(Roles = "Manager")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(DynamicModelResponse<ScheduleViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -41,6 +43,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
+        [Authorize(Roles = "Manager")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(ScheduleOrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]

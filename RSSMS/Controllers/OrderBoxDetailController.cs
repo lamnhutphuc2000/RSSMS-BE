@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.OrderBoxes;
@@ -23,6 +24,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
+        [Authorize(Roles = "Manager,Office staff,Delivery Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderBoxesDetailViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
@@ -30,13 +32,14 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _orderBoxService.Create(model));
         }
+
         /// <summary>
         /// Move box to another box
         /// </summary>
-        /// <param name="id"></param>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut]
+        [Authorize(Roles = "Manager,Office staff,Delivery Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderBoxesMoveViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]

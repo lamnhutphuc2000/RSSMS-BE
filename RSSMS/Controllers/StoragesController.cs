@@ -22,9 +22,10 @@ namespace RSSMS.API.Controllers
             _storagesService = storageService;
         }
         /// <summary>
-        /// Get all Storage
+        /// Get all storages
         /// </summary>
         /// <param name="model"></param>
+        /// <param name="types"></param>
         /// <param name="fields"></param>
         /// <param name="page"></param>
         /// <param name="size"></param>
@@ -41,7 +42,7 @@ namespace RSSMS.API.Controllers
             return Ok(await _storagesService.GetAll(model, types, fields, page, size, accessToken));
         }
         /// <summary>
-        /// Get Storage By ID
+        /// Get storage by Id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -57,7 +58,7 @@ namespace RSSMS.API.Controllers
             return Ok(await _storagesService.GetById(id, accessToken));
         }
         /// <summary>
-        /// Create Storage
+        /// Create new storage
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
@@ -72,7 +73,7 @@ namespace RSSMS.API.Controllers
             return Ok(await _storagesService.Create(model));
         }
         /// <summary>
-        /// Update Storage
+        /// Update storage by Id
         /// </summary>
         /// <param name="id"></param>
         /// <param name="model"></param>
@@ -88,7 +89,7 @@ namespace RSSMS.API.Controllers
             return Ok(await _storagesService.Update(id, model));
         }
         /// <summary>
-        ///   Delete Storage 
+        /// Delete storage by Id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>

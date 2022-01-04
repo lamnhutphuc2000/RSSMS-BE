@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Products;
@@ -19,14 +20,12 @@ namespace RSSMS.API.Controllers
             _productsService = productService;
         }
         /// <summary>
-        /// Get All Product
+        /// Get all products
         /// </summary>
         /// <param name="model"></param>
-        /// <param name="fields"></param>
-        /// <param name="page"></param>
-        /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
+        [Authorize]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(DynamicModelResponse<ProductViewAllModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -36,11 +35,12 @@ namespace RSSMS.API.Controllers
             return Ok(await _productsService.GetAll(model));
         }
         /// <summary>
-        /// Get Product By Id
+        /// Get product by Id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
+        [Authorize]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(ProductViewAllModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -50,11 +50,12 @@ namespace RSSMS.API.Controllers
             return Ok(await _productsService.GetById(id));
         }
         /// <summary>
-        /// Create Product
+        /// Create new product
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(ProductCreateViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -64,12 +65,13 @@ namespace RSSMS.API.Controllers
             return Ok(await _productsService.Create(model));
         }
         /// <summary>
-        /// Update Product
+        /// Update product by Id
         /// </summary>
         /// <param name="id"></param>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -79,11 +81,12 @@ namespace RSSMS.API.Controllers
             return Ok(await _productsService.Update(id, model));
         }
         /// <summary>
-        /// Delete Product
+        /// Delete product by Id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]

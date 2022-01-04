@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
@@ -27,8 +28,8 @@ namespace RSSMS.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
+        [Authorize(Roles = "Manager,Delivery Staff,Office staff,Admin")]
         [MapToApiVersion("1")]
-        //[Authorize]
         [ProducesResponseType(typeof(DynamicModelResponse<ShelfViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
@@ -36,8 +37,13 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _shelfService.GetAll(model, fields, page, size));
         }
-
+        /// <summary>
+        /// Get shelf by Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id}")]
+        [Authorize(Roles = "Manager,Delivery Staff,Office staff,Admin")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(ShelfViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -46,8 +52,13 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _shelfService.GetById(id));
         }
-
+        /// <summary>
+        /// Create new shelf
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost]
+        [Authorize(Roles = "Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(ShelfViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -57,7 +68,14 @@ namespace RSSMS.API.Controllers
             return Ok(await _shelfService.Create(model));
         }
 
+        /// <summary>
+        /// Update shelf by Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(ShelfViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -67,7 +85,13 @@ namespace RSSMS.API.Controllers
             return Ok(await _shelfService.Update(id, model));
         }
 
+        /// <summary>
+        /// Delete shelf by Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]

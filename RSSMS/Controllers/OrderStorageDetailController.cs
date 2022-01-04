@@ -20,7 +20,7 @@ namespace RSSMS.API.Controllers
             _orderStorage = orderStorage;
         }
         /// <summary>
-        /// Assign storage to order
+        /// Assign order to stage
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>

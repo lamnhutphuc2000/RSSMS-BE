@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
@@ -27,11 +28,12 @@ namespace RSSMS.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
+        [Authorize(Roles = "Manager,Office staff,Delivery Staff,Customer")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(DynamicModelResponse<NotificationViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetAreaByStorageID([FromQuery] int userId, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
+        public async Task<IActionResult> GetNotifications([FromQuery] int userId, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
         {
             return Ok(await _notifService.GetAll(userId, fields, page, size));
         }

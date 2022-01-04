@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
@@ -20,7 +21,7 @@ namespace RSSMS.API.Controllers
             _areaService = areaService;
         }
         /// <summary>
-        /// 
+        /// Get list of area by storage Id
         /// </summary>
         /// <param name="storageid"></param>
         /// <param name="model"></param>
@@ -29,6 +30,7 @@ namespace RSSMS.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
+        [Authorize(Roles = "Admin,Manager,Delivery Staff,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(DynamicModelResponse<AreaViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -38,11 +40,12 @@ namespace RSSMS.API.Controllers
             return Ok(await _areaService.GetByStorageId(storageid, model, fields, page, size));
         }
         /// <summary>
-        /// Get Area By ID
+        /// Get area by Id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Manager,Delivery Staff,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(AreaDetailViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -52,11 +55,12 @@ namespace RSSMS.API.Controllers
             return Ok(await _areaService.GetById(id));
         }
         /// <summary>
-        /// Create Area by Storage Id
+        /// Create new area
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
+        [Authorize(Roles = "Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(AreaViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -66,11 +70,12 @@ namespace RSSMS.API.Controllers
             return Ok(await _areaService.Create(model));
         }
         /// <summary>
-        /// Delete Area by ID
+        /// Delete area by Id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -81,12 +86,13 @@ namespace RSSMS.API.Controllers
             return Ok("Deleted");
         }
         /// <summary>
-        /// Update name Area by ID
+        /// Update area by Id
         /// </summary>
         /// <param name="id"></param>
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]

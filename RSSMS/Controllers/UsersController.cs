@@ -37,7 +37,7 @@ namespace RSSMS.API.Controllers
         }
 
         /// <summary>
-        /// Login third party
+        /// Login by third party
         /// </summary>
         /// <param name="firebaseID"></param>
         /// <param name="deviceToken"></param>
@@ -59,7 +59,7 @@ namespace RSSMS.API.Controllers
         /// <returns></returns>
         [HttpPost("changepassword")]
         [MapToApiVersion("1")]
-        //[Authorize]
+        [Authorize]
         [ProducesResponseType(typeof(UserViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
@@ -67,10 +67,13 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _userService.ChangePassword(model));
         }
+
         /// <summary>
         /// Get all users
         /// </summary>
         /// <param name="model"></param>
+        /// <param name="storageId"></param>
+        /// <param name="orderId"></param>
         /// <param name="fields"></param>
         /// <param name="page"></param>
         /// <param name="size"></param>
@@ -87,6 +90,11 @@ namespace RSSMS.API.Controllers
             return Ok(await _userService.GetAll(model, storageId, orderId, fields, page, size, accessToken));
         }
 
+        /// <summary>
+        /// Get user by Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin,Manager")]
         [MapToApiVersion("1")]
@@ -97,12 +105,14 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _userService.GetById(id));
         }
+
         /// <summary>
-        /// Get User By Phone Number
+        /// Get user by phone number
         /// </summary>
         /// <param name="phone"></param>
         /// <returns></returns>
         [HttpGet("user/{phone}")]
+        [Authorize(Roles = "Admin,Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(UserViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -112,8 +122,12 @@ namespace RSSMS.API.Controllers
             return Ok(await _userService.GetByPhone(phone));
         }
 
+        /// <summary>
+        /// Create new user
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost]
-        //[Authorize(Roles = "Admin,Manager")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(UserCreateViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -123,8 +137,14 @@ namespace RSSMS.API.Controllers
             return Ok(await _userService.Create(model));
         }
 
+        /// <summary>
+        /// Update user by Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -134,6 +154,12 @@ namespace RSSMS.API.Controllers
             return Ok(await _userService.Update(id, model));
         }
 
+        /// <summary>
+        /// Delete user by Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="firebaseID"></param>
+        /// <returns></returns>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin,Manager")]
         [MapToApiVersion("1")]
