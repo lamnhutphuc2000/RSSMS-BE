@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Notifications;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace RSSMS.API.Controllers
 {

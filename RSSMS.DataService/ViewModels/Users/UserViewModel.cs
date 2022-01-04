@@ -10,7 +10,7 @@ namespace RSSMS.DataService.ViewModels.Users
     public partial class UserViewModel
     {
         public static string[] Fields = {
-            "Id","RoleName","StorageName","Name","Address","Phone","Email","IsActive","Images","StaffManageStorages"
+            "Id","RoleName","StorageName","Gender","Birthdate","Name","Address","Phone","Email","IsActive","Images","StaffManageStorages"
         };
         [BindNever]
         public int? Id { get; set; }
@@ -18,6 +18,10 @@ namespace RSSMS.DataService.ViewModels.Users
         public string Name { get; set; }
         [BindNever]
         public string Email { get; set; }
+        [BindNever]
+        public int? Gender { get; set; }
+        [BindNever]
+        public DateTime? Birthdate { get; set; }
         [BindNever]
         public string Address { get; set; }
         [BindNever]

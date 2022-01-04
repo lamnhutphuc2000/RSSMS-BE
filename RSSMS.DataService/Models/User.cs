@@ -23,6 +23,8 @@ namespace RSSMS.DataService.Models
         public int Id { get; set; }
         public int? RoleId { get; set; }
         public string Name { get; set; }
+        public int? Gender { get; set; }
+        public DateTime? Birthdate { get; set; }
         public string Address { get; set; }
         public string Password { get; set; }
         public string Phone { get; set; }

@@ -47,9 +47,8 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(TokenViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> checkLogin(string firebaseID, string deviceToken)
+        public async Task<IActionResult> CheckLogin(string firebaseID, string deviceToken)
         {
-            //UserCreateThirdPartyViewModel model, 
             return Ok(await _userService.checkLogin(firebaseID, deviceToken));
         }
 

@@ -9,10 +9,10 @@
         public string Address { get; set; }
         public string Image { get; set; }
         public string Phone { get; set; }
-        public int? RoleId { get; set; }    
+        public int? RoleId { get; set; }
         public string DeviceToken { get; set; }
 
-        public UserCreateThirdPartyViewModel(string name, string password, string email,  string image, string phone, string deviceToken)
+        public UserCreateThirdPartyViewModel(string name, string password, string email, string image, string phone, string deviceToken)
         {
             Name = name;
             Password = password;
