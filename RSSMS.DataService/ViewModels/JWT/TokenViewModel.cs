@@ -1,5 +1,6 @@
 ﻿using RSSMS.DataService.ViewModels.Images;
 using RSSMS.DataService.ViewModels.StaffManageUser;
+using System;
 using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.JWT
@@ -14,6 +15,8 @@ namespace RSSMS.DataService.ViewModels.JWT
         public int UserId { get; set; }
         public int? StorageId { get; set; }
         public string Name { get; set; }
+        public int? Gender { get; set; }
+        public DateTime? Birthdate { get; set; }
         public string Email { get; set; }
         public string Address { get; set; }
         public string RoleName { get; set; }
