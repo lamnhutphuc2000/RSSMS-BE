@@ -91,22 +91,13 @@ namespace RSSMS.DataService.Services
 
         public async Task<UserViewModel> createWithoutFirebase(UserCreateThirdPartyViewModel model, string fireBaseID)
         {
-            var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
+            //var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
             var userCreate = _mapper.Map<Models.User>(model);
             userCreate.DeviceTokenId = model.DeviceToken;
             userCreate.IsActive = true;
             userCreate.FirebaseId = fireBaseID;
             userCreate.RoleId = 3 ;
             await CreateAsync(userCreate);
-           /* if (model.StorageIds != null)
-            {
-                for (int i = 0; i < model.StorageIds.Count; i++)
-                {
-                    var staffAssignModel = _mapper.Map<StaffManageStorageCreateViewModel>(userCreate);
-                    staffAssignModel.StorageId = model.StorageIds.ElementAt(i);
-                    await _staffManageStorageService.Create(staffAssignModel);
-                }
-            }*/
             return await GetById(userCreate.Id);
         }
 
@@ -385,7 +376,7 @@ namespace RSSMS.DataService.Services
 
                 if (checkLocalID == null)
                 {
-                    UserCreateThirdPartyViewModel model = new UserCreateThirdPartyViewModel(checkFirebase.DisplayName, "", checkFirebase.Email,
+                    UserCreateThirdPartyViewModel model = new UserCreateThirdPartyViewModel(checkFirebase.DisplayName,
                         checkFirebase.PhotoUrl,checkFirebase.PhoneNumber, deviceToken);
                     await createWithoutFirebase(model, firebaseID);
                     await loginWithFirebaseID(firebaseID);
