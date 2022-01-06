@@ -93,8 +93,15 @@ namespace RSSMS.DataService.Services
                     .ThenInclude(orderDetail => orderDetail.Product);
             }
 
+            if(role == "Customer")
+            {
+                order = order.Where(x => x.CustomerId == userId)
+                    .Include(x => x.OrderStorageDetails)
+                    .Include(x => x.OrderDetails)
+                    .ThenInclude(orderDetail => orderDetail.Product);
+            }
 
-            var result = order.OrderByDescending(x => x.DeliveryDate)
+            var result = order.OrderByDescending(x => x.CreatedDate)
                 .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
@@ -132,6 +139,11 @@ namespace RSSMS.DataService.Services
                 storageId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
                 var managerId = _staffmanageStorageService.Get(x => x.StorageId == storageId && x.RoleName == "Manager").Select(x => x.UserId).FirstOrDefault();
                 if (managerId != 0) order.ManagerId = managerId;
+            }
+
+            if (role == "Customer")
+            {
+                order.CustomerId = userId;
             }
 
             //Check Type of Order

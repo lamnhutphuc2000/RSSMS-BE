@@ -35,7 +35,7 @@ namespace RSSMS.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
-        [Authorize(Roles = "Admin,Manager,Office staff")]
+        [Authorize(Roles = "Admin,Manager,Office staff,Customer")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
@@ -50,7 +50,7 @@ namespace RSSMS.API.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Manager,Office staff")]
+        [Authorize(Roles = "Admin,Manager,Office staff,Customer")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -65,7 +65,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
-        [Authorize(Roles = "Manager,Office staff")]
+        [Authorize(Roles = "Manager,Office staff,Customer")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderCreateViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
