@@ -47,8 +47,11 @@ namespace RSSMS.DataService.ViewModels.Orders
         public int? Status { get; set; }
         [BindNever]
         public bool? IsPaid { get; set; }
-
-
+        [BindNever]
+        public int? StorageId { get; set; }
+        [BindNever]
+        public string StorageName { get; set; }
+        [BindNever]
         public virtual ICollection<OrderDetailsViewModel> OrderDetails { get; set; }
     }
 }
