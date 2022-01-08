@@ -30,10 +30,12 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IStaffManageStorageService _staffManageStorageService;
-        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService) : base(unitOfWork, repository)
+        private readonly IAreaService _areaService;
+        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService, IAreaService areaService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffManageStorageService = staffManageStorageService;
+            _areaService = areaService;
         }
 
         public async Task<StorageViewModel> Create(StorageCreateViewModel model)
@@ -54,8 +56,13 @@ namespace RSSMS.DataService.Services
 
         public async Task<StorageViewModel> Delete(int id)
         {
-            var entity = await GetAsync<int>(id);
+            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Areas).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
+            var areas = entity.Areas;
+            foreach (var area in areas)
+            {
+                if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage is in used");
+            }
             entity.IsActive = false;
             await UpdateAsync(entity);
             return _mapper.Map<StorageViewModel>(entity);
@@ -140,8 +147,18 @@ namespace RSSMS.DataService.Services
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage Id not matched");
 
-            var entity = await GetAsync(id);
+            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Areas).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
+
+            var areas = entity.Areas;
+            if(entity.Type != model.Type)
+            {
+                foreach (var area in areas)
+                {
+                    if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
+                }
+            }
+            
 
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);

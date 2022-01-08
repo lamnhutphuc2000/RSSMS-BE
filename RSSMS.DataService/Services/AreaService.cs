@@ -23,6 +23,7 @@ namespace RSSMS.DataService.Services
         Task<AreaViewModel> Delete(int id);
         Task<AreaViewModel> Update(int id, AreaUpdateViewModel model);
         Task<AreaDetailViewModel> GetById(int id);
+        bool CheckIsUsed(int id);
     }
     public class AreaService : BaseService<Area>, IAreaService
 
@@ -46,8 +47,10 @@ namespace RSSMS.DataService.Services
 
         public async Task<AreaViewModel> Delete(int id)
         {
-            var area = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
+            var area = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Shelves).FirstOrDefaultAsync();
             if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
+            var areaIsUsed = CheckIsUsed(id);
+            if(areaIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area is in used");
             area.IsActive = false;
             await UpdateAsync(area);
             return _mapper.Map<AreaViewModel>(area);
@@ -100,6 +103,18 @@ namespace RSSMS.DataService.Services
             await UpdateAsync(updateEntity);
 
             return _mapper.Map<AreaViewModel>(updateEntity);
+        }
+
+        public bool CheckIsUsed(int id)
+        {
+            var area = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Shelves).FirstOrDefault();
+            if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
+            var shelves = area.Shelves;
+            foreach (var shelf in shelves)
+            {
+                if (_shelfService.CheckIsUsed(shelf.Id)) return true;
+            }
+            return false;
         }
     }
 }

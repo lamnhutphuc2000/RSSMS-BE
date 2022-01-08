@@ -25,6 +25,7 @@ namespace RSSMS.DataService.Services
         Task<ShelfViewModel> Delete(int id);
         Task<ShelfViewModel> Update(int id, ShelfUpdateViewModel model);
         List<BoxUsageViewModel> GetBoxUsageByAreaId(int areaId);
+        bool CheckIsUsed(int id);
     }
     public class ShelfService : BaseService<Shelf>, IShelfService
 
@@ -54,8 +55,8 @@ namespace RSSMS.DataService.Services
         {
             var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes).ThenInclude(boxes => boxes.OrderBoxDetails).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf id not found");
-            var BoxAssignedToOrder = entity.Boxes.Where(x => x.OrderBoxDetails.Any(a => a.IsActive == true)).ToList();
-            if(BoxAssignedToOrder.Count() > 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
+            var shelfIsUsed = CheckIsUsed(id);
+            if(shelfIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
             entity.IsActive = false;
             await UpdateAsync(entity);
             return _mapper.Map<ShelfViewModel>(entity);
@@ -84,10 +85,11 @@ namespace RSSMS.DataService.Services
 
             var shelfSize = entity.BoxesInHeight * entity.BoxesInWidth;
             var newShelfSize = model.BoxesInWidth * model.BoxesInHeight;
-            var BoxAssignedToOrder = entity.Boxes.Where(x => x.OrderBoxDetails.Any(a => a.IsActive == true)).ToList();
-            if (BoxAssignedToOrder.Count() > 0)
+            var shelfIsUsed = CheckIsUsed(id);
+            if (shelfIsUsed)
             {
-                if(shelfSize != newShelfSize) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
+                if (entity.Type != model.Type) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
+                if (shelfSize != newShelfSize) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
                 if(model.ProductId != entity.Boxes.FirstOrDefault().ProductId) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
             }
 
@@ -182,6 +184,15 @@ namespace RSSMS.DataService.Services
             result.BoxRemaining = boxRemaining;
             result.Usage = usage;
             return result;
+        }
+
+        public bool CheckIsUsed(int id)
+        {
+            var entity = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes).ThenInclude(boxes => boxes.OrderBoxDetails).FirstOrDefault();
+            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf id not found");
+            var BoxAssignedToOrder = entity.Boxes.Where(x => x.OrderBoxDetails.Any(a => a.IsActive == true)).ToList();
+            if (BoxAssignedToOrder.Count() > 0) return true;
+            return false;
         }
     }
 }
