@@ -25,7 +25,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut("assign-staff")]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Admin,Manager")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
