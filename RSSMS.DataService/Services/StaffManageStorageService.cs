@@ -30,18 +30,13 @@ namespace RSSMS.DataService.Services
             var staffUnAssigned = model.UserUnAssigned;
             if (staffAssigned != null)
             {
-                var managerAssigned = staffAssigned.Where(a => a.RoleName == "Manager");
-                if (managerAssigned != null)
+                var managerAssigned = staffAssigned.Where(a => a.RoleName == "Manager").ToList();
+                if (managerAssigned.Count > 0)
                 {
-                    if (managerAssigned.Count() > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "More than 1 manager assigned to this storage");
-                    var managerInStorage = Get(x => x.StorageId == model.StorageId && x.RoleName == "Manager").FirstOrDefault();
-                    if (managerInStorage != null)
-                    {
-                        if (managerInStorage.UserId != managerAssigned.FirstOrDefault().UserId)
-                        {
-                            throw new ErrorResponse((int)HttpStatusCode.BadRequest, "This storage has assigned manager");
-                        }
-                    }
+                    if (managerAssigned.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "More than 1 manager assigned to this storage");
+                    var managerInStorage = Get(x => x.RoleName == "Manager" && x.StorageId == model.StorageId).FirstOrDefault();
+                    if(staffUnAssigned.Where(x => x.UserId == managerInStorage.UserId).FirstOrDefault() == null)
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "More than 1 manager assigned to this storage");
                 }
 
                 foreach (var staff in staffAssigned)
@@ -53,7 +48,6 @@ namespace RSSMS.DataService.Services
                     }
 
                 }
-
 
                 if (staffUnAssigned != null)
                 {
@@ -82,9 +76,6 @@ namespace RSSMS.DataService.Services
                     }
                 }
             }
-
-
-
 
             return null;
         }

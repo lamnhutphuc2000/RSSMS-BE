@@ -35,28 +35,34 @@ namespace RSSMS.DataService.Services
         {
             var userIds = model.UserIds;
             if (userIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id null");
-            var schedules = Get(x => x.OrderId == model.OrderId && x.IsActive == true).ToList();
+            var orderIds = model.OrderIds;
+            if (orderIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id null");
+            var schedules = Get(x => orderIds.Contains(x.Id) && x.IsActive == true).ToList();
             foreach (var schedule in schedules)
             {
                 schedule.IsActive = false;
                 await UpdateAsync(schedule);
             }
-            foreach (var userId in userIds)
+            for(int i = 0; i < userIds.Count; i++)
             {
-                var scheduleToCreate = _mapper.Map<Schedule>(model);
-                scheduleToCreate.UserId = userId;
-                await CreateAsync(scheduleToCreate);
+                for(int j = 0; j < orderIds.Count; j ++)
+                {
+                    var scheduleToCreate = _mapper.Map<Schedule>(model);
+                    scheduleToCreate.UserId = userIds[i];
+                    scheduleToCreate.OrderId = orderIds[j];
+                    await CreateAsync(scheduleToCreate);
+                }
             }
-            var result = Get(x => x.OrderId == model.OrderId && x.IsActive == true).Include(x => x.User).ThenInclude(x => x.Images)
-                        .AsEnumerable().GroupBy(p => (int)p.OrderId)
-                                    .Select(g => new ScheduleOrderViewModel
-                                    {
-                                        OrderId = g.Key,
-                                        DeliveryTime = model.DeliveryTime,
-                                        SheduleDay = model.SheduleDay,
-                                        Users = Get(x => x.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
-                                    }).ToList();
-            return result;
+            //var result = Get(x => x.OrderId == model.OrderId && x.IsActive == true).Include(x => x.User).ThenInclude(x => x.Images)
+            //            .AsEnumerable().GroupBy(p => (int)p.OrderId)
+            //                        .Select(g => new ScheduleOrderViewModel
+            //                        {
+            //                            OrderId = g.Key,
+            //                            DeliveryTime = model.DeliveryTime,
+            //                            SheduleDay = model.SheduleDay,
+            //                            Users = Get(x => x.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
+            //                        }).ToList();
+            return null;
         }
 
         public async Task<DynamicModelResponse<ScheduleViewModel>> Get(ScheduleSearchViewModel model, string[] fields, int page, int size)

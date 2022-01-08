@@ -127,18 +127,19 @@ namespace RSSMS.DataService.Services
             }
             foreach (var product in products)
             {
-                result.Add(GetBoxUsageBySizeType(product.Name, shelves));
+                result.Add(GetBoxUsageBySizeType(product.Name,(int)product.Type, shelves));
             }
 
             return result;
         }
 
-        private BoxUsageViewModel GetBoxUsageBySizeType(string sizeName, List<Shelf> shelves)
+        private BoxUsageViewModel GetBoxUsageBySizeType(string sizeName,int productType, List<Shelf> shelves)
         {
             int totalBox = 0;
             int boxRemaining = 0;
             double usage = 0;
             BoxUsageViewModel result = new BoxUsageViewModel();
+            result.ProductType = productType;
             result.SizeType = sizeName;
             result.TotalBox = 0;
             result.Usage = 0;
