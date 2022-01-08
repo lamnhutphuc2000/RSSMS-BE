@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using RSSMS.DataService.Models;
+using RSSMS.DataService.ViewModels.Boxes;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using System;
 using System.Collections.Generic;
@@ -10,7 +12,7 @@ namespace RSSMS.DataService.ViewModels.Orders
 
         public static string[] Fields = {
             "Id","CustomerName","CustomerPhone","DeliveryAddress","AddressReturn","TotalPrice","TypeOrder","RejectedReason"
-                ,"IsUserDelivery","PaymentMethod","DeliveryTime","DeliveryDate","ReturnDate","DurationDays","DurationMonths","Status","IsPaid"
+                ,"IsUserDelivery","PaymentMethod","DeliveryTime","DeliveryDate","ReturnDate","DurationDays","DurationMonths","Status","IsPaid","OrderBoxDetails"
         };
         public int? Id { get; set; }
         [BindNever]
@@ -53,5 +55,7 @@ namespace RSSMS.DataService.ViewModels.Orders
         public string StorageName { get; set; }
         [BindNever]
         public virtual ICollection<OrderDetailsViewModel> OrderDetails { get; set; }
+        [BindNever]
+        public virtual ICollection<BoxDetailViewModel> OrderBoxDetails { get; set; }
     }
 }

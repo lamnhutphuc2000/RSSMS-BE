@@ -52,8 +52,10 @@ namespace RSSMS.DataService.Services
 
         public async Task<ShelfViewModel> Delete(int id)
         {
-            var entity = await GetAsync<int>(id);
+            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes).ThenInclude(boxes => boxes.OrderBoxDetails).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf id not found");
+            var BoxAssignedToOrder = entity.Boxes.Where(x => x.OrderBoxDetails.Any(a => a.IsActive == true)).ToList();
+            if(BoxAssignedToOrder.Count() > 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
             entity.IsActive = false;
             await UpdateAsync(entity);
             return _mapper.Map<ShelfViewModel>(entity);
@@ -75,10 +77,19 @@ namespace RSSMS.DataService.Services
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf Id not matched");
 
-            var entity = await GetAsync(id);
+            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes).ThenInclude(boxes => boxes.OrderBoxDetails).FirstOrDefaultAsync();
             var shelf = Get(x => x.Name == model.Name && x.AreaId == entity.AreaId && x.Id != id && x.IsActive == true).Include(x => x.Boxes.Where(x => x.IsActive == true)).FirstOrDefault();
             if (shelf != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf name is existed");
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf not found");
+
+            var shelfSize = entity.BoxesInHeight * entity.BoxesInWidth;
+            var newShelfSize = model.BoxesInWidth * model.BoxesInHeight;
+            var BoxAssignedToOrder = entity.Boxes.Where(x => x.OrderBoxDetails.Any(a => a.IsActive == true)).ToList();
+            if (BoxAssignedToOrder.Count() > 0)
+            {
+                if(shelfSize != newShelfSize) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
+                if(model.ProductId != entity.Boxes.FirstOrDefault().ProductId) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
+            }
 
             if (entity.BoxesInHeight != model.BoxesInHeight || entity.BoxesInWidth != model.BoxesInWidth)
             {
