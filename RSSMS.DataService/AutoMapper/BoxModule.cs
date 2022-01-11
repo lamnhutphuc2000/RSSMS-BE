@@ -10,6 +10,9 @@ namespace RSSMS.DataService.AutoMapper
         public static void ConfigBoxModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Box, BoxViewModel>()
+                .ForMember(dest => dest.ReturnDate,
+                   opt => opt.MapFrom
+                   (src => src.OrderBoxDetails.Where(a => a.IsActive == true).FirstOrDefault() != null ? src.OrderBoxDetails.Where(a => a.IsActive == true).FirstOrDefault().Order.ReturnDate : null))
                 .ForMember(des => des.SizeType, opt => opt.MapFrom(des => des.Product.Size))
                 .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.OrderBoxDetails.Where(x => x.IsActive == true).FirstOrDefault().OrderId));
             mc.CreateMap<Box, BoxDetailViewModel>()

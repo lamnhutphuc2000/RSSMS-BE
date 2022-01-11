@@ -68,9 +68,38 @@ namespace RSSMS.DataService.Services
                 .Include(x => x.Boxes.Where(a => a.IsActive == true))
                 .ThenInclude(x => x.Product)
                 .Include(x => x.Boxes.Where(a => a.IsActive == true))
-                .ThenInclude(x => x.OrderBoxDetails.Where(a => a.IsActive == true)).FirstOrDefaultAsync();
+                .ThenInclude(x => x.OrderBoxDetails.Where(a => a.IsActive == true))
+                .ThenInclude(x => x.Order).FirstOrDefaultAsync();
             if (shelf == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf id not found");
             var result = _mapper.Map<ShelfViewModel>(shelf);
+            var boxes = result.Boxes;
+            DateTime now = DateTime.Now;
+            List<BoxViewModel> newBoxes = new List<BoxViewModel>();
+            foreach(var box in boxes)
+            {
+                box.Status = null;
+                if(box.ReturnDate != null)
+                {
+                    var dayGap = box.ReturnDate - now;
+                    if (dayGap.Value.Days <= 3 && dayGap.Value.Days > 0)
+                    {
+                        // close out of date
+                        box.Status = 1;
+                    }
+                    if (dayGap.Value.Days <= 0)
+                    {
+                        // out of date
+                        box.Status = 0;
+                    }
+                    if (dayGap.Value.Days > 3)
+                    {
+                        // not close out of date
+                        box.Status = 2;
+                    }
+                }
+                newBoxes.Add(box);
+            }
+            result.Boxes = newBoxes;
             return result;
         }
 
