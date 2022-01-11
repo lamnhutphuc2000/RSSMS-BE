@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
@@ -35,7 +36,8 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Gets([FromQuery] ScheduleSearchViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
         {
-            return Ok(await _scheduleService.Get(model, fields, page, size));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _scheduleService.Get(model, fields, page, size, accessToken));
         }
         /// <summary>
         /// Create new schedule

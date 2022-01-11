@@ -11,6 +11,7 @@ using RSSMS.DataService.ViewModels.Schedules;
 using RSSMS.DataService.ViewModels.Users;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ namespace RSSMS.DataService.Services
 {
     public interface IScheduleService : IBaseService<Schedule>
     {
-        Task<DynamicModelResponse<ScheduleViewModel>> Get(ScheduleSearchViewModel model, string[] fields, int page, int size);
+        Task<DynamicModelResponse<ScheduleViewModel>> Get(ScheduleSearchViewModel model, string[] fields, int page, int size, string accessToken);
         Task<List<ScheduleOrderViewModel>> Create(ScheduleCreateViewModel model);
     }
     public class ScheduleService : BaseService<Schedule>, IScheduleService
@@ -37,7 +38,8 @@ namespace RSSMS.DataService.Services
             if (userIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id null");
             var schedules = model.Schedules;
             if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id null");
-            var schedulesAssigned = Get(x => schedules.Any(a => a.OrderIds == x.OrderId) && x.IsActive == true).ToList();
+            var schedulesAssigned = Get(x => x.IsActive == true).Where(x => schedules.Any(a => a.OrderIds == x.OrderId)).AsEnumerable().ToList();
+
             foreach (var scheduleAssigned in schedulesAssigned)
             {
                 scheduleAssigned.IsActive = false;
@@ -68,11 +70,23 @@ namespace RSSMS.DataService.Services
             return null;
         }
 
-        public async Task<DynamicModelResponse<ScheduleViewModel>> Get(ScheduleSearchViewModel model, string[] fields, int page, int size)
+        public async Task<DynamicModelResponse<ScheduleViewModel>> Get(ScheduleSearchViewModel model, string[] fields, int page, int size, string accessToken)
         {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+
+
+
             var schedules = Get(x => x.IsActive == true)
-                        .Where(x => x.SheduleDay >= model.DateFrom && x.SheduleDay <= model.DateTo).Include(x => x.User).ThenInclude(x => x.Images)
-                        .AsEnumerable().GroupBy(p => (int)p.OrderId)
+                        .Where(x => x.SheduleDay >= model.DateFrom && x.SheduleDay <= model.DateTo).Include(x => x.Order).Include(x => x.User).ThenInclude(x => x.Images);
+
+            if (role == "Delivery Staff")
+            {
+                schedules = schedules.Where(x => x.UserId == userId).Include(x => x.Order).Include(x => x.User).ThenInclude(x => x.Images);
+            }
+
+            var result = schedules.AsEnumerable().GroupBy(p => (int)p.OrderId)
                                     .Select(g => new ScheduleViewModel
                                     {
                                         OrderId = g.Key,
@@ -81,9 +95,7 @@ namespace RSSMS.DataService.Services
                                         Status = g.First().Status,
                                         IsActive = g.First().IsActive,
                                         Users = Get(x => x.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
-                                    }).AsQueryable();
-
-            var result = schedules.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+                                    }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedul not found");
 
             var rs = new DynamicModelResponse<ScheduleViewModel>
