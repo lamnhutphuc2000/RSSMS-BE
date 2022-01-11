@@ -106,7 +106,6 @@ namespace RSSMS.DataService.Services
 
         public async Task<UserViewModel> CreateWithoutFirebase(UserCreateThirdPartyViewModel model, string fireBaseID)
         {
-            var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
             var userCreate = _mapper.Map<Models.User>(model);
             userCreate.DeviceTokenId = model.DeviceToken;
             userCreate.IsActive = true;
@@ -379,8 +378,8 @@ namespace RSSMS.DataService.Services
 
                 if (checkLocalID == null)
                 {
-                    UserCreateThirdPartyViewModel model = new UserCreateThirdPartyViewModel(checkFirebase.DisplayName, "", checkFirebase.Email,
-                        checkFirebase.PhotoUrl, checkFirebase.PhoneNumber, deviceToken);
+                    UserCreateThirdPartyViewModel model = new UserCreateThirdPartyViewModel(checkFirebase.DisplayName,
+                        checkFirebase.PhotoUrl,checkFirebase.PhoneNumber, deviceToken);
                     await CreateWithoutFirebase(model, firebaseID);
                     await LoginWithFirebaseID(firebaseID);
                 }
