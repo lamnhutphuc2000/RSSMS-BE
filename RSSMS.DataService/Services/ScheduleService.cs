@@ -35,24 +35,27 @@ namespace RSSMS.DataService.Services
         {
             var userIds = model.UserIds;
             if (userIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id null");
-            var orderIds = model.OrderIds;
-            if (orderIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id null");
-            var schedules = Get(x => orderIds.Contains(x.Id) && x.IsActive == true).ToList();
-            foreach (var schedule in schedules)
+            var schedules = model.Schedules;
+            if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id null");
+            var schedulesAssigned = Get(x => schedules.Any(a => a.OrderIds == x.OrderId) && x.IsActive == true).ToList();
+            foreach (var scheduleAssigned in schedulesAssigned)
             {
-                schedule.IsActive = false;
-                await UpdateAsync(schedule);
+                scheduleAssigned.IsActive = false;
+                await UpdateAsync(scheduleAssigned);
             }
-            for(int i = 0; i < userIds.Count; i++)
+            for (int i = 0; i < userIds.Count; i++)
             {
-                for(int j = 0; j < orderIds.Count; j ++)
+                for (int j = 0; j < schedules.Count; j++)
                 {
                     var scheduleToCreate = _mapper.Map<Schedule>(model);
                     scheduleToCreate.UserId = userIds[i];
-                    scheduleToCreate.OrderId = orderIds[j];
+                    scheduleToCreate.OrderId = schedules[j].OrderIds;
+                    scheduleToCreate.DeliveryTime = schedules[j].DeliveryTime;
                     await CreateAsync(scheduleToCreate);
                 }
             }
+
+
             //var result = Get(x => x.OrderId == model.OrderId && x.IsActive == true).Include(x => x.User).ThenInclude(x => x.Images)
             //            .AsEnumerable().GroupBy(p => (int)p.OrderId)
             //                        .Select(g => new ScheduleOrderViewModel
