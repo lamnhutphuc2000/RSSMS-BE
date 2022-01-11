@@ -9,6 +9,7 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Requests;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -17,7 +18,7 @@ namespace RSSMS.DataService.Services
 {
     public interface IRequestService : IBaseService<Request>
     {
-        Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, string[] fields, int page, int size);
+        Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, string[] fields, int page, int size, string accessToken);
         Task<RequestViewModel> GetById(int id);
         Task<RequestCreateViewModel> Create(RequestCreateViewModel model);
         Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model);
@@ -28,9 +29,17 @@ namespace RSSMS.DataService.Services
     public class RequestService : BaseService<Request>, IRequestService
     {
         private readonly IMapper _mapper;
-        public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IScheduleService _scheduleService;
+        private readonly INotificationService _notificationService;
+        private readonly INotificationDetailService _notificationDetailService;
+        private readonly IStaffManageStorageService _staffManageStorageService;
+        public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper, IScheduleService scheduleService, INotificationService notificationService, INotificationDetailService notificationDetailService, IStaffManageStorageService staffManageStorageService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
+            _scheduleService = scheduleService;
+            _notificationService = notificationService;
+            _notificationDetailService = notificationDetailService;
+            _staffManageStorageService = staffManageStorageService;
         }
 
         public async Task<RequestViewModel> Delete(int id)
@@ -42,24 +51,39 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<RequestViewModel>(entity);
         }
 
-        public async Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, string[] fields, int page, int size)
+        public async Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, string[] fields, int page, int size, string accessToken)
         {
-            var requests = Get(x => x.IsActive == true)
-                    .ProjectTo<RequestViewModel>(_mapper.ConfigurationProvider)
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+            
+            var requests = Get(x => x.IsActive == true).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+
+            if(role == "Manager")
+            {
+                var storageIds = _staffManageStorageService.Get(x => x.UserId == userId).Select(a => a.StorageId).ToList();
+                var staff = _staffManageStorageService.Get(x => storageIds.Contains(x.StorageId)).Select(a => a.UserId).ToList();
+                requests = requests.Where(x => staff.Contains((int)x.UserId) || x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+            }
+
+            if(role == "Delivery Staff")
+            {
+                requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+            }
+
+            var result = requests.ProjectTo<RequestViewModel>(_mapper.ConfigurationProvider)
                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-
-
-            if (requests.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
             var rs = new DynamicModelResponse<RequestViewModel>
             {
                 Metadata = new PagingMetaData
                 {
                     Page = page,
                     Size = size,
-                    Total = requests.Item1,
-                    TotalPage = (int)Math.Ceiling((double)requests.Item1 / size)
+                    Total = result.Item1,
+                    TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
                 },
-                Data = requests.Item2.ToList()
+                Data = result.Item2.ToList()
             };
             return rs;
         }
@@ -90,6 +114,26 @@ namespace RSSMS.DataService.Services
         {
             var request = _mapper.Map<Request>(model);
             await CreateAsync(request);
+            var schedules = _scheduleService.Get(x => x.UserId == model.UserId && x.OrderId == model.UserId).Include(a => a.User);
+            var user = schedules.FirstOrDefault().User;
+            foreach(var schedule in schedules)
+            {
+                schedule.IsActive = false;
+                await _scheduleService.UpdateAsync(schedule);
+            }
+
+            Notification noti = new Notification
+            {
+                Description = "Delivery staff " +user.Name +" cancel delivery of order "+model.OrderId,
+                CreateDate = DateTime.Now,
+                IsActive = true,
+                Type = 0,
+                OrderId = model.OrderId
+            };
+            await _notificationService.CreateAsync(noti);
+
+            await _notificationDetailService.PushOrderNoti("Delivery staff " + user.Name + " cancel delivery of order " + model.OrderId, model.UserId, noti.Id, model.OrderId, request.Id);
+
             return _mapper.Map<RequestCreateViewModel>(request);
         }
 

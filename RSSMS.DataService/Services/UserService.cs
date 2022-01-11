@@ -138,8 +138,6 @@ namespace RSSMS.DataService.Services
             {
                 scheduleDay = model.SheduleDay;
                 deliveryTimes = model.DeliveryTimes;
-
-
             }
             model.SheduleDay = null;
             model.DeliveryTimes = null;

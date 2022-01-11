@@ -12,7 +12,6 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<Request, RequestViewModel>();
             mc.CreateMap<RequestViewModel, Request>();
 
-            mc.CreateMap<Request, RequestCreateViewModel>();
             mc.CreateMap<RequestCreateViewModel, Request>()
                 .ForMember(des => des.IsActive, otp => otp.MapFrom(src => true))
                 .ForMember(des => des.CreatedDate, otp => otp.MapFrom(src => DateTime.Now));
