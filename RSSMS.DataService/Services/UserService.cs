@@ -46,12 +46,14 @@ namespace RSSMS.DataService.Services
         private readonly IMapper _mapper;
         private readonly IStaffManageStorageService _staffManageStorageService;
         private readonly IOrderService _orderService;
+        private readonly IScheduleService _scheduleService;
         private static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
-        public UserService(IUnitOfWork unitOfWork, IUserRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService, IOrderService orderService) : base(unitOfWork, repository)
+        public UserService(IUnitOfWork unitOfWork, IUserRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService, IOrderService orderService, IScheduleService scheduleService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffManageStorageService = staffManageStorageService;
             _orderService = orderService;
+            _scheduleService = scheduleService;
         }
 
         public Task<int> Count(List<UserViewModel> shelves)
@@ -130,7 +132,17 @@ namespace RSSMS.DataService.Services
             var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
 
             var user = Get(x => x.Id == Int32.Parse(uid)).Include(x => x.Role).FirstOrDefault();
+            DateTime? scheduleDay = null;
+            ICollection<string> deliveryTimes = null;
+            if (model.SheduleDay != null && model.DeliveryTimes != null)
+            {
+                scheduleDay = model.SheduleDay;
+                deliveryTimes = model.DeliveryTimes;
 
+
+            }
+            model.SheduleDay = null;
+            model.DeliveryTimes = null;
             var users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin")).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model);
             if (storageId == 0)
@@ -162,6 +174,11 @@ namespace RSSMS.DataService.Services
                 users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
                     .Where(x => x.Schedules.Count == 0 || (!x.Schedules.Any(a => a.OrderId == orderId && a.IsActive == true) && (!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == deliveryTime && a.SheduleDay == deliveryDate) && (!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == returnTime && a.SheduleDay == returnDate))))).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model);
+            }
+            if(scheduleDay != null && deliveryTimes != null)
+            {
+                var usersInDelivery = _scheduleService.Get(x => scheduleDay.Value.Date == x.SheduleDay.Value.Date && deliveryTimes.Contains(x.DeliveryTime) && x.IsActive == true).Select(schedule => schedule.UserId).Distinct().ToList();
+                users = users.Where(x => !usersInDelivery.Contains(x.Id));
             }
             if (user.Role.Name == "Manager")
             {
