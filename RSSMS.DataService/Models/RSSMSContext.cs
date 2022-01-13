@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
@@ -210,8 +212,6 @@ namespace RSSMS.DataService.Models
 
             modelBuilder.Entity<OrderDetail>(entity =>
             {
-                entity.HasKey(e => new { e.OrderId, e.ProductId });
-
                 entity.ToTable("OrderDetail");
 
                 entity.Property(e => e.Note).HasMaxLength(255);
