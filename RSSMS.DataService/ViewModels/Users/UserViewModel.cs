@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using RSSMS.DataService.Attributes;
 using RSSMS.DataService.ViewModels.Images;
-using RSSMS.DataService.ViewModels.Schedules;
 using RSSMS.DataService.ViewModels.StaffManageUser;
 using System;
 using System.Collections.Generic;

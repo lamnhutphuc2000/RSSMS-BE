@@ -1,7 +1,4 @@
-﻿using RSSMS.DataService.ViewModels.RequestDetails;
-using System.Collections.Generic;
-
-namespace RSSMS.DataService.ViewModels.Requests
+﻿namespace RSSMS.DataService.ViewModels.Requests
 {
     public class RequestCreateViewModel
     {

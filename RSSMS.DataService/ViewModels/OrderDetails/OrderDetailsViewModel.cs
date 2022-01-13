@@ -10,6 +10,7 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public decimal? Price { get; set; }
         public int? Amount { get; set; }
         public int? ProductType { get; set; }
+        public string Note { get; set; }
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
 
     }

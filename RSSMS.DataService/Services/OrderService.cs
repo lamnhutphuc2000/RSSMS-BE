@@ -93,7 +93,7 @@ namespace RSSMS.DataService.Services
                     .ThenInclude(orderDetail => orderDetail.Product);
             }
 
-            if(role == "Customer")
+            if (role == "Customer")
             {
                 order = order.Where(x => x.CustomerId == userId)
                     .Include(x => x.OrderStorageDetails)

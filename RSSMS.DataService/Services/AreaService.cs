@@ -50,7 +50,7 @@ namespace RSSMS.DataService.Services
             var area = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Shelves).FirstOrDefaultAsync();
             if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
             var areaIsUsed = CheckIsUsed(id);
-            if(areaIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area is in used");
+            if (areaIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area is in used");
             area.IsActive = false;
             await UpdateAsync(area);
             return _mapper.Map<AreaViewModel>(area);

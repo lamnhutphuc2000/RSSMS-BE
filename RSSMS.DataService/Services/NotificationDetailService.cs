@@ -84,7 +84,7 @@ namespace RSSMS.DataService.Services
         public async Task<ResponseContent> PushCancelRequestNoti(string description, int senderId, int notificationId, int orderId, int? requestId)
         {
             var storageSenderIn = _staffManageStorageService.Get(x => x.UserId == senderId).Select(a => a.StorageId).FirstOrDefault();
-            if(storageSenderIn == 0) return null;
+            if (storageSenderIn == 0) return null;
             var manager = _staffManageStorageService.Get(x => x.RoleName == "Manager" && x.StorageId == storageSenderIn).Include(x => x.User).Select(x => x.User).FirstOrDefault();
             if (manager == null) return null;
 

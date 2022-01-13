@@ -10,7 +10,7 @@
         public int? RoleId { get; set; }
         public string DeviceToken { get; set; }
 
-        public UserCreateThirdPartyViewModel(string name,   string image, string phone, string deviceToken)
+        public UserCreateThirdPartyViewModel(string name, string image, string phone, string deviceToken)
         {
             Name = name;
             Image = image;

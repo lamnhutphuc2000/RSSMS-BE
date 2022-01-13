@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.Boxes;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using System;

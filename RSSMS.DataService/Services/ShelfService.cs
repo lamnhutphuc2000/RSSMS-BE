@@ -56,7 +56,7 @@ namespace RSSMS.DataService.Services
             var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes).ThenInclude(boxes => boxes.OrderBoxDetails).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf id not found");
             var shelfIsUsed = CheckIsUsed(id);
-            if(shelfIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
+            if (shelfIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
             entity.IsActive = false;
             await UpdateAsync(entity);
             return _mapper.Map<ShelfViewModel>(entity);
@@ -75,10 +75,10 @@ namespace RSSMS.DataService.Services
             var boxes = result.Boxes;
             DateTime now = DateTime.Now;
             List<BoxViewModel> newBoxes = new List<BoxViewModel>();
-            foreach(var box in boxes)
+            foreach (var box in boxes)
             {
                 box.Status = null;
-                if(box.ReturnDate != null)
+                if (box.ReturnDate != null)
                 {
                     var dayGap = box.ReturnDate - now;
                     if (dayGap.Value.Days <= 3 && dayGap.Value.Days > 0)
@@ -119,7 +119,7 @@ namespace RSSMS.DataService.Services
             {
                 if (entity.Type != model.Type) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
                 if (shelfSize != newShelfSize) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
-                if(model.ProductId != entity.Boxes.FirstOrDefault().ProductId) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
+                if (model.ProductId != entity.Boxes.FirstOrDefault().ProductId) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
             }
 
             if (entity.BoxesInHeight != model.BoxesInHeight || entity.BoxesInWidth != model.BoxesInWidth)
@@ -169,13 +169,13 @@ namespace RSSMS.DataService.Services
             }
             foreach (var product in products)
             {
-                result.Add(GetBoxUsageBySizeType(product.Name,(int)product.Type, shelves));
+                result.Add(GetBoxUsageBySizeType(product.Name, (int)product.Type, shelves));
             }
 
             return result;
         }
 
-        private BoxUsageViewModel GetBoxUsageBySizeType(string sizeName,int productType, List<Shelf> shelves)
+        private BoxUsageViewModel GetBoxUsageBySizeType(string sizeName, int productType, List<Shelf> shelves)
         {
             int totalBox = 0;
             int boxRemaining = 0;

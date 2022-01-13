@@ -173,7 +173,7 @@ namespace RSSMS.DataService.Services
                     .Where(x => x.Schedules.Count == 0 || (!x.Schedules.Any(a => a.OrderId == orderId && a.IsActive == true) && (!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == deliveryTime && a.SheduleDay == deliveryDate) && (!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == returnTime && a.SheduleDay == returnDate))))).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model);
             }
-            if(scheduleDay != null && deliveryTimes != null)
+            if (scheduleDay != null && deliveryTimes != null)
             {
                 var usersInDelivery = _scheduleService.Get(x => scheduleDay.Value.Date == x.SheduleDay.Value.Date && deliveryTimes.Contains(x.DeliveryTime) && x.IsActive == true).Select(schedule => schedule.UserId).Distinct().ToList();
                 users = users.Where(x => !usersInDelivery.Contains(x.Id));
@@ -394,7 +394,7 @@ namespace RSSMS.DataService.Services
                 if (checkLocalID == null)
                 {
                     UserCreateThirdPartyViewModel model = new UserCreateThirdPartyViewModel(checkFirebase.DisplayName,
-                        checkFirebase.PhotoUrl,checkFirebase.PhoneNumber, deviceToken);
+                        checkFirebase.PhotoUrl, checkFirebase.PhoneNumber, deviceToken);
                     await CreateWithoutFirebase(model, firebaseID);
                     await LoginWithFirebaseID(firebaseID);
                 }

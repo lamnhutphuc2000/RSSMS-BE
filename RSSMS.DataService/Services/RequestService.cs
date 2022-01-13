@@ -56,17 +56,17 @@ namespace RSSMS.DataService.Services
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-            
+
             var requests = Get(x => x.IsActive == true).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
 
-            if(role == "Manager")
+            if (role == "Manager")
             {
                 var storageIds = _staffManageStorageService.Get(x => x.UserId == userId).Select(a => a.StorageId).ToList();
                 var staff = _staffManageStorageService.Get(x => storageIds.Contains(x.StorageId)).Select(a => a.UserId).ToList();
                 requests = requests.Where(x => staff.Contains((int)x.UserId) || x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
             }
 
-            if(role == "Delivery Staff")
+            if (role == "Delivery Staff")
             {
                 requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
             }
@@ -116,7 +116,7 @@ namespace RSSMS.DataService.Services
             await CreateAsync(request);
             var schedules = _scheduleService.Get(x => x.UserId == model.UserId && x.OrderId == model.UserId).Include(a => a.User);
             var user = schedules.FirstOrDefault().User;
-            foreach(var schedule in schedules)
+            foreach (var schedule in schedules)
             {
                 schedule.IsActive = false;
                 await _scheduleService.UpdateAsync(schedule);
@@ -124,7 +124,7 @@ namespace RSSMS.DataService.Services
 
             Notification noti = new Notification
             {
-                Description = "Delivery staff " +user.Name +" cancel delivery of order "+model.OrderId,
+                Description = "Delivery staff " + user.Name + " cancel delivery of order " + model.OrderId,
                 CreateDate = DateTime.Now,
                 IsActive = true,
                 Type = 0,

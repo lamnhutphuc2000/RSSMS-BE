@@ -214,6 +214,8 @@ namespace RSSMS.DataService.Models
 
                 entity.ToTable("OrderDetail");
 
+                entity.Property(e => e.Note).HasMaxLength(255);
+
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderDetails)
                     .HasForeignKey(d => d.OrderId)
