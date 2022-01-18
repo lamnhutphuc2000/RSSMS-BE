@@ -25,6 +25,7 @@ namespace RSSMS.DataService.Services
         Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
         Task<OrderViewModel> GetById(int id);
         Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model);
+        Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken);
     }
     class OrderService : BaseService<Order>, IOrderService
     {
@@ -207,9 +208,6 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<OrderUpdateViewModel>(updateEntity);
         }
 
-
-
-
         public async Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model)
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id not matched");
@@ -219,6 +217,33 @@ namespace RSSMS.DataService.Services
             entity.RejectedReason = model.RejectedReason;
             await UpdateAsync(entity);
             return _mapper.Map<OrderViewModel>(entity);
+        }
+
+        public async Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken)
+        {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+            var order = await Get(x => x.IsActive == true && x.Id == model.Id).Include(x => x.Customer).FirstOrDefaultAsync();
+            if (role == "Delivery Staff")
+            {
+                int customerId = (int)order.CustomerId;
+                var registrationId = order.Customer.DeviceTokenId;
+                string description = "Please commit order changes";
+                Notification noti = new Notification
+                {
+                    CreateDate = DateTime.Now,
+                    IsActive = true,
+                    OrderId = order.Id,
+                    Status = 0,
+                    Type = 2,
+                    Description = description,
+                    Note = "Delivery staff id: " + userId + " has commit the order: " + order.Id + " changes",
+                };
+                await _notificationService.CreateAsync(noti);
+                var result = await _notificationDetailService.SendNoti(description, userId, customerId, registrationId, noti.Id, order.Id, null, model);
+            }
+            return _mapper.Map<OrderViewModel>(order);
         }
     }
 }

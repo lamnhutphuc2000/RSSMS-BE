@@ -13,8 +13,9 @@ namespace RSSMS.DataService.Services
 {
     public interface INotificationDetailService : IBaseService<NotificationDetail>
     {
-        Task<ResponseContent> PushOrderNoti(string description, int SenderId, int NotificationId, int orderId, int? requestId);
+        Task<ResponseContent> PushOrderNoti(string description, int SenderId, int NotificationId, int orderId, int? requestId); // noti to manager when receive another order
         Task<ResponseContent> PushCancelRequestNoti(string description, int SenderId, int NotificationId, int orderId, int? requestId);
+        Task<ResponseContent> SendNoti(string description, int SenderId, int receiverId, string registrationId, int NotificationId, int orderId, int? requestId, object data);
     }
     public class NotificationDetailService : BaseService<NotificationDetail>, INotificationDetailService
     {
@@ -132,6 +133,25 @@ namespace RSSMS.DataService.Services
                         OrderId = orderId,
                         RequestId = requestId
                     }
+                };
+                var result = await sender.SendAsync(message);
+                return result;
+            }
+        }
+
+        public async Task<ResponseContent> SendNoti(string description, int SenderId, int receiverId, string registrationId, int NotificationId, int orderId, int? requestId, object data)
+        {
+            using (var sender = new Sender("AAAAry7VzWE:APA91bEFLYrdoliXt0cRdQtnnRNOdxhYXP0mMTOSrgOvcqhULEGKWwUJQIP7phbTXq54zGYD0pzRpDNXfkaSDwd36q088cKkT-CiQz-IBIdLC2ki9zuyK865yiHMG1G6q403iW9fsaKR"))
+            {
+                var message = new Message
+                {
+                    To = registrationId,
+                    Notification = new FCM.Net.Notification
+                    {
+                        Title = "From RSSMS",
+                        Body = description
+                    },
+                    Data = data
                 };
                 var result = await sender.SendAsync(message);
                 return result;

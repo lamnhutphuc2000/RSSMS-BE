@@ -89,7 +89,8 @@ namespace RSSMS.DataService.Services
                         .ThenInclude(order => order.Customer)
                         .Include(x => x.Order)
                         .ThenInclude(order => order.OrderDetails)
-                        .ThenInclude(orderDetail => orderDetail.Product);
+                        .ThenInclude(orderDetail => orderDetail.Product)
+                        .ThenInclude(product => product.Images);
                 result = schedules.AsEnumerable().GroupBy(p => (int)p.OrderId)
                                     .Select(g => new ScheduleViewModel
                                     {

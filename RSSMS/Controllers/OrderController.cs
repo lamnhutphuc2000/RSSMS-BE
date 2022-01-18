@@ -106,5 +106,21 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _orderService.Cancel(id, model));
         }
+        /// <summary>
+        /// Send order notification to customer by delivery staff
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPost("{id}")]
+        [Authorize(Roles = "Delivery Staff")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> SendOrderNoti(int id, OrderViewModel model)
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _orderService.SendOrderNoti(model, accessToken));
+        }
     }
 }
