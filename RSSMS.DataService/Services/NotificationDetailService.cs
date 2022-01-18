@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using FCM.Net;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.UnitOfWorks;
@@ -141,6 +142,7 @@ namespace RSSMS.DataService.Services
 
         public async Task<ResponseContent> SendNoti(string description, int SenderId, int receiverId, string registrationId, int NotificationId, int orderId, int? requestId, object data)
         {
+            string jsonConvert = JsonConvert.SerializeObject(data);
             using (var sender = new Sender("AAAAry7VzWE:APA91bEFLYrdoliXt0cRdQtnnRNOdxhYXP0mMTOSrgOvcqhULEGKWwUJQIP7phbTXq54zGYD0pzRpDNXfkaSDwd36q088cKkT-CiQz-IBIdLC2ki9zuyK865yiHMG1G6q403iW9fsaKR"))
             {
                 var message = new Message
@@ -151,7 +153,10 @@ namespace RSSMS.DataService.Services
                         Title = "From RSSMS",
                         Body = description
                     },
-                    Data = data
+                    Data = new Dictionary<string, string>
+                    {
+                        {"data",jsonConvert }
+                    }
                 };
                 var result = await sender.SendAsync(message);
                 return result;
