@@ -102,19 +102,13 @@ namespace RSSMS.DataService.Services
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().SheduleDay,
                                         Users = Get(x => x.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
-                                    });
+                                    });;
                 result = tmp.AsEnumerable().GroupBy(p => (DateTime)p.ScheduleDay)
                     .Select(g => new ScheduleViewModel
                     {
                         ScheduleDay = g.Key,
-                        Order = _mapper.Map<OrderViewModel>(g.First().Order),
-                        Address = g.First().Order.AddressReturn,
-                        Note = g.First().Note,
-                        Status = g.First().Order.Status,
-                        IsActive = g.First().IsActive,
-                        Users = Get(x => x.OrderId == g.First().Order.Id && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
+                        Orders = g.Where(x => x.ScheduleDay == g.Key).Select(x => x.Order).ToList()
                     }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-                
             }
             else
             {
@@ -132,7 +126,7 @@ namespace RSSMS.DataService.Services
                                         Users = Get(x => x.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
                                     }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             }
-            if(result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");
+            if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");
 
             var rs = new DynamicModelResponse<ScheduleViewModel>

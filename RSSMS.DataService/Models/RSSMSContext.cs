@@ -97,6 +97,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
 
+                entity.Property(e => e.Name).HasMaxLength(255);
+
                 entity.Property(e => e.Note).HasMaxLength(100);
 
                 entity.Property(e => e.Type)
