@@ -91,7 +91,7 @@ namespace RSSMS.DataService.Services
                         .ThenInclude(order => order.OrderDetails)
                         .ThenInclude(orderDetail => orderDetail.Product)
                         .ThenInclude(product => product.Images);
-                result = schedules.AsEnumerable().GroupBy(p => (int)p.OrderId)
+                var tmp = schedules.AsEnumerable().GroupBy(p => (int)p.OrderId)
                                     .Select(g => new ScheduleViewModel
                                     {
                                         OrderId = g.Key,
@@ -100,8 +100,21 @@ namespace RSSMS.DataService.Services
                                         Note = g.First().Note,
                                         Status = g.First().Order.Status,
                                         IsActive = g.First().IsActive,
+                                        ScheduleDay = (DateTime)g.First().SheduleDay,
                                         Users = Get(x => x.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
-                                    }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+                                    });
+                result = tmp.AsEnumerable().GroupBy(p => (DateTime)p.ScheduleDay)
+                    .Select(g => new ScheduleViewModel
+                    {
+                        ScheduleDay = g.Key,
+                        Order = _mapper.Map<OrderViewModel>(g.First().Order),
+                        Address = g.First().Order.AddressReturn,
+                        Note = g.First().Note,
+                        Status = g.First().Order.Status,
+                        IsActive = g.First().IsActive,
+                        Users = Get(x => x.OrderId == g.First().Order.Id && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
+                    }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+                
             }
             else
             {
@@ -115,11 +128,12 @@ namespace RSSMS.DataService.Services
                                         Note = g.First().Note,
                                         Status = g.First().Order.Status,
                                         IsActive = g.First().IsActive,
+                                        ScheduleDay = (DateTime)g.First().SheduleDay,
                                         Users = Get(x => x.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
                                     }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             }
-            if(result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedul not found");
-            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedul not found");
+            if(result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");
+            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");
 
             var rs = new DynamicModelResponse<ScheduleViewModel>
             {
