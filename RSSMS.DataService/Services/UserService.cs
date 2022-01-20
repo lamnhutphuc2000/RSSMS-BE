@@ -273,12 +273,11 @@ namespace RSSMS.DataService.Services
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User not found");
 
             var images = model.Images;
-            var files = images.Select(x => x.File).ToList();
-            foreach (var file in files)
+            foreach (var image in images)
             {
-                if (file.Length > 0)
+                if (image.File.Length > 0)
                 {
-                    byte[] data = System.Convert.FromBase64String(file);
+                    byte[] data = System.Convert.FromBase64String(image.File);
                     MemoryStream ms = new MemoryStream(data);
 
                     var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
@@ -297,11 +296,11 @@ namespace RSSMS.DataService.Services
                         .Child("avatar.jpg")
                         .PutAsync(ms, cancellation.Token);
                     var result = upload;
-
+                    image.Url = result.TargetUrl;
                 }
             }
 
-
+            model.Images = images;
 
 
             var updateEntity = _mapper.Map(model, entity);
