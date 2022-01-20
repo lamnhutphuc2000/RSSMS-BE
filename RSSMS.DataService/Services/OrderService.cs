@@ -7,6 +7,8 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
+using RSSMS.DataService.ViewModels.Images;
+using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Orders;
 using RSSMS.DataService.ViewModels.Products;
 using System;
@@ -34,13 +36,16 @@ namespace RSSMS.DataService.Services
         private readonly IStaffManageStorageService _staffmanageStorageService;
         private readonly INotificationService _notificationService;
         private readonly INotificationDetailService _notificationDetailService;
-        public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository, IOrderDetailService orderDetailService, IStaffManageStorageService staffmanageStorageService, INotificationService notificationService, INotificationDetailService notificationDetailService, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IFirebaseService _firebaseService;
+
+        public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository, IOrderDetailService orderDetailService, IStaffManageStorageService staffmanageStorageService, INotificationService notificationService, INotificationDetailService notificationDetailService, IFirebaseService firebaseService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _orderDetailService = orderDetailService;
             _staffmanageStorageService = staffmanageStorageService;
             _notificationService = notificationService;
             _notificationDetailService = notificationDetailService;
+            _firebaseService = firebaseService;
         }
         public async Task<OrderViewModel> GetById(int id)
         {
@@ -225,6 +230,7 @@ namespace RSSMS.DataService.Services
             var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
             var order = await Get(x => x.IsActive == true && x.Id == model.Id).Include(x => x.Customer).FirstOrDefaultAsync();
+
             if (role == "Delivery Staff")
             {
                 int customerId = (int)order.CustomerId;
@@ -241,6 +247,25 @@ namespace RSSMS.DataService.Services
                     Note = "Delivery staff id: " + userId + " has commit the order: " + order.Id + " changes",
                 };
                 await _notificationService.CreateAsync(noti);
+
+
+                // Get list of images
+                Dictionary<int, List<AvatarImageViewModel>> imagesOfOrder = new Dictionary<int, List<AvatarImageViewModel>>();
+                var orderDetails = model.OrderDetails;
+                int num = 0;
+                foreach(var orderDetail in orderDetails)
+                {
+                    var images = orderDetail.Images;
+                    foreach (var image in images)
+                    {
+                        var url = await _firebaseService.UploadImageToFirebase(image.File, "temp", order.Id, orderDetail.Id + "-" + num);
+                        if (url != null) image.Url = url;
+                        num++;
+                    }
+                    orderDetail.Images = images;
+                }
+                model.OrderDetails = orderDetails;
+
                 var result = await _notificationDetailService.SendNoti(description, userId, customerId, registrationId, noti.Id, order.Id, null, model);
             }
             return _mapper.Map<OrderViewModel>(order);
