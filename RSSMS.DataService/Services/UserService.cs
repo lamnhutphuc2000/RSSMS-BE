@@ -295,8 +295,7 @@ namespace RSSMS.DataService.Services
                         .Child($"{id}")
                         .Child("avatar.jpg")
                         .PutAsync(ms, cancellation.Token);
-                    var result = upload;
-                    image.Url = result.TargetUrl;
+                    image.Url = await upload;
                 }
             }
 
