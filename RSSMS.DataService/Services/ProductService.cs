@@ -35,9 +35,11 @@ namespace RSSMS.DataService.Services
         public async Task<ProductViewModel> Create(ProductCreateViewModel model)
         {
             var product = _mapper.Map<Product>(model);
+            var images = model.Images;
+            product.Images = null;
             await CreateAsync(product);
 
-            var images = model.Images;
+            
             foreach (var avatar in images)
             {
                 var url = await _firebaseService.UploadImageToFirebase(avatar.File, "products", product.Id, "avatar");

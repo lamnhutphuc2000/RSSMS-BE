@@ -83,12 +83,13 @@ namespace RSSMS.DataService.Services
 
             // Create user
             var userCreate = _mapper.Map<Models.User>(model);
+            var images = model.Images;
+            userCreate.Images = null;
             userCreate.FirebaseId = us.LocalId;
             userCreate.DeviceTokenId = model.DeviceToken;
             await CreateAsync(userCreate);
 
             // Upload image to firebase
-            var images = model.Images;
             foreach (var avatar in images)
             {
                 var url = await _firebaseService.UploadImageToFirebase(avatar.File, "users", userCreate.Id, "avatar");

@@ -43,9 +43,11 @@ namespace RSSMS.DataService.Services
         public async Task<StorageViewModel> Create(StorageCreateViewModel model)
         {
             var storage = _mapper.Map<Storage>(model);
+            var images = model.Images;
+            storage.Images = null;
             await CreateAsync(storage);
 
-            var images = model.Images;
+            
             foreach (var avatar in images)
             {
                 var url = await _firebaseService.UploadImageToFirebase(avatar.File, "storages", storage.Id, "avatar");
