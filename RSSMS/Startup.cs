@@ -5,10 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json.Serialization;
 using RSSMS.API.App_Start;
 using RSSMS.API.Handler;
 using RSSMS.DataService.Extensions;
 using RSSMS.DataService.Models;
+using System.Text.Json;
 
 namespace RSSMS
 {
