@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Firebase.Auth;
+using Firebase.Storage;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using Google.Apis.Auth.OAuth2;
@@ -18,10 +19,12 @@ using RSSMS.DataService.ViewModels.Users;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
@@ -48,6 +51,7 @@ namespace RSSMS.DataService.Services
         private readonly IOrderService _orderService;
         private readonly IScheduleService _scheduleService;
         private static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
+        private static string Bucket = "rssms-5fcc8.appspot.com";
         public UserService(IUnitOfWork unitOfWork, IUserRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService, IOrderService orderService, IScheduleService scheduleService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -267,6 +271,37 @@ namespace RSSMS.DataService.Services
 
             var entity = await GetAsync(id);
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User not found");
+
+            var images = model.Images;
+            var files = images.Select(x => x.File).ToList();
+            foreach(var file in files)
+            {
+                FileStream fs;
+                if(file.Length > 0)
+                {
+                    string path = "images";
+                    fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Open);
+
+                    var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
+                    var a = await auth.SignInWithEmailAndPasswordAsync("toadmin@gmail.com", "123456");
+
+                    var cancellation = new CancellationTokenSource();
+
+                    var upload = new FirebaseStorage(
+                        Bucket,
+                        new FirebaseStorageOptions
+                        {
+                            AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
+                            ThrowOnCancel = true
+                        }).Child("assets")
+                        .Child($"{file.FileName}.{Path.GetExtension(file.FileName).Substring(1)}")
+                        .PutAsync(fs,cancellation.Token);
+                    var result = upload;
+
+                }
+            }
+
+
 
 
             var updateEntity = _mapper.Map(model, entity);
