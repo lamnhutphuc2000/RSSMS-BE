@@ -274,13 +274,12 @@ namespace RSSMS.DataService.Services
 
             var images = model.Images;
             var files = images.Select(x => x.File).ToList();
-            foreach(var file in files)
+            foreach (var file in files)
             {
-                FileStream fs;
-                if(file.Length > 0)
+                if (file.Length > 0)
                 {
-                    string path = "images";
-                    fs = new FileStream(Path.Combine(path, file.FileName), FileMode.Open);
+                    byte[] data = System.Convert.FromBase64String(file);
+                    MemoryStream ms = new MemoryStream(data);
 
                     var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
                     var a = await auth.SignInWithEmailAndPasswordAsync("toadmin@gmail.com", "123456");
@@ -294,8 +293,9 @@ namespace RSSMS.DataService.Services
                             AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
                             ThrowOnCancel = true
                         }).Child("assets")
-                        .Child($"{file.FileName}.{Path.GetExtension(file.FileName).Substring(1)}")
-                        .PutAsync(fs,cancellation.Token);
+                        .Child($"{id}")
+                        .Child("avatar.jpg")
+                        .PutAsync(ms, cancellation.Token);
                     var result = upload;
 
                 }

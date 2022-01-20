@@ -8,7 +8,7 @@ namespace RSSMS.DataService.ViewModels.Images
         [JsonProperty("id")]
         public int Id { get; set; }
         [JsonProperty("file")]
-        public IFormFile File { get; set; }
+        public string File { get; set; }
         [JsonProperty("url")]
         public string Url { get; set; }
         [JsonProperty("note")]
