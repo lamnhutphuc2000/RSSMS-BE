@@ -1,11 +1,9 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Notifications;
-using RSSMS.DataService.ViewModels.Orders;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -39,6 +37,6 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _notifService.GetAll(userId, fields, page, size));
         }
-        
+
     }
 }

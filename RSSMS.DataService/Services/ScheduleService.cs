@@ -78,7 +78,7 @@ namespace RSSMS.DataService.Services
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-            (int, IQueryable<ScheduleViewModel>) result = (0,null);
+            (int, IQueryable<ScheduleViewModel>) result = (0, null);
 
             if (role == "Delivery Staff")
             {
@@ -102,7 +102,7 @@ namespace RSSMS.DataService.Services
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().SheduleDay,
                                         Users = Get(x => x.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).ToList()
-                                    });;
+                                    }); ;
                 result = tmp.AsEnumerable().GroupBy(p => (DateTime)p.ScheduleDay)
                     .Select(g => new ScheduleViewModel
                     {

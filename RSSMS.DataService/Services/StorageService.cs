@@ -31,17 +31,29 @@ namespace RSSMS.DataService.Services
         private readonly IMapper _mapper;
         private readonly IStaffManageStorageService _staffManageStorageService;
         private readonly IAreaService _areaService;
-        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService, IAreaService areaService) : base(unitOfWork, repository)
+        private readonly IFirebaseService _firebaseService;
+        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService, IAreaService areaService, IFirebaseService firebaseService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffManageStorageService = staffManageStorageService;
             _areaService = areaService;
+            _firebaseService = firebaseService;
         }
 
         public async Task<StorageViewModel> Create(StorageCreateViewModel model)
         {
             var storage = _mapper.Map<Storage>(model);
             await CreateAsync(storage);
+
+            var images = model.Images;
+            foreach (var avatar in images)
+            {
+                var url = await _firebaseService.UploadImageToFirebase(avatar.File, "storages", storage.Id, "avatar");
+                if (url != null) avatar.Url = url;
+            }
+            storage.Images = images.AsQueryable().ProjectTo<Image>(_mapper.ConfigurationProvider).ToList();
+
+            await UpdateAsync(storage);
 
             foreach (UserListStaffViewModel staffAssigned in model.ListStaff)
             {
@@ -159,6 +171,13 @@ namespace RSSMS.DataService.Services
                 }
             }
 
+            var images = model.Images;
+            foreach (var avatar in images)
+            {
+                var url = await _firebaseService.UploadImageToFirebase(avatar.File, "storages", id, "avatar");
+                if (url != null) avatar.Url = url;
+            }
+            model.Images = images;
 
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);

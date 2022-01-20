@@ -7,9 +7,7 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Notifications;
-using RSSMS.DataService.ViewModels.Orders;
 using System;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -28,7 +26,7 @@ namespace RSSMS.DataService.Services
             _mapper = mapper;
         }
 
-        
+
         public async Task<DynamicModelResponse<NotificationViewModel>> GetAll(int userId, string[] fields, int page, int size)
         {
             var notifications = Get(x => x.IsActive == true && x.NotificationDetails.Any(a => a.UserId == userId && a.IsActive == true))

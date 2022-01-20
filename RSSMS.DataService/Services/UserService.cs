@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Firebase.Auth;
-using Firebase.Storage;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using Google.Apis.Auth.OAuth2;
@@ -9,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using RSSMS.DataService.Constants;
+using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
@@ -19,12 +19,10 @@ using RSSMS.DataService.ViewModels.Users;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
@@ -50,14 +48,16 @@ namespace RSSMS.DataService.Services
         private readonly IStaffManageStorageService _staffManageStorageService;
         private readonly IOrderService _orderService;
         private readonly IScheduleService _scheduleService;
+        private readonly IFirebaseService _firebaseService;
         private static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
         private static string Bucket = "rssms-5fcc8.appspot.com";
-        public UserService(IUnitOfWork unitOfWork, IUserRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService, IOrderService orderService, IScheduleService scheduleService) : base(unitOfWork, repository)
+        public UserService(IUnitOfWork unitOfWork, IUserRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService, IOrderService orderService, IScheduleService scheduleService, IFirebaseService firebaseService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffManageStorageService = staffManageStorageService;
             _orderService = orderService;
             _scheduleService = scheduleService;
+            _firebaseService = firebaseService;
         }
 
         public Task<int> Count(List<UserViewModel> shelves)
@@ -80,10 +80,23 @@ namespace RSSMS.DataService.Services
             }
             var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
             if (user != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email is existed");
+
+            // Create user
             var userCreate = _mapper.Map<Models.User>(model);
             userCreate.FirebaseId = us.LocalId;
             userCreate.DeviceTokenId = model.DeviceToken;
             await CreateAsync(userCreate);
+
+            // Upload image to firebase
+            var images = model.Images;
+            foreach (var avatar in images)
+            {
+                var url = await _firebaseService.UploadImageToFirebase(avatar.File, "users", userCreate.Id, "avatar");
+                if (url != null) avatar.Url = url;
+            }
+            userCreate.Images = images.AsQueryable().ProjectTo<Image>(_mapper.ConfigurationProvider).ToList();
+
+            // Assign user to storages
             if (model.StorageIds != null)
             {
                 for (int i = 0; i < model.StorageIds.Count; i++)
@@ -269,39 +282,16 @@ namespace RSSMS.DataService.Services
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User Id not matched");
 
-            var entity = await GetAsync(id);
+            var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User not found");
 
             var images = model.Images;
-            foreach (var image in images)
+            foreach (var avatar in images)
             {
-                if (image.File.Length > 0)
-                {
-                    byte[] data = System.Convert.FromBase64String(image.File);
-                    MemoryStream ms = new MemoryStream(data);
-
-                    var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
-                    var a = await auth.SignInWithEmailAndPasswordAsync("toadmin@gmail.com", "123456");
-
-                    var cancellation = new CancellationTokenSource();
-
-                    var upload = new FirebaseStorage(
-                        Bucket,
-                        new FirebaseStorageOptions
-                        {
-                            AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
-                            ThrowOnCancel = true
-                        }).Child("assets")
-                        .Child($"{id}")
-                        .Child("avatar.jpg")
-                        .PutAsync(ms, cancellation.Token);
-                    image.Url = await upload;
-                }
+                var url = await _firebaseService.UploadImageToFirebase(avatar.File, "users", id, "avatar");
+                if (url != null) avatar.Url = url;
             }
-
             model.Images = images;
-
-
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);
 

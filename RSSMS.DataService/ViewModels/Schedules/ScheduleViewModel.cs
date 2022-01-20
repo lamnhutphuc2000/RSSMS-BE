@@ -13,7 +13,7 @@ namespace RSSMS.DataService.ViewModels.Schedules
         public List<OrderViewModel> Orders { get; set; }
         public string Address { get; set; }
         public string Note { get; set; }
-        
+
         public int? Status { get; set; }
         public bool? IsActive { get; set; }
         public List<UserViewModel> Users { get; set; }

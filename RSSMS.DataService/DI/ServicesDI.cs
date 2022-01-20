@@ -58,6 +58,8 @@ namespace RSSMS.DataService.DI
 
             services.AddScoped<INotificationDetailRepository, NotificationDetailRepository>();
             services.AddScoped<INotificationDetailService, NotificationDetailService>();
+
+            services.AddScoped<IFirebaseService, FirebaseService>();
         }
     }
 }

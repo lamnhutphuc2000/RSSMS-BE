@@ -25,16 +25,28 @@ namespace RSSMS.DataService.Services
     public class ProductService : BaseService<Product>, IProductService
     {
         private readonly IMapper _mapper;
-        public ProductService(IUnitOfWork unitOfWork, IProductRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IFirebaseService _firebaseService;
+        public ProductService(IUnitOfWork unitOfWork, IProductRepository repository, IMapper mapper, IFirebaseService firebaseService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
+            _firebaseService = firebaseService;
         }
 
         public async Task<ProductViewModel> Create(ProductCreateViewModel model)
         {
-            var storage = _mapper.Map<Product>(model);
-            await CreateAsync(storage);
-            return _mapper.Map<ProductViewModel>(storage);
+            var product = _mapper.Map<Product>(model);
+            await CreateAsync(product);
+
+            var images = model.Images;
+            foreach (var avatar in images)
+            {
+                var url = await _firebaseService.UploadImageToFirebase(avatar.File, "products", product.Id, "avatar");
+                if (url != null) avatar.Url = url;
+            }
+            product.Images = images.AsQueryable().ProjectTo<Image>(_mapper.ConfigurationProvider).ToList();
+            await UpdateAsync(product);
+
+            return _mapper.Map<ProductViewModel>(product);
         }
 
         public async Task<ProductViewAllModel> Delete(int id)
@@ -85,6 +97,14 @@ namespace RSSMS.DataService.Services
             var updateEntity = _mapper.Map(model, entity);
             updateEntity.IsActive = false;
             await UpdateAsync(updateEntity);
+
+            var images = model.Images;
+            foreach (var avatar in images)
+            {
+                var url = await _firebaseService.UploadImageToFirebase(avatar.File, "products", updateEntity.Id, "avatar");
+                if (url != null) avatar.Url = url;
+            }
+            updateEntity.Images = images.AsQueryable().ProjectTo<Image>(_mapper.ConfigurationProvider).ToList();
 
             updateEntity.Id = 0;
             updateEntity.IsActive = true;
