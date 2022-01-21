@@ -6,6 +6,7 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
+using RSSMS.DataService.ViewModels.Images;
 using RSSMS.DataService.ViewModels.Products;
 using System.Collections.Generic;
 using System.Linq;
@@ -98,13 +99,19 @@ namespace RSSMS.DataService.Services
 
             var updateEntity = _mapper.Map(model, entity);
             updateEntity.IsActive = false;
+            updateEntity.Images = null;
             await UpdateAsync(updateEntity);
+            
 
-            var images = model.Images;
+            List<AvatarImageViewModel> images = model.Images.ToList();
             foreach (var avatar in images)
             {
                 var url = await _firebaseService.UploadImageToFirebase(avatar.File, "products", updateEntity.Id, "avatar");
-                if (url != null) avatar.Url = url;
+                if (url != null)
+                {
+                    avatar.Id = 0;
+                    avatar.Url = url;
+                }
             }
             updateEntity.Images = images.AsQueryable().ProjectTo<Image>(_mapper.ConfigurationProvider).ToList();
 
