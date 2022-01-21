@@ -259,7 +259,11 @@ namespace RSSMS.DataService.Services
                     foreach (var image in images)
                     {
                         var url = await _firebaseService.UploadImageToFirebase(image.File, "temp", order.Id, orderDetail.Id + "-" + num);
-                        if (url != null) image.Url = url;
+                        if (url != null) 
+                        {
+                            image.File = null;
+                            image.Url = url;
+                        }
                         num++;
                     }
                     orderDetail.Images = images;
