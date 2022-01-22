@@ -204,8 +204,35 @@ namespace RSSMS.DataService.Services
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order Id not matched");
 
-            var entity = await GetAsync(id);
+            var entity = await Get(x => x.IsActive == true)
+                .Include(x => x.OrderStorageDetails)
+                .Include(x => x.OrderDetails)
+                .ThenInclude(orderDetail => orderDetail.Product).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+
+
+
+            Dictionary<int, List<AvatarImageViewModel>> imagesOfOrder = new Dictionary<int, List<AvatarImageViewModel>>();
+            var orderDetails = model.OrderDetails;
+            int num = 0;
+            foreach (var orderDetail in orderDetails)
+            {
+                var images = orderDetail.Images;
+                foreach (var image in images)
+                {
+                    var url = await _firebaseService.UploadImageToFirebase(image.File, "orders", id, orderDetail.Id + "-" + num);
+                    if (url != null)
+                    {
+                        image.Url = url;
+                    }
+                    num++;
+                }
+                orderDetail.Images = images;
+            }
+            model.OrderDetails = orderDetails;
+
+
+
 
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);
