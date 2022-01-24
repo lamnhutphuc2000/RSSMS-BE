@@ -90,12 +90,16 @@ namespace RSSMS.DataService.Services
             await CreateAsync(userCreate);
 
             // Upload image to firebase
-            foreach (var avatar in images)
+            if(images != null)
             {
-                var url = await _firebaseService.UploadImageToFirebase(avatar.File, "users", userCreate.Id, "avatar");
-                if (url != null) avatar.Url = url;
+                foreach (var avatar in images)
+                {
+                    var url = await _firebaseService.UploadImageToFirebase(avatar.File, "users", userCreate.Id, "avatar");
+                    if (url != null) avatar.Url = url;
+                }
+                userCreate.Images = images.AsQueryable().ProjectTo<Image>(_mapper.ConfigurationProvider).ToList();
             }
-            userCreate.Images = images.AsQueryable().ProjectTo<Image>(_mapper.ConfigurationProvider).ToList();
+            
 
             // Assign user to storages
             if (model.StorageIds != null)

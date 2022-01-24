@@ -63,7 +63,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(StorageViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -94,7 +94,7 @@ namespace RSSMS.API.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]

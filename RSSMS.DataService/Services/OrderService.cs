@@ -24,7 +24,7 @@ namespace RSSMS.DataService.Services
     {
         Task<OrderCreateViewModel> Create(OrderCreateViewModel model, string accessToken);
         Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, IList<int> OrderStatuses, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken);
-        Task<Order> Update(int id, OrderUpdateViewModel model);
+        Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
         Task<OrderViewModel> GetById(int id);
         Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model);
         Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken);
@@ -200,7 +200,7 @@ namespace RSSMS.DataService.Services
             return model;
         }
 
-        public async Task<Order> Update(int id, OrderUpdateViewModel model)
+        public async Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model)
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order Id not matched");
 
@@ -215,9 +215,10 @@ namespace RSSMS.DataService.Services
             var updateEntity = _mapper.Map(model, entity);
             var orderDetails = updateEntity.OrderDetails.Select(c => { c.OrderId = id; return c; }).ToList();
             updateEntity.OrderDetails = orderDetails;
+            updateEntity.Status = 3;
             await UpdateAsync(updateEntity);
 
-            return updateEntity;
+            return model;
         }
 
         public async Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model)
