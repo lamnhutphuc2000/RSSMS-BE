@@ -24,7 +24,7 @@ namespace RSSMS.DataService.Services
     {
         Task<OrderCreateViewModel> Create(OrderCreateViewModel model, string accessToken);
         Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, IList<int> OrderStatuses, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken);
-        Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
+        Task<Order> Update(int id, OrderUpdateViewModel model);
         Task<OrderViewModel> GetById(int id);
         Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model);
         Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken);
@@ -200,44 +200,24 @@ namespace RSSMS.DataService.Services
             return model;
         }
 
-        public async Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model)
+        public async Task<Order> Update(int id, OrderUpdateViewModel model)
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order Id not matched");
 
-            var entity = await Get(x => x.IsActive == true)
-                .Include(x => x.OrderStorageDetails)
+            var entity = await Get(x => x.Id == id && x.IsActive == true)
+                .Include(x => x.Schedules)
                 .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.Product).FirstOrDefaultAsync();
+                .ThenInclude(orderDetails => orderDetails.Images).AsNoTracking().FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
 
 
 
-            Dictionary<int, List<AvatarImageViewModel>> imagesOfOrder = new Dictionary<int, List<AvatarImageViewModel>>();
-            var orderDetails = model.OrderDetails;
-            int num = 0;
-            foreach (var orderDetail in orderDetails)
-            {
-                var images = orderDetail.Images;
-                foreach (var image in images)
-                {
-                    var url = await _firebaseService.UploadImageToFirebase(image.File, "orders", id, orderDetail.Id + "-" + num);
-                    if (url != null)
-                    {
-                        image.Url = url;
-                    }
-                    num++;
-                }
-                orderDetail.Images = images;
-            }
-            model.OrderDetails = orderDetails;
-
-
-
-
             var updateEntity = _mapper.Map(model, entity);
+            var orderDetails = updateEntity.OrderDetails.Select(c => { c.OrderId = id; return c; }).ToList();
+            updateEntity.OrderDetails = orderDetails;
             await UpdateAsync(updateEntity);
 
-            return _mapper.Map<OrderUpdateViewModel>(updateEntity);
+            return updateEntity;
         }
 
         public async Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model)

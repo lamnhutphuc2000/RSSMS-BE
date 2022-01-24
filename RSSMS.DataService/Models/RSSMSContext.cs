@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
@@ -104,6 +106,11 @@ namespace RSSMS.DataService.Models
                     .IsFixedLength(true);
 
                 entity.Property(e => e.Url).HasMaxLength(200);
+
+                entity.HasOne(d => d.OrderDetail)
+                    .WithMany(p => p.Images)
+                    .HasForeignKey(d => d.OrderDetailId)
+                    .HasConstraintName("FK_Image_OrderDetail");
 
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.Images)

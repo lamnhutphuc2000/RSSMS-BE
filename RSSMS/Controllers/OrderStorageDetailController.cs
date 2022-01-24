@@ -25,7 +25,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
-        [Authorize(Roles = "Manager")]
+        //[Authorize(Roles = "Manager")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderStorageDetailViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]

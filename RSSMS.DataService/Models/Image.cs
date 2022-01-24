@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 #nullable disable
 
@@ -20,8 +21,10 @@ namespace RSSMS.DataService.Models
         public int? StorageId { get; set; }
         public int? OrderId { get; set; }
         public string Name { get; set; }
+        public int? OrderDetailId { get; set; }
 
         public virtual Order Order { get; set; }
+        public virtual OrderDetail OrderDetail { get; set; }
         public virtual Product Product { get; set; }
         public virtual Storage Storage { get; set; }
         public virtual User User { get; set; }

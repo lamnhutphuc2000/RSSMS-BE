@@ -85,23 +85,7 @@ namespace RSSMS.DataService.Repositories
 
         public void Update(TEntity entity)
         {
-            //dbSet.Update(entity);
-
-            dbSet.Attach(entity);
-
-            dbContext.Entry(entity).State = EntityState.Modified;
-
-            var entry = dbContext.Entry(entity);
-
-            Type type = typeof(TEntity);
-            PropertyInfo[] properties = type.GetProperties();
-            foreach (PropertyInfo property in properties)
-            {
-                if (property.GetValue(entity, null) == null)
-                {
-                    entry.Property(property.Name).IsModified = false;
-                }
-            }
+            dbSet.Update(entity);
         }
     }
 }

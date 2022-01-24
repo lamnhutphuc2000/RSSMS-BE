@@ -28,8 +28,10 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<OrderViewModel, Order>();
 
-            mc.CreateMap<Order, OrderUpdateViewModel>();
-            mc.CreateMap<OrderUpdateViewModel, Order>();
+            mc.CreateMap<Order, OrderUpdateViewModel>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            mc.CreateMap<OrderUpdateViewModel, Order>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         }
     }
 }

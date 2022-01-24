@@ -2,6 +2,7 @@
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Products;
+using System.Linq;
 
 namespace RSSMS.DataService.AutoMapper
 {
