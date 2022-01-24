@@ -20,7 +20,7 @@ namespace RSSMS.DataService.AutoMapper
                   .ForMember(des => des.CreatedDate, otp => otp.MapFrom(src => DateTime.Now));
 
             mc.CreateMap<Order, OrderViewModel>()
-                .ForMember(des => des.OrderBoxDetails, opt => opt.MapFrom(src => src.OrderBoxDetails.Where(x => x.IsActive == true).Select(a => a.Box)))
+                //.ForMember(des => des.OrderBoxDetails, opt => opt.MapFrom(src => src.OrderDetails.Select(x => x.BoxOrderDetails.Where(a => a.IsActive == true)).Select(a => a.)))
                 .ForMember(des => des.StorageId, opt => opt.MapFrom(src => src.OrderStorageDetails.Where(x => x.IsActive == true).FirstOrDefault().StorageId))
                 .ForMember(des => des.StorageName, opt => opt.MapFrom(src => src.OrderStorageDetails.Where(x => x.IsActive == true).FirstOrDefault().Storage.Name))
                 .ForMember(des => des.DurationDays, opt => opt.MapFrom(src => (src.ReturnDate - src.DeliveryDate).Value.Days))

@@ -9,7 +9,7 @@ namespace RSSMS.DataService.Models
     {
         public Box()
         {
-            OrderBoxDetails = new HashSet<OrderBoxDetail>();
+            BoxOrderDetails = new HashSet<BoxOrderDetail>();
             RequestDetails = new HashSet<RequestDetail>();
         }
 
@@ -25,10 +25,9 @@ namespace RSSMS.DataService.Models
         public int? ModifiedBy { get; set; }
         public int? ProductId { get; set; }
 
-        public virtual Order Order { get; set; }
         public virtual Product Product { get; set; }
         public virtual Shelf Shelf { get; set; }
-        public virtual ICollection<OrderBoxDetail> OrderBoxDetails { get; set; }
+        public virtual ICollection<BoxOrderDetail> BoxOrderDetails { get; set; }
         public virtual ICollection<RequestDetail> RequestDetails { get; set; }
     }
 }

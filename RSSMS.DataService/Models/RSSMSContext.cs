@@ -19,6 +19,7 @@ namespace RSSMS.DataService.Models
 
         public virtual DbSet<Area> Areas { get; set; }
         public virtual DbSet<Box> Boxes { get; set; }
+        public virtual DbSet<BoxOrderDetail> BoxOrderDetails { get; set; }
         public virtual DbSet<Image> Images { get; set; }
         public virtual DbSet<Notification> Notifications { get; set; }
         public virtual DbSet<NotificationDetail> NotificationDetails { get; set; }
@@ -73,11 +74,6 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
 
-                entity.HasOne(d => d.Order)
-                    .WithMany(p => p.Boxes)
-                    .HasForeignKey(d => d.OrderId)
-                    .HasConstraintName("FK_Box_Order");
-
                 entity.HasOne(d => d.Product)
                     .WithMany(p => p.Boxes)
                     .HasForeignKey(d => d.ProductId)
@@ -87,6 +83,21 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.Boxes)
                     .HasForeignKey(d => d.ShelfId)
                     .HasConstraintName("FK_Box_Shelf");
+            });
+
+            modelBuilder.Entity<BoxOrderDetail>(entity =>
+            {
+                entity.ToTable("BoxOrderDetail");
+
+                entity.HasOne(d => d.Box)
+                    .WithMany(p => p.BoxOrderDetails)
+                    .HasForeignKey(d => d.BoxId)
+                    .HasConstraintName("FK_BoxOrderDetail_Box");
+
+                entity.HasOne(d => d.OrderDetail)
+                    .WithMany(p => p.BoxOrderDetails)
+                    .HasForeignKey(d => d.OrderDetailId)
+                    .HasConstraintName("FK_BoxOrderDetail_OrderDetail");
             });
 
             modelBuilder.Entity<Image>(entity =>
@@ -203,18 +214,6 @@ namespace RSSMS.DataService.Models
             modelBuilder.Entity<OrderBoxDetail>(entity =>
             {
                 entity.ToTable("OrderBoxDetail");
-
-                entity.HasOne(d => d.Box)
-                    .WithMany(p => p.OrderBoxDetails)
-                    .HasForeignKey(d => d.BoxId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_OrderBoxDetail_Box");
-
-                entity.HasOne(d => d.Order)
-                    .WithMany(p => p.OrderBoxDetails)
-                    .HasForeignKey(d => d.OrderId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_OrderBoxDetail_Order");
             });
 
             modelBuilder.Entity<OrderDetail>(entity =>

@@ -101,7 +101,10 @@ namespace RSSMS.DataService.Services
             updateEntity.IsActive = false;
             updateEntity.Images = null;
             await UpdateAsync(updateEntity);
-            
+
+            updateEntity.Id = 0;
+            updateEntity.IsActive = true;
+            await CreateAsync(updateEntity);
 
             List<AvatarImageViewModel> images = model.Images.ToList();
             foreach (var avatar in images)
@@ -115,9 +118,7 @@ namespace RSSMS.DataService.Services
             }
             updateEntity.Images = images.AsQueryable().ProjectTo<Image>(_mapper.ConfigurationProvider).ToList();
 
-            updateEntity.Id = 0;
-            updateEntity.IsActive = true;
-            await CreateAsync(updateEntity);
+            await UpdateAsync(updateEntity);
 
             return _mapper.Map<ProductUpdateViewModel>(updateEntity);
         }
