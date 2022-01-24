@@ -94,19 +94,23 @@ namespace RSSMS.DataService.Services
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Product Id not matched");
 
-            var entity = await GetAsync(id);
+            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.Images).FirstOrDefaultAsync();
+            var oldImage = entity.Images;
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Product not found");
 
+            List<AvatarImageViewModel> images = model.Images.ToList();
+
+            model.Images = null;
             var updateEntity = _mapper.Map(model, entity);
             updateEntity.IsActive = false;
-            updateEntity.Images = null;
+            updateEntity.Images = oldImage;
             await UpdateAsync(updateEntity);
 
             updateEntity.Id = 0;
             updateEntity.IsActive = true;
             await CreateAsync(updateEntity);
 
-            List<AvatarImageViewModel> images = model.Images.ToList();
+            
             foreach (var avatar in images)
             {
                 var url = await _firebaseService.UploadImageToFirebase(avatar.File, "products", updateEntity.Id, "avatar");

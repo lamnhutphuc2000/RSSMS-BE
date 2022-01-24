@@ -14,6 +14,6 @@ namespace RSSMS.DataService.ViewModels.Products
         public string Unit { get; set; }
         public string Tooltip { get; set; }
         public int? Status { get; set; }
-        public virtual ICollection<AvatarImageViewModel> Images { get; set; }
+        public virtual List<AvatarImageViewModel> Images { get; set; }
     }
 }

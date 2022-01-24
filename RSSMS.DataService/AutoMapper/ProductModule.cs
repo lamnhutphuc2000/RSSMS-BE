@@ -22,7 +22,8 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<Product, ProductUpdateViewModel>();
             mc.CreateMap<ProductUpdateViewModel, Product>()
-                .ForMember(des => des.ModifiedDate, opt => opt.MapFrom(src => DateTime.Now));
+                .ForMember(des => des.ModifiedDate, opt => opt.MapFrom(src => DateTime.Now))
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         }
     }
 }
