@@ -14,7 +14,7 @@ namespace RSSMS.DataService.ViewModels.Storages
 
         public int? Status { get; set; }
 
-        public int? Type { get; set; }
+        
 
         public virtual ICollection<AvatarImageCreateViewModel> Images { get; set; }
         public virtual ICollection<UserListStaffViewModel> ListStaff { get; set; }

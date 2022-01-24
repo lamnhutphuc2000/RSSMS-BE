@@ -9,6 +9,7 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Areas;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ namespace RSSMS.DataService.Services
 
     public interface IAreaService : IBaseService<Area>
     {
-        Task<DynamicModelResponse<AreaViewModel>> GetByStorageId(int id, AreaViewModel model, string[] fields, int page, int size);
+        Task<DynamicModelResponse<AreaViewModel>> GetByStorageId(int id, AreaViewModel model, List<int> types, string[] fields, int page, int size);
         Task<AreaViewModel> Create(AreaCreateViewModel model);
         Task<AreaViewModel> Delete(int id);
         Task<AreaViewModel> Update(int id, AreaUpdateViewModel model);
@@ -66,13 +67,22 @@ namespace RSSMS.DataService.Services
             return result;
         }
 
-        public async Task<DynamicModelResponse<AreaViewModel>> GetByStorageId(int id, AreaViewModel model, string[] fields, int page, int size)
+        public async Task<DynamicModelResponse<AreaViewModel>> GetByStorageId(int id, AreaViewModel model, List<int> types, string[] fields, int page, int size)
         {
-            var result = Get(x => x.StorageId == id && x.IsActive == true)
-                .ProjectTo<AreaViewModel>(_mapper.ConfigurationProvider)
+            var areas = Get(x => x.StorageId == id && x.IsActive == true)
+                .ProjectTo<AreaViewModel>(_mapper.ConfigurationProvider);
+
+            if (types.Count > 0)
+            {
+                areas = areas.Where(x => types.Contains((int)x.Type));
+            }
+
+            var result = areas
                  .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
+
+            
 
             var rs = new DynamicModelResponse<AreaViewModel>
             {

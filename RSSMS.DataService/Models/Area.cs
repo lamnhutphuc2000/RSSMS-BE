@@ -17,6 +17,7 @@ namespace RSSMS.DataService.Models
         public string Name { get; set; }
         public string Description { get; set; }
         public int? Usage { get; set; }
+        public int? Type { get; set; }
         public int? Status { get; set; }
         public bool? IsActive { get; set; }
         public DateTime? CreatedDate { get; set; }

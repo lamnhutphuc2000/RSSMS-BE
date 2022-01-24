@@ -8,6 +8,7 @@ namespace RSSMS.DataService.ViewModels.Areas
         public int Id { get; set; }
         public int? StorageId { get; set; }
         public string Name { get; set; }
+        public int? Type { get; set; }
         public string Description { get; set; }
         public int? Status { get; set; }
         public List<BoxUsageViewModel> BoxUsage { get; set; }

@@ -4,6 +4,7 @@ using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Areas;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -35,9 +36,9 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(DynamicModelResponse<AreaViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetAreaByStorageID([FromQuery] int storageid, [FromQuery] AreaViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
+        public async Task<IActionResult> GetAreaByStorageID([FromQuery] int storageid, [FromQuery] AreaViewModel model, [FromQuery] List<int> types, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
         {
-            return Ok(await _areaService.GetByStorageId(storageid, model, fields, page, size));
+            return Ok(await _areaService.GetByStorageId(storageid, model, types, fields, page, size));
         }
         /// <summary>
         /// Get area by Id

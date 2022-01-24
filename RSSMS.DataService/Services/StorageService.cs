@@ -165,12 +165,9 @@ namespace RSSMS.DataService.Services
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
 
             var areas = entity.Areas;
-            if (entity.Type != model.Type)
+            foreach (var area in areas)
             {
-                foreach (var area in areas)
-                {
-                    if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
-                }
+                if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
             }
 
             var images = model.Images;
