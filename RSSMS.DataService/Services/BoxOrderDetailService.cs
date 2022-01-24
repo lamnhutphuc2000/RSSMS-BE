@@ -28,7 +28,7 @@ namespace RSSMS.DataService.Services
         public BoxOrderDetailService(IUnitOfWork unitOfWork, IBoxService boxService, IOrderService orderSerivce, IBoxOrderDetailRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
-            _boxService = _boxService;
+            _boxService = boxService;
             _orderSerivce = orderSerivce;
         }
 
