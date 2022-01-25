@@ -5,6 +5,7 @@ namespace RSSMS.DataService.ViewModels.Requests
     public class RequestCreateViewModel
     {
         public int? OrderId { get; set; }
+        public decimal? TotalPrice { get; set; }
         public DateTime OldReturnDate { get; set; }
         public DateTime ReturnDate { get; set; }
         public DateTime CancelDay { get; set; }
