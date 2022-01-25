@@ -86,8 +86,15 @@ namespace RSSMS.DataService.Services
             {
                 order = order.Where(x => x.OrderStorageDetails.Count == 0 || x.ManagerId.HasValue == false || x.ManagerId == userId)
                     .Include(x => x.OrderStorageDetails)
+                    .Include(x => x.Schedules)
                     .Include(x => x.OrderDetails)
                     .ThenInclude(orderDetail => orderDetail.Product);
+
+                foreach (var o in order)
+                {
+                    if (o.Schedules.Any(a => a.Status == 1))
+                        o.Status = 5;
+                }
             }
 
             if (role == "Office staff")

@@ -43,14 +43,15 @@ namespace RSSMS.API.Controllers
             return Ok(await _requestService.GetById(id));
         }
         [HttpPost]
-        [Authorize(Roles = "Delivery Staff")]
+        [Authorize(Roles = "Delivery Staff, Customer")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(RequestCreateViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Add(RequestCreateViewModel model)
         {
-            return Ok(await _requestService.Create(model));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _requestService.Create(model, accessToken));
         }
         /// <summary>
         /// Update Product

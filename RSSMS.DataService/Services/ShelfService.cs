@@ -139,7 +139,7 @@ namespace RSSMS.DataService.Services
                 .Include(x => x.Boxes.Where(a => a.IsActive == true))
                 .ThenInclude(x => x.Product)
                 .Include(x => x.Boxes.Where(a => a.IsActive == true))
-                .ThenInclude(x => x.BoxOrderDetails.Where(a => a.IsActive == true))
+                .ThenInclude(x => x.BoxOrderDetails.Where(a => a.IsActive == true)).ThenInclude(x => x.OrderDetail)
                 .ProjectTo<ShelfViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);

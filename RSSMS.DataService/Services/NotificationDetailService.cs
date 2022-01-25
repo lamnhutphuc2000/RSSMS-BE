@@ -15,7 +15,7 @@ namespace RSSMS.DataService.Services
     public interface INotificationDetailService : IBaseService<NotificationDetail>
     {
         Task<ResponseContent> PushOrderNoti(string description, int SenderId, int NotificationId, int orderId, int? requestId); // noti to manager when receive another order
-        Task<ResponseContent> PushCancelRequestNoti(string description, int SenderId, int NotificationId, int orderId, int? requestId);
+        Task<ResponseContent> PushCancelRequestNoti(string description, int SenderId, int NotificationId);
         Task<ResponseContent> SendNoti(string description, int SenderId, int receiverId, string registrationId, int NotificationId, int orderId, int? requestId, object data);
     }
     public class NotificationDetailService : BaseService<NotificationDetail>, INotificationDetailService
@@ -83,7 +83,7 @@ namespace RSSMS.DataService.Services
                 return result;
             }
         }
-        public async Task<ResponseContent> PushCancelRequestNoti(string description, int senderId, int notificationId, int orderId, int? requestId)
+        public async Task<ResponseContent> PushCancelRequestNoti(string description, int senderId, int notificationId)
         {
             var storageSenderIn = _staffManageStorageService.Get(x => x.UserId == senderId).Select(a => a.StorageId).FirstOrDefault();
             if (storageSenderIn == 0) return null;
@@ -130,9 +130,7 @@ namespace RSSMS.DataService.Services
                     },
                     Data = new
                     {
-                        Content = description,
-                        OrderId = orderId,
-                        RequestId = requestId
+                        Content = description
                     }
                 };
                 var result = await sender.SendAsync(message);

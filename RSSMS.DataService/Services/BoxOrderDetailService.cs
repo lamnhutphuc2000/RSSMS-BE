@@ -49,6 +49,7 @@ namespace RSSMS.DataService.Services
                 var entity = _mapper.Map<BoxOrderDetail>(box);
                 entity.BoxId = box.BoxId;
                 entity.OrderDetailId = box.OrderDetailId;
+                entity.IsActive = true;
                 await CreateAsync(entity);
             }
             return model;

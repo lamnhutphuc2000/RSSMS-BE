@@ -14,7 +14,7 @@ namespace RSSMS.DataService.AutoMapper
                    opt => opt.MapFrom
                    (src => src.BoxOrderDetails.Where(a => a.IsActive == true).FirstOrDefault() != null ? src.BoxOrderDetails.Where(a => a.IsActive == true).FirstOrDefault().OrderDetail.Order.ReturnDate : null))
                 .ForMember(des => des.SizeType, opt => opt.MapFrom(des => des.Product.Size))
-                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.BoxOrderDetails.Where(x => x.IsActive == true).FirstOrDefault().OrderDetailId));
+                .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.BoxOrderDetails.Where(x => x.IsActive == true).FirstOrDefault().OrderDetail.OrderId));
             mc.CreateMap<Box, BoxDetailViewModel>()
                 .ForMember(des => des.ShelfName, opt => opt.MapFrom(des => des.Shelf.Name))
                 .ForMember(des => des.AreaName, opt => opt.MapFrom(des => des.Shelf.Area.Name))

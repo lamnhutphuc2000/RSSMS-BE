@@ -39,13 +39,14 @@ namespace RSSMS.DataService.Services
             if (userIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id null");
             var schedules = model.Schedules;
             if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id null");
-            var listSchedules = Get(x => x.IsActive == true).ToList();
+            var listSchedules = Get().ToList();
 
             var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.OrderIds == x.OrderId));
 
             foreach (var scheduleAssigned in schedulesAssigned)
             {
                 scheduleAssigned.IsActive = false;
+                scheduleAssigned.Status = 0;
                 await UpdateAsync(scheduleAssigned);
             }
             for (int i = 0; i < userIds.Count; i++)

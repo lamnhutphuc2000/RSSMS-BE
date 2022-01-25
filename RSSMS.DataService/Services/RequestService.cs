@@ -20,7 +20,7 @@ namespace RSSMS.DataService.Services
     {
         Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, string[] fields, int page, int size, string accessToken);
         Task<RequestViewModel> GetById(int id);
-        Task<RequestCreateViewModel> Create(RequestCreateViewModel model);
+        Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken);
         Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model);
         Task<RequestViewModel> Delete(int id);
     }
@@ -110,31 +110,46 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<RequestViewModel>(updateEntity);
         }
 
-        public async Task<RequestCreateViewModel> Create(RequestCreateViewModel model)
+        public async Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken)
         {
-            var request = _mapper.Map<Request>(model);
-            await CreateAsync(request);
-            var schedules = _scheduleService.Get(x => x.UserId == model.UserId && x.OrderId == model.UserId).Include(a => a.User);
-            var user = schedules.FirstOrDefault().User;
-            foreach (var schedule in schedules)
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+
+            if(role == "Delivery Staff")
             {
-                schedule.IsActive = false;
-                await _scheduleService.UpdateAsync(schedule);
+                var schedules = _scheduleService.Get(x => x.SheduleDay == model.CancelDay && x.IsActive == true && x.UserId == userId).Include(a => a.User);
+                foreach (var schedule in schedules)
+                {
+                    schedule.IsActive = false;
+                    schedule.Status = 1;
+                    await _scheduleService.UpdateAsync(schedule);
+
+                    var request = _mapper.Map<Request>(model);
+                    request.OrderId = schedule.OrderId;
+                    request.UserId = userId;
+                    await CreateAsync(request);
+                }
+                var user = schedules.FirstOrDefault().User;
+                var listOrder = schedules.Select(x => x.OrderId).ToList();
+
+                Notification noti = new Notification
+                {
+                    Description = "Delivery staff " + user.Name + " cancel delivery of order " + listOrder.ToString(),
+                    CreateDate = DateTime.Now,
+                    IsActive = true,
+                    Type = 0,
+                    
+                };
+                await _notificationService.CreateAsync(noti);
+
+                await _notificationDetailService.PushCancelRequestNoti("a", userId, noti.Id);
+
+                return model;
             }
+            return null;
 
-            Notification noti = new Notification
-            {
-                Description = "Delivery staff " + user.Name + " cancel delivery of order " + model.OrderId,
-                CreateDate = DateTime.Now,
-                IsActive = true,
-                Type = 0,
-                OrderId = model.OrderId
-            };
-            await _notificationService.CreateAsync(noti);
-
-            await _notificationDetailService.PushOrderNoti("Delivery staff " + user.Name + " cancel delivery of order " + model.OrderId, model.UserId, noti.Id, model.OrderId, request.Id);
-
-            return _mapper.Map<RequestCreateViewModel>(request);
+            
         }
 
         public async Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model)
