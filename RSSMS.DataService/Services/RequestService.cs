@@ -130,12 +130,11 @@ namespace RSSMS.DataService.Services
                     request.UserId = userId;
                     await CreateAsync(request);
                 }
-                var user = schedules.FirstOrDefault().User;
                 var listOrder = schedules.Select(x => x.OrderId).ToList();
 
                 Notification noti = new Notification
                 {
-                    Description = "Delivery staff " + user.Name + " cancel delivery of order " + listOrder.ToString(),
+                    Description = "Delivery staff " + userId + " cancel delivery of order " + listOrder.ToString(),
                     CreateDate = DateTime.Now,
                     IsActive = true,
                     Type = 0,
