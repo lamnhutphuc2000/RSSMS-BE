@@ -11,6 +11,7 @@ namespace RSSMS.DataService.Models
         {
             Images = new HashSet<Image>();
             OrderDetails = new HashSet<OrderDetail>();
+            OrderHistoryExtensions = new HashSet<OrderHistoryExtension>();
             OrderStorageDetails = new HashSet<OrderStorageDetail>();
             Requests = new HashSet<Request>();
             Schedules = new HashSet<Schedule>();
@@ -42,6 +43,7 @@ namespace RSSMS.DataService.Models
         public virtual User Manager { get; set; }
         public virtual ICollection<Image> Images { get; set; }
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
+        public virtual ICollection<OrderHistoryExtension> OrderHistoryExtensions { get; set; }
         public virtual ICollection<OrderStorageDetail> OrderStorageDetails { get; set; }
         public virtual ICollection<Request> Requests { get; set; }
         public virtual ICollection<Schedule> Schedules { get; set; }

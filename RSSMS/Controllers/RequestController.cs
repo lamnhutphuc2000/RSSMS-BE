@@ -22,7 +22,7 @@ namespace RSSMS.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Manager,Delivery Staff,Office staff")]
+        [Authorize(Roles = "Manager,Delivery Staff,Office staff, Customer")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(DynamicModelResponse<RequestViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]

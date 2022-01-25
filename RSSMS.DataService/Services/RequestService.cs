@@ -33,13 +33,19 @@ namespace RSSMS.DataService.Services
         private readonly INotificationService _notificationService;
         private readonly INotificationDetailService _notificationDetailService;
         private readonly IStaffManageStorageService _staffManageStorageService;
-        public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper, IScheduleService scheduleService, INotificationService notificationService, INotificationDetailService notificationDetailService, IStaffManageStorageService staffManageStorageService) : base(unitOfWork, repository)
+        private readonly IOrderHistoryExtensionService _orderHistoryExtensionService;
+        public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper
+            , IScheduleService scheduleService, INotificationService notificationService
+            , INotificationDetailService notificationDetailService, IStaffManageStorageService staffManageStorageService
+            , IOrderHistoryExtensionService orderHistoryExtensionService
+            ) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _scheduleService = scheduleService;
             _notificationService = notificationService;
             _notificationDetailService = notificationDetailService;
             _staffManageStorageService = staffManageStorageService;
+            _orderHistoryExtensionService = orderHistoryExtensionService;
         }
 
         public async Task<RequestViewModel> Delete(int id)
@@ -71,6 +77,10 @@ namespace RSSMS.DataService.Services
                 requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
             }
 
+            if (role == "Customer")
+            {
+                requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+            }
             var result = requests.ProjectTo<RequestViewModel>(_mapper.ConfigurationProvider)
                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
@@ -116,7 +126,9 @@ namespace RSSMS.DataService.Services
             var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-            if(role == "Delivery Staff")
+            Request request = null;
+            Notification noti = null;
+            if (role == "Delivery Staff")
             {
                 var schedules = _scheduleService.Get(x => x.SheduleDay.Value.Date == model.CancelDay.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
                 if(schedules.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
@@ -126,14 +138,14 @@ namespace RSSMS.DataService.Services
                     schedule.Status = 1;
                     await _scheduleService.UpdateAsync(schedule);
 
-                    var request = _mapper.Map<Request>(model);
+                    request = _mapper.Map<Request>(model);
                     request.OrderId = schedule.OrderId;
                     request.UserId = userId;
                     await CreateAsync(request);
                 }
                 var listOrder = schedules.Select(x => x.OrderId).ToList();
 
-                Notification noti = new Notification
+                noti = new Notification
                 {
                     Description = "Delivery staff " + userId + " cancel delivery of order " + listOrder.ToString(),
                     CreateDate = DateTime.Now,
@@ -147,7 +159,33 @@ namespace RSSMS.DataService.Services
 
                 return model;
             }
-            return null;
+
+
+            request = _mapper.Map<Request>(model);
+            request.UserId = userId;
+
+            await CreateAsync(request);
+
+            noti = new Notification
+            {
+                Description = "Customer " + userId + " expand the order: " + model.OrderId,
+                CreateDate = DateTime.Now,
+                IsActive = true,
+                Type = 0,
+                OrderId = model.OrderId
+            };
+            OrderHistoryExtension orderExtend = _mapper.Map<OrderHistoryExtension>(model);
+            orderExtend.ModifiedBy = userId;
+            await _orderHistoryExtensionService.CreateAsync(orderExtend);
+            var manager = _orderHistoryExtensionService.Get(x => x.OrderId == model.OrderId).Include(x => x.Order).ThenInclude(x => x.Manager).Select(x => x.Order.Manager).FirstOrDefault();
+            await _notificationService.CreateAsync(noti);
+            await _notificationDetailService.SendNoti("Customer " + userId + " expand the order: " + model.OrderId, userId, manager.Id, manager.DeviceTokenId, noti.Id, (int)model.OrderId, request.Id, new
+            {
+                Content = "Customer " + userId + " expand the order: " + model.OrderId,
+                OrderId = model.OrderId,
+                RequestId = request.Id
+            });
+            return model;
 
             
         }

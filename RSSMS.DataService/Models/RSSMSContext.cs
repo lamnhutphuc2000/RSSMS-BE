@@ -24,8 +24,8 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<Notification> Notifications { get; set; }
         public virtual DbSet<NotificationDetail> NotificationDetails { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
-        public virtual DbSet<OrderBoxDetail> OrderBoxDetails { get; set; }
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
+        public virtual DbSet<OrderHistoryExtension> OrderHistoryExtensions { get; set; }
         public virtual DbSet<OrderStorageDetail> OrderStorageDetails { get; set; }
         public virtual DbSet<Product> Products { get; set; }
         public virtual DbSet<Request> Requests { get; set; }
@@ -211,11 +211,6 @@ namespace RSSMS.DataService.Models
                     .HasConstraintName("FK_Order_User1");
             });
 
-            modelBuilder.Entity<OrderBoxDetail>(entity =>
-            {
-                entity.ToTable("OrderBoxDetail");
-            });
-
             modelBuilder.Entity<OrderDetail>(entity =>
             {
                 entity.ToTable("OrderDetail");
@@ -233,6 +228,24 @@ namespace RSSMS.DataService.Models
                     .HasForeignKey(d => d.ProductId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OrderDetail_Product");
+            });
+
+            modelBuilder.Entity<OrderHistoryExtension>(entity =>
+            {
+                entity.ToTable("OrderHistoryExtension");
+
+                entity.Property(e => e.CreateDate).HasColumnType("datetime");
+
+                entity.Property(e => e.Note).HasMaxLength(50);
+
+                entity.Property(e => e.OldReturnDate).HasColumnType("datetime");
+
+                entity.Property(e => e.ReturnDate).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.OrderHistoryExtensions)
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_OrderHistoryExtension_Order");
             });
 
             modelBuilder.Entity<OrderStorageDetail>(entity =>

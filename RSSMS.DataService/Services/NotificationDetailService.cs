@@ -145,7 +145,7 @@ namespace RSSMS.DataService.Services
             {
                 var message = new Message
                 {
-                    To = registrationId,
+                    To = "cCPHWDFsyi5OG3SBo-akEt:APA91bGeLvhc2z8zUwH_VlVfP3X-Jaogy2GuRrrJ5xk-aaUnIJrnt0TcaJsUOBGuEqSio-mhPK6Lpg7DS24bJdXQOvyn7kUufnQSfdzcT1A1wcES9MLLseIZkVnewtbSHNRijRzKV4hb",
                     Notification = new FCM.Net.Notification
                     {
                         Title = "From RSSMS",
