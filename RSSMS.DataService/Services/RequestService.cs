@@ -118,7 +118,8 @@ namespace RSSMS.DataService.Services
 
             if(role == "Delivery Staff")
             {
-                var schedules = _scheduleService.Get(x => x.SheduleDay == model.CancelDay && x.IsActive == true && x.UserId == userId).Include(a => a.User);
+                var schedules = _scheduleService.Get(x => x.SheduleDay.Value.Date == model.CancelDay.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
+                if(schedules.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
                 foreach (var schedule in schedules)
                 {
                     schedule.IsActive = false;
@@ -142,7 +143,7 @@ namespace RSSMS.DataService.Services
                 };
                 await _notificationService.CreateAsync(noti);
 
-                await _notificationDetailService.PushCancelRequestNoti("a", userId, noti.Id);
+                await _notificationDetailService.PushCancelRequestNoti("Delivery staff " + userId + " cancel delivery of order " + listOrder.ToString(), userId, noti.Id);
 
                 return model;
             }

@@ -65,15 +65,20 @@ namespace RSSMS.DataService.Services
 
             var order = Get(x => x.IsActive == true)
                 .Include(x => x.OrderStorageDetails)
+                .Include(x => x.Schedules)
                 .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.Product);
 
-            if (OrderStatuses.Count > 0)
+            if(OrderStatuses != null)
             {
-                order = Get(x => x.IsActive == true).Where(x => OrderStatuses.Contains((int)x.Status)).Include(x => x.OrderStorageDetails)
-                .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.Product);
+                if (OrderStatuses.Count > 0)
+                {
+                    order = Get(x => x.IsActive == true).Where(x => OrderStatuses.Contains((int)x.Status)).Include(x => x.OrderStorageDetails).Include(x => x.Schedules)
+                    .Include(x => x.OrderDetails)
+                    .ThenInclude(orderDetail => orderDetail.Product);
+                }
             }
+            
 
             if (dateFrom != null && dateTo != null)
             {
@@ -89,12 +94,6 @@ namespace RSSMS.DataService.Services
                     .Include(x => x.Schedules)
                     .Include(x => x.OrderDetails)
                     .ThenInclude(orderDetail => orderDetail.Product);
-
-                foreach (var o in order)
-                {
-                    if (o.Schedules.Any(a => a.Status == 1))
-                        o.Status = 5;
-                }
             }
 
             if (role == "Office staff")
@@ -114,12 +113,12 @@ namespace RSSMS.DataService.Services
                     .ThenInclude(orderDetail => orderDetail.Product);
             }
 
-
             var result = order.OrderByDescending(x => x.CreatedDate)
                 .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+
 
             var rs = new DynamicModelResponse<OrderViewModel>
             {

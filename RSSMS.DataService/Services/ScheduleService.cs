@@ -46,7 +46,7 @@ namespace RSSMS.DataService.Services
             foreach (var scheduleAssigned in schedulesAssigned)
             {
                 scheduleAssigned.IsActive = false;
-                scheduleAssigned.Status = 0;
+                scheduleAssigned.Status = null;
                 await UpdateAsync(scheduleAssigned);
             }
             for (int i = 0; i < userIds.Count; i++)

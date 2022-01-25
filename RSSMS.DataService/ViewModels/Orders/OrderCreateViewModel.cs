@@ -21,7 +21,5 @@ namespace RSSMS.DataService.ViewModels.Orders
         public virtual ICollection<ProductOrderViewModel> ListProduct { get; set; }
 
 
-
-
     }
 }
