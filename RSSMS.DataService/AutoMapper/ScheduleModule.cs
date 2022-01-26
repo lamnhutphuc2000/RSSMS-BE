@@ -8,6 +8,8 @@ namespace RSSMS.DataService.AutoMapper
     {
         public static void ConfigScheduleModule(this IMapperConfigurationExpression mc)
         {
+            mc.CreateMap<Schedule, ScheduleViewModel>();
+
             mc.CreateMap<Schedule, ScheduleOrderViewModel>();
             mc.CreateMap<ScheduleOrderViewModel, Schedule>()
                 .ForMember(des => des.IsActive, opt => opt.MapFrom(src => true));
