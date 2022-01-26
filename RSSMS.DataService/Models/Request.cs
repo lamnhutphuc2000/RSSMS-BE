@@ -18,6 +18,9 @@ namespace RSSMS.DataService.Models
         public int? UserId { get; set; }
         public int? Type { get; set; }
         public int? Status { get; set; }
+        public DateTime? ReturnDate { get; set; }
+        public string ReturnTime { get; set; }
+        public string ReturnAddress { get; set; }
         public string Note { get; set; }
         public bool? IsActive { get; set; }
         public DateTime? CreatedDate { get; set; }

@@ -3,13 +3,16 @@ using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.Requests;
 using System;
 
+
 namespace RSSMS.DataService.AutoMapper
 {
     public static class RequestModule
     {
         public static void ConfigRequestModule(this IMapperConfigurationExpression mc)
         {
-            mc.CreateMap<Request, RequestViewModel>();
+            mc.CreateMap<Request, RequestViewModel>()
+                .ForMember(des => des.DeliveryStaffName, opt => opt.MapFrom(src => src.User.Role.Name == "Delivery Staff" ? src.User.Name : null))
+                .ForMember(des => des.DeliveryStaffPhone, otp => otp.MapFrom(src => src.User.Role.Name == "Delivery Staff" ? src.User.Phone : null));
             mc.CreateMap<RequestViewModel, Request>();
 
             mc.CreateMap<RequestCreateViewModel, Request>()

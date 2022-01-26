@@ -306,6 +306,12 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Note).HasMaxLength(100);
 
+                entity.Property(e => e.ReturnAddress).HasMaxLength(255);
+
+                entity.Property(e => e.ReturnDate).HasColumnType("datetime");
+
+                entity.Property(e => e.ReturnTime).HasMaxLength(50);
+
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.Requests)
                     .HasForeignKey(d => d.OrderId)
