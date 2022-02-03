@@ -8,6 +8,7 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Notifications;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace RSSMS.DataService.Services
     public interface INotificationService : IBaseService<Models.Notification>
     {
         Task<DynamicModelResponse<NotificationViewModel>> GetAll(int userId, string[] fields, int page, int size);
+        Task<NotificationViewModel> Update(int id, NotificationUpdateViewModel model, string accessToken);
     }
     public class NotificationService : BaseService<Models.Notification>, INotificationService
     {
@@ -46,6 +48,31 @@ namespace RSSMS.DataService.Services
                 Data = notifications.Item2.ToList()
             };
             return rs;
+        }
+
+        public async Task<NotificationViewModel> Update(int id, NotificationUpdateViewModel model, string accessToken)
+        {
+            if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Notification Id not matched");
+
+            var entity = Get(x => x.Id == id && x.IsActive == true).Include(x => x.NotificationDetails);
+            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Notification not found");
+
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+            var entityToUpdate = await entity.Where(x => x.NotificationDetails.Any(notificationDetail => notificationDetail.UserId == userId && notificationDetail.IsActive == true && notificationDetail.NotificationId == id)).FirstOrDefaultAsync();
+            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Notification not found");
+
+            var notificationDetail = entityToUpdate.NotificationDetails;
+            foreach(var noti in notificationDetail)
+            {
+                noti.IsRead = model.IsRead;
+            }
+            entityToUpdate.NotificationDetails = notificationDetail;
+
+            await UpdateAsync(entityToUpdate);
+
+            return _mapper.Map<NotificationViewModel>(entityToUpdate);
         }
     }
 }

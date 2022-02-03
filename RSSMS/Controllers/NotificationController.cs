@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
@@ -38,5 +39,22 @@ namespace RSSMS.API.Controllers
             return Ok(await _notifService.GetAll(userId, fields, page, size));
         }
 
+        /// <summary>
+        /// Update notification by Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPut("{id}")]
+        [Authorize]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> Update(int id, NotificationUpdateViewModel model)
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _notifService.Update(id, model, accessToken));
+        }
     }
 }
