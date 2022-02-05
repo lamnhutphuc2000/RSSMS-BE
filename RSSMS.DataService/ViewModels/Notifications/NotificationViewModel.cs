@@ -1,4 +1,6 @@
-﻿namespace RSSMS.DataService.ViewModels.Notifications
+﻿using System;
+
+namespace RSSMS.DataService.ViewModels.Notifications
 {
     public class NotificationViewModel
     {
@@ -9,5 +11,6 @@
         public int Type { get; set; }
         public bool IsOwn { get; set; }
         public bool IsRead { get; set; }
+        public DateTime CreateDate { get; set; }
     }
 }

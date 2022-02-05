@@ -95,8 +95,9 @@ namespace RSSMS.DataService.Services
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Product Id not matched");
 
             var entity = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.Images).FirstOrDefaultAsync();
-            var oldImage = entity.Images;
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Product not found");
+            ICollection<Image> oldImage = null;
+            if(entity.Images != null) oldImage = entity.Images;
 
             List<AvatarImageViewModel> images = model.Images.ToList();
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Responses;
@@ -35,7 +36,8 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Add(BoxOrderDetailCreateViewModel model)
         {
-            return Ok(await _boxOrderDetailService.Create(model));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _boxOrderDetailService.Create(model,accessToken));
         }
 
         /// <summary>

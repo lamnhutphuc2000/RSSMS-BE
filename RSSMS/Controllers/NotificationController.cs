@@ -5,6 +5,7 @@ using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Notifications;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -40,21 +41,20 @@ namespace RSSMS.API.Controllers
         }
 
         /// <summary>
-        /// Update notification by Id
+        /// Update notification to readed by list of id
         /// </summary>
-        /// <param name="id"></param>
         /// <param name="model"></param>
         /// <returns></returns>
-        [HttpPut("{id}")]
+        [HttpPut]
         [Authorize]
         [MapToApiVersion("1")]
-        [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(NotificationUpdateViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Update(int id, NotificationUpdateViewModel model)
+        public async Task<IActionResult> Update(NotificationUpdateViewModel model)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            return Ok(await _notifService.Update(id, model, accessToken));
+            return Ok(await _notifService.Update(model, accessToken));
         }
     }
 }
