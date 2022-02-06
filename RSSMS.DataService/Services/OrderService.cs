@@ -26,7 +26,7 @@ namespace RSSMS.DataService.Services
         Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, IList<int> OrderStatuses, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken);
         Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
         Task<OrderViewModel> GetById(int id);
-        Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model);
+        Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model, string accessToken);
         Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken);
     }
     class OrderService : BaseService<Order>, IOrderService
@@ -227,12 +227,16 @@ namespace RSSMS.DataService.Services
             return model;
         }
 
-        public async Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model)
+        public async Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model, string accessToken)
         {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id not matched");
             var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
             entity.Status = 0;
+            entity.ModifiedBy = userId;
             entity.RejectedReason = model.RejectedReason;
             await UpdateAsync(entity);
             return _mapper.Map<OrderViewModel>(entity);

@@ -22,6 +22,11 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<Request, RequestUpdateViewModel>();
             mc.CreateMap<RequestUpdateViewModel, Request>()
                 .ForMember(des => des.ModifiedDate, otp => otp.MapFrom(src => DateTime.Now));
+
+            mc.CreateMap<RequestByIdViewModel, Request>();
+            mc.CreateMap<Request, RequestByIdViewModel>()
+                .ForMember(des => des.CancelBy, otp => otp.MapFrom(src => src.User.Name))
+                .ForMember(des => des.CancelByPhone, otp => otp.MapFrom(src => src.User.Phone));
         }
     }
 }

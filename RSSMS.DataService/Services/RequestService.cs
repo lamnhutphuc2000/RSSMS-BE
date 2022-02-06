@@ -19,7 +19,7 @@ namespace RSSMS.DataService.Services
     public interface IRequestService : IBaseService<Request>
     {
         Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, string[] fields, int page, int size, string accessToken);
-        Task<RequestViewModel> GetById(int id);
+        Task<RequestByIdViewModel> GetById(int id);
         Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken);
         Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model);
         Task<RequestViewModel> Delete(int id);
@@ -101,10 +101,10 @@ namespace RSSMS.DataService.Services
             return rs;
         }
 
-        public async Task<RequestViewModel> GetById(int id)
+        public async Task<RequestByIdViewModel> GetById(int id)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
-               .ProjectTo<RequestViewModel>(_mapper.ConfigurationProvider)
+               .ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider)
                .FirstOrDefaultAsync();
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
             return result;
@@ -133,7 +133,7 @@ namespace RSSMS.DataService.Services
             Notification noti = null;
             if (role == "Delivery Staff" && model.Type == 0) // huy lich giao hang
             {
-                var schedules = _scheduleService.Get(x => x.SheduleDay.Value.Date == model.CancelDay.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
+                var schedules = _scheduleService.Get(x => x.SheduleDay.Value.Date == model.CancelDay.Value.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
                 if(schedules.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
                 foreach (var schedule in schedules)
                 {
@@ -192,33 +192,66 @@ namespace RSSMS.DataService.Services
                 });
                 return model;
             }
-            // rut do ve
-            var order = _orderService.Get(x => x.Id == model.OrderId && x.IsActive == true && x.CustomerId == userId).Include(x => x.Manager).FirstOrDefault();
-            if(order == null)
+            Order order = null;
+            if(model.Type == 2) // rut do ve
+            {
+                order = _orderService.Get(x => x.Id == model.OrderId && x.IsActive == true && x.CustomerId == userId).Include(x => x.Manager).FirstOrDefault();
+                if (order == null)
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+                if (order.Manager == null)
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Manager not found");
+                request = _mapper.Map<Request>(model);
+                request.UserId = userId;
+                await CreateAsync(request);
+
+
+
+                noti = new Notification
+                {
+                    Description = "Customer " + userId + " take back the order: " + model.OrderId,
+                    CreateDate = DateTime.Now,
+                    IsActive = true,
+                    Type = 3,
+                    OrderId = model.OrderId
+                };
+                await _notificationService.CreateAsync(noti);
+                await _notificationDetailService.SendNoti("Customer " + userId + " take back the order: " + model.OrderId, userId, order.Manager.Id, order.Manager.DeviceTokenId, noti.Id, (int)model.OrderId, request.Id, new
+                {
+                    Content = "Customer " + userId + " take back the order: " + model.OrderId,
+                    OrderId = model.OrderId,
+                    RequestId = request.Id
+                });
+                return model;
+            }
+
+            // customer huy don
+            order = _orderService.Get(x => x.Id == model.OrderId && x.IsActive == true && x.CustomerId == userId).Include(x => x.Manager).FirstOrDefault();
+            if (order == null)
                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-            if(order.Manager == null)
+            if (order.Manager == null)
                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Manager not found");
             request = _mapper.Map<Request>(model);
             request.UserId = userId;
             await CreateAsync(request);
-
-            
-
+            order.RejectedReason = model.Note;
+            order.Status = 0;
+            await _orderService.UpdateAsync(order);
             noti = new Notification
             {
-                Description = "Customer " + userId + " take back the order: " + model.OrderId,
+                Description = "Customer " + userId + " cancel the order: " + model.OrderId,
                 CreateDate = DateTime.Now,
                 IsActive = true,
-                Type = 3,
+                Type = 4,
                 OrderId = model.OrderId
             };
             await _notificationService.CreateAsync(noti);
-            await _notificationDetailService.SendNoti("Customer " + userId + " take back the order: " + model.OrderId, userId, order.Manager.Id, order.Manager.DeviceTokenId, noti.Id, (int)model.OrderId, request.Id, new
+            await _notificationDetailService.SendNoti("Customer " + userId + " cancel the order: " + model.OrderId, userId, order.Manager.Id, order.Manager.DeviceTokenId, noti.Id, (int)model.OrderId, request.Id, new
             {
-                Content = "Customer " + userId + " take back the order: " + model.OrderId,
+                Content = "Customer " + userId + " cancel the order: " + model.OrderId,
                 OrderId = model.OrderId,
                 RequestId = request.Id
             });
+
             return model;
         }
 

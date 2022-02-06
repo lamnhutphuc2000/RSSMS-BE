@@ -104,7 +104,8 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Cancel(int id, OrderCancelViewModel model)
         {
-            return Ok(await _orderService.Cancel(id, model));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _orderService.Cancel(id, model, accessToken));
         }
         /// <summary>
         /// Send order notification to customer by delivery staff
