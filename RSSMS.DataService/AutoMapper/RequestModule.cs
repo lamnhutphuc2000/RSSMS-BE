@@ -2,7 +2,7 @@
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.Requests;
 using System;
-
+using System.Linq;
 
 namespace RSSMS.DataService.AutoMapper
 {
@@ -25,6 +25,7 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<RequestByIdViewModel, Request>();
             mc.CreateMap<Request, RequestByIdViewModel>()
+                .ForMember(des => des.TotalPrice, opt => opt.MapFrom(src => src.Order != null ? src.Order.OrderHistoryExtensions != null ? src.Order.OrderHistoryExtensions.FirstOrDefault().TotalPrice : null : null))
                 .ForMember(des => des.CancelBy, otp => otp.MapFrom(src => src.User.Name))
                 .ForMember(des => des.CancelByPhone, otp => otp.MapFrom(src => src.User.Phone));
         }

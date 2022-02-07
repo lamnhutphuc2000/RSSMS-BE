@@ -242,6 +242,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.ReturnDate).HasColumnType("datetime");
 
+                entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 3)");
+
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderHistoryExtensions)
                     .HasForeignKey(d => d.OrderId)

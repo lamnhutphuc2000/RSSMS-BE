@@ -13,6 +13,7 @@ namespace RSSMS.DataService.Models
         public DateTime? ReturnDate { get; set; }
         public int? Status { get; set; }
         public string Note { get; set; }
+        public decimal? TotalPrice { get; set; }
         public bool? IsActive { get; set; }
         public DateTime? CreateDate { get; set; }
         public int? ModifiedBy { get; set; }
