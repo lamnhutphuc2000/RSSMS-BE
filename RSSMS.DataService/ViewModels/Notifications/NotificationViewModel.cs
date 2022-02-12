@@ -1,6 +1,4 @@
-﻿using RSSMS.DataService.Models;
-using System;
-using System.Collections.Generic;
+﻿using System;
 
 namespace RSSMS.DataService.ViewModels.Notifications
 {

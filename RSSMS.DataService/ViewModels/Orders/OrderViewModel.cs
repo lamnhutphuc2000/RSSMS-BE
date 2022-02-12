@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using RSSMS.DataService.ViewModels.Boxes;
 using RSSMS.DataService.ViewModels.OrderDetails;
+using RSSMS.DataService.ViewModels.OrderHistoryExtension;
 using System;
 using System.Collections.Generic;
 
@@ -12,7 +13,7 @@ namespace RSSMS.DataService.ViewModels.Orders
 
         public static string[] Fields = {
             "Id","CustomerName","CustomerPhone","DeliveryAddress","AddressReturn","TotalPrice","TypeOrder","RejectedReason"
-                ,"IsUserDelivery","PaymentMethod","DeliveryTime","DeliveryDate","ReturnDate","DurationDays","DurationMonths","Status","IsPaid","OrderBoxDetails"
+                ,"IsUserDelivery","PaymentMethod","DeliveryTime","DeliveryDate","ReturnDate","DurationDays","DurationMonths","Status","IsPaid","OrderBoxDetails","OrderHistoryExtensions"
         };
         [JsonProperty("id")]
         public int? Id { get; set; }
@@ -79,5 +80,8 @@ namespace RSSMS.DataService.ViewModels.Orders
         [JsonProperty("orderBoxDetails")]
         [BindNever]
         public virtual ICollection<BoxDetailViewModel> OrderBoxDetails { get; set; }
+        [JsonProperty("orderHistoryExtensions")]
+        [BindNever]
+        public virtual ICollection<OrderHistoryExtensionViewModel> OrderHistoryExtensions { get; set; }
     }
 }

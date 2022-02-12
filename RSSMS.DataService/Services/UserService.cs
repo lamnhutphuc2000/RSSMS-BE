@@ -90,7 +90,7 @@ namespace RSSMS.DataService.Services
             await CreateAsync(userCreate);
 
             // Upload image to firebase
-            if(images != null)
+            if (images != null)
             {
                 foreach (var avatar in images)
                 {
@@ -99,7 +99,7 @@ namespace RSSMS.DataService.Services
                 }
                 userCreate.Images = images.AsQueryable().ProjectTo<Image>(_mapper.ConfigurationProvider).ToList();
             }
-            
+
 
             // Assign user to storages
             if (model.StorageIds != null)

@@ -5,10 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.BoxOrderDetails;
-using RSSMS.DataService.ViewModels.OrderBoxes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -37,7 +33,7 @@ namespace RSSMS.API.Controllers
         public async Task<IActionResult> Add(BoxOrderDetailCreateViewModel model)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            return Ok(await _boxOrderDetailService.Create(model,accessToken));
+            return Ok(await _boxOrderDetailService.Create(model, accessToken));
         }
 
         /// <summary>

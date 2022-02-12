@@ -3,7 +3,6 @@ using RSSMS.DataService.ViewModels.RequestDetails;
 using RSSMS.DataService.ViewModels.Schedules;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace RSSMS.DataService.ViewModels.Requests
 {

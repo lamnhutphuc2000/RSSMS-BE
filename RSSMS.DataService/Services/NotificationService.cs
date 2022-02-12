@@ -62,12 +62,12 @@ namespace RSSMS.DataService.Services
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
-            foreach(var noti in listNoti)
+            foreach (var noti in listNoti)
             {
                 var notificationDetails = noti.NotificationDetails;
-                foreach(var notificationDetail in notificationDetails)
+                foreach (var notificationDetail in notificationDetails)
                 {
-                    if(notificationDetail.UserId == (int)userId && notificationDetail.IsActive == true)
+                    if (notificationDetail.UserId == (int)userId && notificationDetail.IsActive == true)
                     {
                         notificationDetail.IsRead = true;
                         await _notificationDetailService.UpdateAsync(notificationDetail);

@@ -1,9 +1,8 @@
 ﻿using AutoMapper;
 using RSSMS.DataService.Models;
+using RSSMS.DataService.ViewModels.OrderHistoryExtension;
 using RSSMS.DataService.ViewModels.Requests;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace RSSMS.DataService.AutoMapper
 {
@@ -14,6 +13,8 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<RequestCreateViewModel, OrderHistoryExtension>()
                 .ForMember(des => des.CreateDate, opt => opt.MapFrom(src => DateTime.Now))
                 .ForMember(des => des.IsActive, opt => opt.MapFrom(src => true));
+
+            mc.CreateMap<OrderHistoryExtension, OrderHistoryExtensionViewModel>();
         }
     }
 }

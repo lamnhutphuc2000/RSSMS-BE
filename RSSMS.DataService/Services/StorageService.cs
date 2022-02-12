@@ -47,7 +47,7 @@ namespace RSSMS.DataService.Services
             storage.Images = null;
             await CreateAsync(storage);
 
-            
+
             foreach (var avatar in images)
             {
                 var url = await _firebaseService.UploadImageToFirebase(avatar.File, "storages", storage.Id, "avatar");

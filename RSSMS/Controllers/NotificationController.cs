@@ -5,7 +5,6 @@ using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Notifications;
-using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 

@@ -8,7 +8,6 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Images;
-using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Orders;
 using RSSMS.DataService.ViewModels.Products;
 using System;
@@ -50,6 +49,7 @@ namespace RSSMS.DataService.Services
         public async Task<OrderViewModel> GetById(int id)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
+                .Include(x => x.OrderHistoryExtensions)
                 .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
 
@@ -64,21 +64,24 @@ namespace RSSMS.DataService.Services
 
 
             var order = Get(x => x.IsActive == true)
+                .Include(x => x.OrderHistoryExtensions)
                 .Include(x => x.OrderStorageDetails)
                 .Include(x => x.Schedules)
                 .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.Product);
 
-            if(OrderStatuses != null)
+            if (OrderStatuses != null)
             {
                 if (OrderStatuses.Count > 0)
                 {
-                    order = Get(x => x.IsActive == true).Where(x => OrderStatuses.Contains((int)x.Status)).Include(x => x.OrderStorageDetails).Include(x => x.Schedules)
+                    order = Get(x => x.IsActive == true).Where(x => OrderStatuses.Contains((int)x.Status))
+                        .Include(x => x.OrderHistoryExtensions)
+                        .Include(x => x.OrderStorageDetails).Include(x => x.Schedules)
                     .Include(x => x.OrderDetails)
                     .ThenInclude(orderDetail => orderDetail.Product);
                 }
             }
-            
+
 
             if (dateFrom != null && dateTo != null)
             {
@@ -271,13 +274,13 @@ namespace RSSMS.DataService.Services
                 Dictionary<int, List<AvatarImageViewModel>> imagesOfOrder = new Dictionary<int, List<AvatarImageViewModel>>();
                 var orderDetails = model.OrderDetails;
                 int num = 0;
-                foreach(var orderDetail in orderDetails)
+                foreach (var orderDetail in orderDetails)
                 {
                     var images = orderDetail.Images;
                     foreach (var image in images)
                     {
                         var url = await _firebaseService.UploadImageToFirebase(image.File, "temp", order.Id, orderDetail.Id + "-" + num);
-                        if (url != null) 
+                        if (url != null)
                         {
                             image.File = null;
                             image.Url = url;

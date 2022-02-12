@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RSSMS.DataService.ViewModels.BoxOrderDetails
+﻿namespace RSSMS.DataService.ViewModels.BoxOrderDetails
 {
     public class BoxOrderDetailUpdateViewModel
     {

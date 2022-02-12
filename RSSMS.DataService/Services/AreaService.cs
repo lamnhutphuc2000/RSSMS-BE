@@ -82,7 +82,7 @@ namespace RSSMS.DataService.Services
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
 
-            
+
 
             var rs = new DynamicModelResponse<AreaViewModel>
             {

@@ -43,8 +43,8 @@ namespace RSSMS.DataService.Services
             entity.StorageId = storageId;
             entity.IsActive = true;
             await CreateAsync(entity);
-            
-            
+
+
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             order.ManagerId = userId;

@@ -1,10 +1,8 @@
 ﻿using System;
 
-#nullable disable
-
-namespace RSSMS.DataService.Models
+namespace RSSMS.DataService.ViewModels.OrderHistoryExtension
 {
-    public partial class OrderHistoryExtension
+    public class OrderHistoryExtensionViewModel
     {
         public int Id { get; set; }
         public int? OrderId { get; set; }
@@ -18,8 +16,5 @@ namespace RSSMS.DataService.Models
         public DateTime? CreateDate { get; set; }
         public int? ModifiedBy { get; set; }
         public DateTime? PaidDate { get; set; }
-
-        public virtual Order Order { get; set; }
-        public virtual Request Request { get; set; }
     }
 }

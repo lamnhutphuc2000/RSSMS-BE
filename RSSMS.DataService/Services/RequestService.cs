@@ -144,7 +144,7 @@ namespace RSSMS.DataService.Services
             if (role == "Delivery Staff" && model.Type == 0) // huy lich giao hang
             {
                 var schedules = _scheduleService.Get(x => x.SheduleDay.Value.Date == model.CancelDay.Value.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
-                if(schedules.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
+                if (schedules.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
                 foreach (var schedule in schedules)
                 {
                     request = _mapper.Map<Request>(model);
@@ -172,7 +172,7 @@ namespace RSSMS.DataService.Services
                 return model;
             }
 
-            if(model.Type == 1) // gia han don
+            if (model.Type == 1) // gia han don
             {
                 request = _mapper.Map<Request>(model);
                 request.UserId = userId;
@@ -202,7 +202,7 @@ namespace RSSMS.DataService.Services
                 return model;
             }
             Order order = null;
-            if(model.Type == 2) // rut do ve
+            if (model.Type == 2) // rut do ve
             {
                 order = _orderService.Get(x => x.Id == model.OrderId && x.IsActive == true && x.CustomerId == userId).Include(x => x.Manager).FirstOrDefault();
                 if (order == null)
@@ -275,9 +275,10 @@ namespace RSSMS.DataService.Services
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
 
             var orderHistoryExtend = entity.OrderHistoryExtensions.FirstOrDefault();
-            if(orderHistoryExtend == null)
+            if (orderHistoryExtend == null)
                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order extend not found");
             orderHistoryExtend.PaidDate = DateTime.Now;
+            orderHistoryExtend.ModifiedBy = userId;
             await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
 
             var order = _orderService.Get(x => x.Id == orderHistoryExtend.OrderId).FirstOrDefault();

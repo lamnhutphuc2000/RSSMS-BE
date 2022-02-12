@@ -40,7 +40,7 @@ namespace RSSMS.DataService.Services
             product.Images = null;
             await CreateAsync(product);
 
-            
+
             foreach (var avatar in images)
             {
                 var url = await _firebaseService.UploadImageToFirebase(avatar.File, "products", product.Id, "avatar");
@@ -97,7 +97,7 @@ namespace RSSMS.DataService.Services
             var entity = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.Images).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Product not found");
             ICollection<Image> oldImage = null;
-            if(entity.Images != null) oldImage = entity.Images;
+            if (entity.Images != null) oldImage = entity.Images;
 
             List<AvatarImageViewModel> images = model.Images.ToList();
 
@@ -111,7 +111,7 @@ namespace RSSMS.DataService.Services
             updateEntity.IsActive = true;
             await CreateAsync(updateEntity);
 
-            
+
             foreach (var avatar in images)
             {
                 var url = await _firebaseService.UploadImageToFirebase(avatar.File, "products", updateEntity.Id, "avatar");
