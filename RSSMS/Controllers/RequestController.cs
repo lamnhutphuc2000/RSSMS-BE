@@ -67,7 +67,8 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Update(int id, RequestUpdateViewModel model)
         {
-            return Ok(await _requestService.Update(id, model));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _requestService.Update(id, model, accessToken));
         }
         /// <summary>
         /// Delete Product

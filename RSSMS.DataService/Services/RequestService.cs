@@ -22,7 +22,7 @@ namespace RSSMS.DataService.Services
         Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestTypes, string[] fields, int page, int size, string accessToken);
         Task<RequestByIdViewModel> GetById(int id);
         Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken);
-        Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model);
+        Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model, string accessToken);
         Task<RequestViewModel> Delete(int id);
     }
 
@@ -264,17 +264,29 @@ namespace RSSMS.DataService.Services
             return model;
         }
 
-        public async Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model)
+        public async Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model, string accessToken)
         {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request Id not matched");
 
-            var entity = await GetAsync(id);
+            var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
 
-            var updateEntity = _mapper.Map(model, entity);
-            await UpdateAsync(updateEntity);
+            var orderHistoryExtend = entity.OrderHistoryExtensions.FirstOrDefault();
+            if(orderHistoryExtend == null)
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order extend not found");
+            orderHistoryExtend.PaidDate = DateTime.Now;
+            await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
 
-            return _mapper.Map<RequestUpdateViewModel>(updateEntity);
+            var order = _orderService.Get(x => x.Id == orderHistoryExtend.OrderId).FirstOrDefault();
+            order.ReturnDate = orderHistoryExtend.ReturnDate;
+            order.ModifiedBy = userId;
+            order.ModifiedDate = DateTime.Now;
+            await _orderService.UpdateAsync(order);
+
+            return _mapper.Map<RequestUpdateViewModel>(model);
         }
     }
 }
