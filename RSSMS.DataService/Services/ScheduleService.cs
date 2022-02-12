@@ -114,7 +114,14 @@ namespace RSSMS.DataService.Services
             else
             {
                 var schedules = Get(x => x.IsActive == true)
-                        .Where(x => x.SheduleDay >= model.DateFrom && x.SheduleDay <= model.DateTo).Include(x => x.Order).Include(x => x.User).ThenInclude(x => x.Images);
+                        .Where(x => x.SheduleDay >= model.DateFrom && x.SheduleDay <= model.DateTo).Include(x => x.Order)
+                        .ThenInclude(order => order.OrderStorageDetails)
+                        .Include(x => x.Order)
+                        .ThenInclude(order => order.Customer)
+                        .Include(x => x.Order)
+                        .ThenInclude(order => order.OrderDetails)
+                        .ThenInclude(orderDetail => orderDetail.Product)
+                        .ThenInclude(product => product.Images);
                 result = schedules.AsEnumerable().GroupBy(p => (int)p.OrderId)
                                     .Select(g => new ScheduleViewModel
                                     {
