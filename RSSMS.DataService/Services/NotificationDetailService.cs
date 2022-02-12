@@ -14,7 +14,7 @@ namespace RSSMS.DataService.Services
 {
     public interface INotificationDetailService : IBaseService<NotificationDetail>
     {
-        Task<ResponseContent> PushOrderNoti(string description, int SenderId, int NotificationId, int orderId, int? requestId); // noti to manager when receive another order
+        Task<ResponseContent> PushOrderNoti(string description, int SenderId, int NotificationId, int orderId, int? requestId, int notiId); // noti to manager when receive another order
         Task<ResponseContent> PushCancelRequestNoti(string description, int SenderId, int NotificationId);
         Task<ResponseContent> SendNoti(string description, int SenderId, int receiverId, string registrationId, int NotificationId, int orderId, int? requestId, object data);
     }
@@ -25,7 +25,7 @@ namespace RSSMS.DataService.Services
         {
             _staffManageStorageService = staffManageStorageService;
         }
-        public async Task<ResponseContent> PushOrderNoti(string description, int senderId, int notificationId, int orderId, int? requestId)
+        public async Task<ResponseContent> PushOrderNoti(string description, int senderId, int notificationId, int orderId, int? requestId, int notiId)
         {
             var managers = _staffManageStorageService.Get(x => x.RoleName == "Manager").Include(x => x.User).Select(x => x.User).ToList();
             if (managers.Count == 0) return null;
@@ -76,7 +76,8 @@ namespace RSSMS.DataService.Services
                     {
                         Content = description,
                         OrderId = orderId,
-                        RequestId = requestId
+                        RequestId = requestId,
+                        NotiId = notiId
                     }
                 };
                 var result = await sender.SendAsync(message);
@@ -130,7 +131,8 @@ namespace RSSMS.DataService.Services
                     },
                     Data = new
                     {
-                        Content = description
+                        Content = description,
+                        NotiId = notificationId
                     }
                 };
                 var result = await sender.SendAsync(message);
@@ -138,7 +140,7 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public async Task<ResponseContent> SendNoti(string description, int SenderId, int receiverId, string registrationId, int NotificationId, int orderId, int? requestId, object data)
+        public async Task<ResponseContent> SendNoti(string description, int SenderId, int receiverId, string registrationId, int notificationId, int orderId, int? requestId, object data)
         {
             string jsonConvert = JsonConvert.SerializeObject(data);
             using (var sender = new Sender("AAAAry7VzWE:APA91bEFLYrdoliXt0cRdQtnnRNOdxhYXP0mMTOSrgOvcqhULEGKWwUJQIP7phbTXq54zGYD0pzRpDNXfkaSDwd36q088cKkT-CiQz-IBIdLC2ki9zuyK865yiHMG1G6q403iW9fsaKR"))
@@ -153,7 +155,8 @@ namespace RSSMS.DataService.Services
                     },
                     Data = new Dictionary<string, string>
                     {
-                        {"data",jsonConvert }
+                        {"data",jsonConvert },
+                        {"NotiId",notificationId.ToString() }
                     }
                 };
                 var result = await sender.SendAsync(message);

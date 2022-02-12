@@ -8,7 +8,7 @@ namespace RSSMS.DataService.ViewModels.Requests
     public class RequestViewModel
     {
         public static string[] Fields = {
-            "Id","OrderId","UserId","Type","Status","Note","RequestDetails"
+            "Id","OrderId","UserId","Type","Status","Note","RequestDetails","Schedules"
         };
         [BindNever]
         public int Id { get; set; }

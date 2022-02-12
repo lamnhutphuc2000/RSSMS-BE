@@ -240,6 +240,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.OldReturnDate).HasColumnType("datetime");
 
+                entity.Property(e => e.PaidDate).HasColumnType("datetime");
+
                 entity.Property(e => e.ReturnDate).HasColumnType("datetime");
 
                 entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 3)");
@@ -248,6 +250,11 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.OrderHistoryExtensions)
                     .HasForeignKey(d => d.OrderId)
                     .HasConstraintName("FK_OrderHistoryExtension_Order");
+
+                entity.HasOne(d => d.Request)
+                    .WithMany(p => p.OrderHistoryExtensions)
+                    .HasForeignKey(d => d.RequestId)
+                    .HasConstraintName("FK_OrderHistoryExtension_Request");
             });
 
             modelBuilder.Entity<OrderStorageDetail>(entity =>

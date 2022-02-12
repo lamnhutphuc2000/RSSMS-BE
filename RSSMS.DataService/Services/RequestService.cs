@@ -19,7 +19,7 @@ namespace RSSMS.DataService.Services
 {
     public interface IRequestService : IBaseService<Request>
     {
-        Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestStatuses, string[] fields, int page, int size, string accessToken);
+        Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestTypes, string[] fields, int page, int size, string accessToken);
         Task<RequestByIdViewModel> GetById(int id);
         Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken);
         Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model);
@@ -61,7 +61,7 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<RequestViewModel>(entity);
         }
 
-        public async Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestStatuses, string[] fields, int page, int size, string accessToken)
+        public async Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestTypes, string[] fields, int page, int size, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
@@ -69,19 +69,18 @@ namespace RSSMS.DataService.Services
 
             var requests = Get(x => x.IsActive == true).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
 
-            if (RequestStatuses != null)
+            if (RequestTypes != null)
             {
-                if (RequestStatuses.Count > 0)
+                if (RequestTypes.Count > 0)
                 {
-                    requests = Get(x => x.IsActive == true).Where(x => RequestStatuses.Contains((int)x.Status)).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+                    requests = Get(x => x.IsActive == true).Where(x => RequestTypes.Contains((int)x.Type)).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
                 }
             }
-
             if (role == "Manager")
             {
                 var storageIds = _staffManageStorageService.Get(x => x.UserId == userId).Select(a => a.StorageId).ToList();
                 var staff = _staffManageStorageService.Get(x => storageIds.Contains(x.StorageId)).Select(a => a.UserId).ToList();
-                requests = requests.Where(x => staff.Contains((int)x.UserId) || x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+                requests = requests.Where(x => staff.Contains((int)x.UserId) || x.UserId == userId).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
             }
 
             if (role == "Delivery Staff")
@@ -93,7 +92,7 @@ namespace RSSMS.DataService.Services
             {
                 requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
             }
-            var result = requests.ProjectTo<RequestViewModel>(_mapper.ConfigurationProvider)
+            var result = requests.OrderByDescending(x => x.CreatedDate).ProjectTo<RequestViewModel>(_mapper.ConfigurationProvider)
                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
             var rs = new DynamicModelResponse<RequestViewModel>
@@ -158,19 +157,17 @@ namespace RSSMS.DataService.Services
                     schedule.RequestId = request.Id;
                     await _scheduleService.UpdateAsync(schedule);
                 }
-                var listOrder = schedules.Select(x => x.OrderId).ToList();
-
+                var user = schedules.Select(x => x.User).Where(x => x.Id == userId).FirstOrDefault();
                 noti = new Notification
                 {
-                    Description = "Delivery staff " + userId + " cancel delivery of order " + listOrder.ToString(),
+                    Description = "Delivery staff " + user.Name + " canceled schedule on " + model.CancelDay,
                     CreateDate = DateTime.Now,
                     IsActive = true,
-                    Type = 0,
-                    
+                    Type = 0
                 };
                 await _notificationService.CreateAsync(noti);
 
-                await _notificationDetailService.PushCancelRequestNoti("Delivery staff " + userId + " cancel delivery of order " + listOrder.ToString(), userId, noti.Id);
+                await _notificationDetailService.PushCancelRequestNoti("Delivery staff " + user.Name + " canceled schedule on " + model.CancelDay, userId, noti.Id);
 
                 return model;
             }
@@ -192,6 +189,7 @@ namespace RSSMS.DataService.Services
                 };
                 OrderHistoryExtension orderExtend = _mapper.Map<OrderHistoryExtension>(model);
                 orderExtend.ModifiedBy = userId;
+                orderExtend.RequestId = request.Id;
                 await _orderHistoryExtensionService.CreateAsync(orderExtend);
                 var manager = _orderHistoryExtensionService.Get(x => x.OrderId == model.OrderId).Include(x => x.Order).ThenInclude(x => x.Manager).Select(x => x.Order.Manager).FirstOrDefault();
                 await _notificationService.CreateAsync(noti);

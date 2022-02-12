@@ -201,7 +201,7 @@ namespace RSSMS.DataService.Services
             };
             await _notificationService.CreateAsync(noti);
 
-            await _notificationDetailService.PushOrderNoti("New order arrive!", userId, noti.Id, order.Id, null);
+            await _notificationDetailService.PushOrderNoti("New order arrive!", userId, noti.Id, order.Id, null, noti.Id);
 
             return model;
         }

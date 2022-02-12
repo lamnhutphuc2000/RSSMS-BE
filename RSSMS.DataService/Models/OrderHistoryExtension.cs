@@ -9,6 +9,7 @@ namespace RSSMS.DataService.Models
     {
         public int Id { get; set; }
         public int? OrderId { get; set; }
+        public int? RequestId { get; set; }
         public DateTime? OldReturnDate { get; set; }
         public DateTime? ReturnDate { get; set; }
         public int? Status { get; set; }
@@ -17,7 +18,9 @@ namespace RSSMS.DataService.Models
         public bool? IsActive { get; set; }
         public DateTime? CreateDate { get; set; }
         public int? ModifiedBy { get; set; }
+        public DateTime? PaidDate { get; set; }
 
         public virtual Order Order { get; set; }
+        public virtual Request Request { get; set; }
     }
 }
