@@ -38,7 +38,7 @@ namespace RSSMS.DataService.Services
             var userIds = model.UserIds;
             if (userIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id null");
             var schedules = model.Schedules;
-            if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id null");
+            if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedules null");
             var listSchedules = Get().ToList();
 
             var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.OrderId == x.OrderId || a.RequestId == x.RequestId));
