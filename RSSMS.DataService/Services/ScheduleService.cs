@@ -41,7 +41,7 @@ namespace RSSMS.DataService.Services
             if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id null");
             var listSchedules = Get().ToList();
 
-            var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.OrderIds == x.OrderId));
+            var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.OrderId == x.OrderId || a.RequestId == x.RequestId));
 
             foreach (var scheduleAssigned in schedulesAssigned)
             {
@@ -55,7 +55,8 @@ namespace RSSMS.DataService.Services
                 {
                     var scheduleToCreate = _mapper.Map<Schedule>(model);
                     scheduleToCreate.UserId = userIds[i];
-                    scheduleToCreate.OrderId = schedules[j].OrderIds;
+                    scheduleToCreate.OrderId = schedules[j].OrderId;
+                    scheduleToCreate.RequestId = schedules[j].RequestId;
                     scheduleToCreate.DeliveryTime = schedules[j].DeliveryTime;
                     await CreateAsync(scheduleToCreate);
                 }
