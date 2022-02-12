@@ -5,6 +5,7 @@ using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Requests;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -27,10 +28,10 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(DynamicModelResponse<RequestViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Get([FromQuery] RequestViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
+        public async Task<IActionResult> Get([FromQuery] RequestViewModel model, [FromQuery] IList<int> RequestStatuses, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            return Ok(await _requestService.GetAll(model, fields, page, size, accessToken));
+            return Ok(await _requestService.GetAll(model, RequestStatuses, fields, page, size, accessToken));
         }
         [HttpGet("{id}")]
         [Authorize]

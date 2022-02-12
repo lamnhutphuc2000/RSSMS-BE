@@ -9,6 +9,7 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Requests;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
@@ -18,7 +19,7 @@ namespace RSSMS.DataService.Services
 {
     public interface IRequestService : IBaseService<Request>
     {
-        Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, string[] fields, int page, int size, string accessToken);
+        Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestStatuses, string[] fields, int page, int size, string accessToken);
         Task<RequestByIdViewModel> GetById(int id);
         Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken);
         Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model);
@@ -60,13 +61,21 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<RequestViewModel>(entity);
         }
 
-        public async Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, string[] fields, int page, int size, string accessToken)
+        public async Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestStatuses, string[] fields, int page, int size, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
             var requests = Get(x => x.IsActive == true).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+
+            if (RequestStatuses != null)
+            {
+                if (RequestStatuses.Count > 0)
+                {
+                    requests = Get(x => x.IsActive == true).Where(x => RequestStatuses.Contains((int)x.Status)).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+                }
+            }
 
             if (role == "Manager")
             {
