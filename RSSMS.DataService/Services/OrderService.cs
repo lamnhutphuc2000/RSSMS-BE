@@ -50,6 +50,12 @@ namespace RSSMS.DataService.Services
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
                 .Include(x => x.OrderHistoryExtensions)
+                .Include(x => x.OrderStorageDetails)
+                .Include(x => x.OrderDetails)
+                .ThenInclude(orderDetail => orderDetail.BoxOrderDetails)
+                .ThenInclude(boxOrderDetail => boxOrderDetail.Box)
+                .ThenInclude(box => box.Shelf)
+                .ThenInclude(shelf => shelf.Area)
                 .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
 

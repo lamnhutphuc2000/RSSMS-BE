@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using RSSMS.DataService.ViewModels.BoxOrderDetails;
 using RSSMS.DataService.ViewModels.Images;
 using System.Collections.Generic;
 
@@ -22,6 +23,9 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public string Note { get; set; }
         [JsonProperty("images")]
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
+
+        [JsonProperty("boxDetails")]
+        public virtual ICollection<BoxOrderViewModel> BoxDetails { get; set; }
 
     }
 }

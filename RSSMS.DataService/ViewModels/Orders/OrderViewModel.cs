@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
 using RSSMS.DataService.ViewModels.Boxes;
+using RSSMS.DataService.ViewModels.BoxOrderDetails;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.OrderHistoryExtension;
 using System;
@@ -77,9 +78,11 @@ namespace RSSMS.DataService.ViewModels.Orders
         [JsonProperty("orderDetails")]
         [BindNever]
         public virtual ICollection<OrderDetailsViewModel> OrderDetails { get; set; }
-        [JsonProperty("orderBoxDetails")]
-        [BindNever]
-        public virtual ICollection<BoxDetailViewModel> OrderBoxDetails { get; set; }
+        //[JsonProperty("orderBoxDetails")]
+        //[BindNever]
+        //public virtual ICollection<BoxDetailViewModel> OrderBoxDetails { get; set; }
+
+        
         [JsonProperty("orderHistoryExtensions")]
         [BindNever]
         public virtual ICollection<OrderHistoryExtensionViewModel> OrderHistoryExtensions { get; set; }
