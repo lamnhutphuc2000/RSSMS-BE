@@ -78,11 +78,12 @@ namespace RSSMS.DataService.ViewModels.Orders
         [JsonProperty("orderDetails")]
         [BindNever]
         public virtual ICollection<OrderDetailsViewModel> OrderDetails { get; set; }
+
         //[JsonProperty("orderBoxDetails")]
         //[BindNever]
         //public virtual ICollection<BoxDetailViewModel> OrderBoxDetails { get; set; }
 
-        
+
         [JsonProperty("orderHistoryExtensions")]
         [BindNever]
         public virtual ICollection<OrderHistoryExtensionViewModel> OrderHistoryExtensions { get; set; }

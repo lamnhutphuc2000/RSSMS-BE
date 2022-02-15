@@ -1,30 +1,23 @@
-﻿using Newtonsoft.Json;
-using RSSMS.DataService.ViewModels.BoxOrderDetails;
+﻿using RSSMS.DataService.ViewModels.BoxOrderDetails;
 using RSSMS.DataService.ViewModels.Images;
+using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace RSSMS.DataService.ViewModels.OrderDetails
 {
-    public class OrderDetailsViewModel
+    public class OrderDetailByIdViewModel
     {
-        [JsonProperty("id")]
         public int Id { get; set; }
-        [JsonProperty("productId")]
         public int ProductId { get; set; }
-        [JsonProperty("productName")]
         public string ProductName { get; set; }
-        [JsonProperty("price")]
         public decimal? Price { get; set; }
-        [JsonProperty("amount")]
         public int? Amount { get; set; }
-        [JsonProperty("productType")]
         public int? ProductType { get; set; }
-        [JsonProperty("note")]
         public string Note { get; set; }
-        [JsonProperty("images")]
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
-        [JsonProperty("productImages")]
         public virtual ICollection<AvatarImageViewModel> ProductImages { get; set; }
 
+        public BoxOrderViewModel BoxDetails { get; set; }
     }
 }

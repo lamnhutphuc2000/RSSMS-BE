@@ -24,7 +24,7 @@ namespace RSSMS.DataService.Services
         Task<OrderCreateViewModel> Create(OrderCreateViewModel model, string accessToken);
         Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, IList<int> OrderStatuses, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken);
         Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
-        Task<OrderViewModel> GetById(int id);
+        Task<OrderByIdViewModel> GetById(int id);
         Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model, string accessToken);
         Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken);
     }
@@ -46,7 +46,7 @@ namespace RSSMS.DataService.Services
             _notificationDetailService = notificationDetailService;
             _firebaseService = firebaseService;
         }
-        public async Task<OrderViewModel> GetById(int id)
+        public async Task<OrderByIdViewModel> GetById(int id)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
                 .Include(x => x.OrderHistoryExtensions)
@@ -58,7 +58,7 @@ namespace RSSMS.DataService.Services
                 .ThenInclude(boxOrderDetail => boxOrderDetail.Box)
                 .ThenInclude(box => box.Shelf)
                 .ThenInclude(shelf => shelf.Area)
-                .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
+                .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
 
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
