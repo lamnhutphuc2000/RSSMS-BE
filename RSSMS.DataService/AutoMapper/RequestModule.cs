@@ -27,7 +27,13 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<RequestByIdViewModel, Request>();
             mc.CreateMap<Request, RequestByIdViewModel>()
-                .ForMember(des => des.TotalPrice, opt => opt.MapFrom(src => src.Order != null ? src.Order.OrderHistoryExtensions != null ? src.Order.OrderHistoryExtensions.FirstOrDefault().TotalPrice : null : null))
+                .ForMember(des => des.CancelBy, otp => otp.MapFrom(src => src.User.Name))
+                .ForMember(des => des.OldReturnDate, otp => otp.MapFrom(src => src.OrderHistoryExtensions != null ? src.OrderHistoryExtensions.First().OldReturnDate : null))
+                .ForMember(des => des.OrderType, otp => otp.MapFrom(src => src.OrderHistoryExtensions != null ? src.OrderHistoryExtensions.First().Order.TypeOrder : null))
+                .ForMember(des => des.ReturnDate, otp => otp.MapFrom(src => src.OrderHistoryExtensions != null ? src.OrderHistoryExtensions.First().ReturnDate : null))
+                .ForMember(des => des.DurationDays, opt => opt.MapFrom(src => (src.OrderHistoryExtensions.First().ReturnDate - src.OrderHistoryExtensions.First().OldReturnDate).Value.Days))
+                .ForMember(des => des.DurationMonths, opt => opt.MapFrom(src => ((src.OrderHistoryExtensions.First().ReturnDate - src.OrderHistoryExtensions.First().OldReturnDate).Value.Days)/30))
+                .ForMember(des => des.TotalPrice, otp => otp.MapFrom(src => src.OrderHistoryExtensions != null ? src.OrderHistoryExtensions.First().TotalPrice : null))
                 .ForMember(des => des.CancelBy, otp => otp.MapFrom(src => src.User.Name))
                 .ForMember(des => des.CancelByPhone, otp => otp.MapFrom(src => src.User.Phone));
         }

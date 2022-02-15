@@ -112,8 +112,8 @@ namespace RSSMS.DataService.Services
         public async Task<RequestByIdViewModel> GetById(int id)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
+                .Include(x => x.OrderHistoryExtensions)
                 .Include(x => x.Order)
-                .ThenInclude(order => order.OrderHistoryExtensions.Where(a => a.IsActive == true).OrderByDescending(orderHistory => orderHistory.CreateDate))
                .ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider)
                .FirstOrDefaultAsync();
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
