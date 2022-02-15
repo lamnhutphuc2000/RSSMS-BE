@@ -52,7 +52,9 @@ namespace RSSMS.DataService.Services
                 .Include(x => x.OrderHistoryExtensions)
                 .Include(x => x.OrderStorageDetails)
                 .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.BoxOrderDetails)
+                .ThenInclude(orderDetail => orderDetail.Images)
+                .Include(x => x.OrderDetails)
+                .ThenInclude(orderDetail => orderDetail.BoxOrderDetails.Where(boxOrderDetail => boxOrderDetail.IsActive == true))
                 .ThenInclude(boxOrderDetail => boxOrderDetail.Box)
                 .ThenInclude(box => box.Shelf)
                 .ThenInclude(shelf => shelf.Area)
@@ -74,6 +76,8 @@ namespace RSSMS.DataService.Services
                 .Include(x => x.OrderStorageDetails)
                 .Include(x => x.Schedules)
                 .Include(x => x.OrderDetails)
+                .ThenInclude(orderDetail => orderDetail.Images)
+                .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.Product);
 
             if (OrderStatuses != null)
@@ -83,6 +87,8 @@ namespace RSSMS.DataService.Services
                     order = Get(x => x.IsActive == true).Where(x => OrderStatuses.Contains((int)x.Status))
                         .Include(x => x.OrderHistoryExtensions)
                         .Include(x => x.OrderStorageDetails).Include(x => x.Schedules)
+                        .Include(x => x.OrderDetails)
+                .ThenInclude(orderDetail => orderDetail.Images)
                     .Include(x => x.OrderDetails)
                     .ThenInclude(orderDetail => orderDetail.Product);
                 }

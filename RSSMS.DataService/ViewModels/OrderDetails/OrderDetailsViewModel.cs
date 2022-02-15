@@ -23,6 +23,8 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public string Note { get; set; }
         [JsonProperty("images")]
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
+        [JsonProperty("productImages")]
+        public virtual ICollection<AvatarImageViewModel> ProductImages { get; set; }
 
         [JsonProperty("boxDetails")]
         public virtual ICollection<BoxOrderViewModel> BoxDetails { get; set; }
