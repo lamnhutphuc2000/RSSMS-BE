@@ -39,12 +39,26 @@ namespace RSSMS.DataService.Services
             if (userIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id null");
             var schedules = model.Schedules;
             if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedules null");
-            var listSchedules = Get().ToList();
+            var listSchedules = Get().Include(x => x.Order).ThenInclude(order => order.Requests).ToList();
 
-            var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.OrderId == x.OrderId || a.RequestId == x.RequestId));
+            var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.OrderId == x.OrderId) && x.SheduleDay.Value.Date == model.SheduleDay.Value.Date);
+
+
 
             foreach (var scheduleAssigned in schedulesAssigned)
             {
+                var requests = scheduleAssigned.Order.Requests;
+                if(requests != null)
+                {
+                    if(requests.Count > 0)
+                    {
+                        foreach (var request in requests)
+                        {
+                            if (request.Type == 0) request.Status = 1;
+                        }
+                        scheduleAssigned.Order.Requests = requests;
+                    }
+                }
                 scheduleAssigned.IsActive = false;
                 scheduleAssigned.Status = null;
                 await UpdateAsync(scheduleAssigned);
@@ -85,7 +99,7 @@ namespace RSSMS.DataService.Services
             if (role == "Delivery Staff")
             {
                 var schedules = Get(x => x.IsActive == true && x.UserId == userId)
-                        .Where(x => x.SheduleDay >= model.DateFrom && x.SheduleDay <= model.DateTo).Include(x => x.Order)
+                        .Where(x => x.SheduleDay.Value.Date >= model.DateFrom.Value.Date && x.SheduleDay.Value.Date <= model.DateTo.Value.Date).Include(x => x.Order)
                         .ThenInclude(order => order.OrderStorageDetails)
                         .Include(x => x.Order)
                         .ThenInclude(order => order.Customer)
@@ -96,6 +110,7 @@ namespace RSSMS.DataService.Services
                 var tmp = schedules.AsEnumerable().GroupBy(p => (int)p.OrderId)
                                     .Select(g => new ScheduleViewModel
                                     {
+                                        Id = g.First().Id,
                                         OrderId = g.Key,
                                         Order = _mapper.Map<OrderViewModel>(g.First().Order),
                                         Address = g.First().Order.AddressReturn,
@@ -115,17 +130,11 @@ namespace RSSMS.DataService.Services
             else
             {
                 var schedules = Get(x => x.IsActive == true)
-                        .Where(x => x.SheduleDay >= model.DateFrom && x.SheduleDay <= model.DateTo).Include(x => x.Order)
-                        .ThenInclude(order => order.OrderStorageDetails)
-                        .Include(x => x.Order)
-                        .ThenInclude(order => order.Customer)
-                        .Include(x => x.Order)
-                        .ThenInclude(order => order.OrderDetails)
-                        .ThenInclude(orderDetail => orderDetail.Product)
-                        .ThenInclude(product => product.Images);
+                        .Where(x => x.SheduleDay >= model.DateFrom && x.SheduleDay <= model.DateTo).Include(x => x.Order).Include(x => x.User).ThenInclude(x => x.Images);
                 result = schedules.AsEnumerable().GroupBy(p => (int)p.OrderId)
                                     .Select(g => new ScheduleViewModel
                                     {
+                                        Id = g.First().Id,
                                         OrderId = g.Key,
                                         Address = g.First().Order.AddressReturn,
                                         Note = g.First().Note,

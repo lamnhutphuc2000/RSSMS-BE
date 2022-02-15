@@ -11,6 +11,8 @@ namespace RSSMS.DataService.AutoMapper
         public static void ConfigRequestModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Request, RequestViewModel>()
+                .ForMember(des => des.CustomerName, opt => opt.MapFrom(src => src.User.Role.Name == "Customer" ? src.User.Name : null))
+                .ForMember(des => des.CustomerPhone, opt => opt.MapFrom(src => src.User.Role.Name == "Customer" ? src.User.Name : null))
                 .ForMember(des => des.DeliveryStaffName, opt => opt.MapFrom(src => src.User.Role.Name == "Delivery Staff" ? src.User.Name : null))
                 .ForMember(des => des.DeliveryStaffPhone, otp => otp.MapFrom(src => src.User.Role.Name == "Delivery Staff" ? src.User.Phone : null));
             mc.CreateMap<RequestViewModel, Request>();

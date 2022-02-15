@@ -80,7 +80,7 @@ namespace RSSMS.DataService.Services
             {
                 var storageIds = _staffManageStorageService.Get(x => x.UserId == userId).Select(a => a.StorageId).ToList();
                 var staff = _staffManageStorageService.Get(x => storageIds.Contains(x.StorageId)).Select(a => a.UserId).ToList();
-                requests = requests.Where(x => staff.Contains((int)x.UserId) || x.UserId == userId).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+                requests = requests.Where(x => staff.Contains((int)x.UserId) || x.UserId == userId || x.User.Role.Name == "Customer").Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
             }
 
             if (role == "Delivery Staff")
@@ -120,19 +120,6 @@ namespace RSSMS.DataService.Services
             return result;
         }
 
-        public async Task<RequestViewModel> Update(int id, RequestViewModel model)
-        {
-            if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request Id not matched");
-
-            var entity = await GetAsync(id);
-            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
-
-            var updateEntity = _mapper.Map(model, entity);
-            await UpdateAsync(updateEntity);
-
-            return _mapper.Map<RequestViewModel>(updateEntity);
-        }
-
         public async Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
@@ -144,12 +131,13 @@ namespace RSSMS.DataService.Services
             if (role == "Delivery Staff" && model.Type == 0) // huy lich giao hang
             {
                 var schedules = _scheduleService.Get(x => x.SheduleDay.Value.Date == model.CancelDay.Value.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
-                if (schedules.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
+                if (schedules.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Schedule not found");
                 foreach (var schedule in schedules)
                 {
                     request = _mapper.Map<Request>(model);
                     request.OrderId = schedule.OrderId;
                     request.UserId = userId;
+                    request.Status = 0;
                     await CreateAsync(request);
 
                     schedule.IsActive = false;
@@ -271,7 +259,7 @@ namespace RSSMS.DataService.Services
 
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request Id not matched");
 
-            var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
+            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.OrderHistoryExtensions).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
 
             var orderHistoryExtend = entity.OrderHistoryExtensions.FirstOrDefault();
