@@ -27,6 +27,7 @@ namespace RSSMS.DataService.Services
         Task<OrderByIdViewModel> GetById(int id);
         Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model, string accessToken);
         Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken);
+        Task<OrderByIdViewModel> Done(int id);
     }
     class OrderService : BaseService<Order>, IOrderService
     {
@@ -306,6 +307,28 @@ namespace RSSMS.DataService.Services
                 var result = await _notificationDetailService.SendNoti(description, userId, customerId, registrationId, noti.Id, order.Id, null, model);
             }
             return _mapper.Map<OrderViewModel>(order);
+        }
+
+        public async Task<OrderByIdViewModel> Done(int id)
+        {
+            var order = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.OrderDetails).ThenInclude(orderDetail => orderDetail.BoxOrderDetails).FirstOrDefaultAsync();
+            if(order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+            var orderDetails = order.OrderDetails;
+            foreach(var orderDetail in orderDetails)
+            {
+                if(orderDetail.BoxOrderDetails != null)
+                {
+                    var boxOrderDetail = orderDetail.BoxOrderDetails;
+                    foreach(var box in boxOrderDetail)
+                    {
+                        box.IsActive = false;
+                    }
+                    orderDetail.BoxOrderDetails = boxOrderDetail;
+                }
+            }
+            order.OrderDetails = orderDetails;
+            await UpdateAsync(order);
+            return await GetById(id);
         }
     }
 }

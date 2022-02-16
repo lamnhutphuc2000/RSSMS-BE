@@ -16,7 +16,7 @@ namespace RSSMS.DataService.Services
     {
         Task<ResponseContent> PushOrderNoti(string description, int SenderId, int NotificationId, int orderId, int? requestId, int notiId); // noti to manager when receive another order
         Task<ResponseContent> PushCancelRequestNoti(string description, int SenderId, int NotificationId);
-        Task<ResponseContent> SendNoti(string description, int SenderId, int receiverId, string registrationId, int NotificationId, int orderId, int? requestId, object data);
+        Task<ResponseContent> SendNoti(string description, int senderId, int receiverId, string registrationId, int NotificationId, int orderId, int? requestId, object data);
     }
     public class NotificationDetailService : BaseService<NotificationDetail>, INotificationDetailService
     {
@@ -140,8 +140,31 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public async Task<ResponseContent> SendNoti(string description, int SenderId, int receiverId, string registrationId, int notificationId, int orderId, int? requestId, object data)
+        public async Task<ResponseContent> SendNoti(string description, int senderId, int receiverId, string registrationId, int notificationId, int orderId, int? requestId, object data)
         {
+            var now = DateTime.Now;
+            NotificationDetail notiSenderDetail = new NotificationDetail
+            {
+                UserId = senderId,
+                NotificationId = notificationId,
+                IsOwn = true,
+                IsRead = true,
+                IsActive = true,
+                CreateDate = now
+            };
+
+            await CreateAsync(notiSenderDetail);
+            NotificationDetail notiDetail = new NotificationDetail
+            {
+                UserId = receiverId,
+                NotificationId = notificationId,
+                IsOwn = false,
+                IsRead = false,
+                IsActive = true,
+                CreateDate = now
+            };
+            await CreateAsync(notiDetail);
+
             string jsonConvert = JsonConvert.SerializeObject(data);
             using (var sender = new Sender("AAAAry7VzWE:APA91bEFLYrdoliXt0cRdQtnnRNOdxhYXP0mMTOSrgOvcqhULEGKWwUJQIP7phbTXq54zGYD0pzRpDNXfkaSDwd36q088cKkT-CiQz-IBIdLC2ki9zuyK865yiHMG1G6q403iW9fsaKR"))
             {

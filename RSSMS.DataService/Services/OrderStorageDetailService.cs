@@ -23,11 +23,16 @@ namespace RSSMS.DataService.Services
         private readonly IMapper _mapper;
         private readonly IStorageService _storageService;
         private readonly IOrderService _orderService;
-        public OrderStorageDetailService(IUnitOfWork unitOfWork, IStorageService storageService, IOrderService orderService, IOrderStorageDetailRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly INotificationDetailService _notificationDetailService;
+        private readonly INotificationService _notificationService;
+        public OrderStorageDetailService(IUnitOfWork unitOfWork, IStorageService storageService, IOrderService orderService,
+            INotificationDetailService notificationDetailService, INotificationService notificationService, IOrderStorageDetailRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _storageService = storageService;
             _orderService = orderService;
+            _notificationDetailService = notificationDetailService;
+            _notificationService = notificationService;
         }
 
         public async Task<OrderStorageDetailViewModel> Create(OrderStorageDetailViewModel model, string accessToken)
@@ -50,6 +55,23 @@ namespace RSSMS.DataService.Services
             order.ManagerId = userId;
             order.Status = 2;
             await _orderService.UpdateAsync(order);
+
+
+            var customer = order.Customer;
+            string description = "Don "+order.Id +" cua khach hang "+customer.Name +" da duoc xu ly ";
+            Notification noti = new Notification
+            {
+                CreateDate = DateTime.Now,
+                IsActive = true,
+                OrderId = order.Id,
+                Status = 0,
+                Type = 6,
+                Description = description,
+                Note = "Don da luu kho",
+            };
+            await _notificationService.CreateAsync(noti);
+
+            await _notificationDetailService.SendNoti(description, userId, customer.Id, customer.DeviceTokenId, noti.Id, order.Id, null, null);
             return model;
         }
 
