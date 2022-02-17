@@ -16,7 +16,7 @@ namespace RSSMS.DataService.ViewModels.Requests
         public string ReturnTime { get; set; }
         public DateTime? OldReturnDate { get; set; }
         public DateTime? ReturnDate { get; set; }
-        public int Durations { get; set; }
+        public int? Durations { get; set; }
         public int? Type { get; set; }
         [BindNever]
         public int? Status { get; set; }
@@ -29,9 +29,9 @@ namespace RSSMS.DataService.ViewModels.Requests
         public string CancelBy { get; set; }
         public string CancelByPhone { get; set; }
         public DateTime? CreateDate { get; set; }
-        public int OrderType { get; set; }
+        public int? OrderType { get; set; }
         public int? DurationDays { get; set; }
-        public int? DurationMonths { get; set; }
+        public int? DurationMonths { get { return (this.DurationDays != null ? this.DurationDays /30 : null); } set { } }
         [BindNever]
         public virtual ICollection<RequestDetailCreateViewModel> RequestDetails { get; set; }
         [BindNever]
