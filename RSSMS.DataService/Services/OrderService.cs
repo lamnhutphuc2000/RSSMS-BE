@@ -326,6 +326,7 @@ namespace RSSMS.DataService.Services
                     orderDetail.BoxOrderDetails = boxOrderDetail;
                 }
             }
+            order.Status = 6;
             order.OrderDetails = orderDetails;
             await UpdateAsync(order);
             return await GetById(id);
