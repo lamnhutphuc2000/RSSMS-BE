@@ -9,7 +9,7 @@ namespace RSSMS.DataService.ViewModels.Requests
     public class RequestViewModel
     {
         public static string[] Fields = {
-            "Id","OrderId","UserId","Type","Status","Note","DeliveryStaffName","ReturnDate","ReturnTime","ReturnAddress","FromDate","ToDate","DeliveryStaffPhone","CustomerName","CustomerPhone","RequestDetails","Schedules"
+            "Id","OrderId","UserId","Type","Status","Note","DeliveryStaffName","ReturnDate","StorageId","StorageName","ReturnTime","ReturnAddress","FromDate","ToDate","DeliveryStaffPhone","CustomerName","CustomerPhone","RequestDetails","Schedules"
         };
         [BindNever]
         public int Id { get; set; }
@@ -29,6 +29,10 @@ namespace RSSMS.DataService.ViewModels.Requests
         public string CustomerName { get; set; }
         [BindNever]
         public string CustomerPhone { get; set; }
+        [BindNever]
+        public int? StorageId { get; set; }
+        [BindNever]
+        public string StorageName { get; set; }
         [BindNever]
         public DateTime? ReturnDate { get; set; }
         [BindNever]

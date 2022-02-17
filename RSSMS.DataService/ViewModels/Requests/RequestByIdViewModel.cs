@@ -31,7 +31,7 @@ namespace RSSMS.DataService.ViewModels.Requests
         public DateTime? CreateDate { get; set; }
         public int? OrderType { get; set; }
         public int? DurationDays { get; set; }
-        public int? DurationMonths { get { return (this.DurationDays != null ? this.DurationDays /30 : null); } set { } }
+        public int? DurationMonths { get; set; }
         [BindNever]
         public virtual ICollection<RequestDetailCreateViewModel> RequestDetails { get; set; }
         [BindNever]

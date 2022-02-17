@@ -67,35 +67,46 @@ namespace RSSMS.DataService.Services
             var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-            var requests = Get(x => x.IsActive == true).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+            var requests = Get(x => x.IsActive == true).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages)
+                .Include(x => x.Order)
+                .ThenInclude(x => x.OrderStorageDetails)
+                .ThenInclude(x => x.Storage);
             if (model.FromDate != null && model.ToDate != null)
             {
                 requests = Get(x => x.IsActive == true && x.ReturnDate.Value.Date >= model.FromDate.Value.Date && x.ReturnDate <= model.ToDate.Value.Date)
-                    .Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+                    .Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages)
+                    .Include(x => x.Order)
+                .ThenInclude(x => x.OrderStorageDetails).ThenInclude(x => x.Storage);
             }
 
             if (RequestTypes != null)
             {
                 if (RequestTypes.Count > 0)
                 {
-                    requests = Get(x => x.IsActive == true).Where(x => RequestTypes.Contains((int)x.Type)).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+                    requests = Get(x => x.IsActive == true).Where(x => RequestTypes.Contains((int)x.Type)).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages).Include(x => x.Order)
+                .ThenInclude(x => x.OrderStorageDetails).ThenInclude(x => x.Storage);
                 }
             }
             if (role == "Manager")
             {
                 var storageIds = _staffManageStorageService.Get(x => x.UserId == userId).Select(a => a.StorageId).ToList();
                 var staff = _staffManageStorageService.Get(x => storageIds.Contains(x.StorageId)).Select(a => a.UserId).ToList();
-                requests = requests.Where(x => staff.Contains((int)x.UserId) || x.UserId == userId || x.User.Role.Name == "Customer").Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+                requests = requests.Where(x => staff.Contains((int)x.UserId) || x.UserId == userId || x.User.Role.Name == "Customer").Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages)
+                    .Include(x => x.Order)
+                .ThenInclude(x => x.OrderStorageDetails).ThenInclude(x => x.Storage);
             }
 
             if (role == "Delivery Staff")
             {
-                requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+                requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages).Include(x => x.Order)
+                .ThenInclude(x => x.OrderStorageDetails).ThenInclude(x => x.Storage);
             }
 
             if (role == "Customer")
             {
-                requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+                requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages)
+                    .Include(x => x.Order)
+                .ThenInclude(x => x.OrderStorageDetails).ThenInclude(x => x.Storage);
             }
             
             var result = requests.OrderByDescending(x => x.CreatedDate).ProjectTo<RequestViewModel>(_mapper.ConfigurationProvider)
