@@ -28,6 +28,7 @@ namespace RSSMS.DataService.Services
         Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model, string accessToken);
         Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken);
         Task<OrderByIdViewModel> Done(int id);
+        Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model);
     }
     class OrderService : BaseService<Order>, IOrderService
     {
@@ -329,6 +330,21 @@ namespace RSSMS.DataService.Services
             order.OrderDetails = orderDetails;
             await UpdateAsync(order);
             return await GetById(id);
+        }
+
+        public async Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model)
+        {
+            var orders = await Get(x => model.Any(a => a.Id == x.Id) && x.IsActive == true).ToListAsync();
+            if(orders == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+            if(orders.Count < model.Count) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+
+            foreach(var order in orders)
+            {
+                order.Status = model.Where(a => a.Id == order.Id).First().Status;
+                await UpdateAsync(order);
+            }
+
+            return null;
         }
     }
 }

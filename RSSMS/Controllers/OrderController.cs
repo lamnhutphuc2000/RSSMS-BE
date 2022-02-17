@@ -92,6 +92,21 @@ namespace RSSMS.API.Controllers
             return Ok(await _orderService.Update(id, model));
         }
         /// <summary>
+        /// Update list orders status by id
+        /// </summary>
+        /// <param name="orders"></param>
+        /// <returns></returns>
+        [HttpPut]
+        [Authorize(Roles = "Manager,Office staff, Customer, Delivery Staff")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> UpdateOrders(List<OrderUpdateStatusViewModel> model)
+        {
+            return Ok(await _orderService.UpdateOrders(model));
+        }
+        /// <summary>
         /// Done the order by order Id
         /// </summary>
         /// <param name="id"></param>
