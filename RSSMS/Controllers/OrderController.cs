@@ -82,7 +82,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Manager,Office staff, Customer")]
+        [Authorize(Roles = "Manager,Office staff, Customer, Delivery Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
