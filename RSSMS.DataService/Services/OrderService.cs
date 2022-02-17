@@ -237,7 +237,6 @@ namespace RSSMS.DataService.Services
             var updateEntity = _mapper.Map(model, entity);
             var orderDetails = updateEntity.OrderDetails.Select(c => { c.OrderId = id; return c; }).ToList();
             updateEntity.OrderDetails = orderDetails;
-            updateEntity.Status = 3;
             await UpdateAsync(updateEntity);
 
             return model;
