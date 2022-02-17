@@ -68,6 +68,11 @@ namespace RSSMS.DataService.Services
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
             var requests = Get(x => x.IsActive == true).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+            if (model.FromDate != null && model.ToDate != null)
+            {
+                requests = Get(x => x.IsActive == true && x.ReturnDate.Value.Date >= model.FromDate.Value.Date && x.ReturnDate <= model.ToDate.Value.Date)
+                    .Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
+            }
 
             if (RequestTypes != null)
             {
@@ -92,6 +97,7 @@ namespace RSSMS.DataService.Services
             {
                 requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages);
             }
+            
             var result = requests.OrderByDescending(x => x.CreatedDate).ProjectTo<RequestViewModel>(_mapper.ConfigurationProvider)
                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");

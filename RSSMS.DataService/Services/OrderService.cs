@@ -334,7 +334,8 @@ namespace RSSMS.DataService.Services
 
         public async Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model)
         {
-            var orders = await Get(x => model.Any(a => a.Id == x.Id) && x.IsActive == true).ToListAsync();
+            var orderIds = model.Select(x => x.Id);
+            var orders = await Get(x => orderIds.Contains(x.Id) && x.IsActive == true).ToListAsync();
             if(orders == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
             if(orders.Count < model.Count) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
 
