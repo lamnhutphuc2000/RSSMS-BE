@@ -112,6 +112,7 @@ namespace RSSMS.DataService.Services
                                     {
                                         Id = g.First().Id,
                                         OrderId = g.Key,
+                                        RequestId = g.First().RequestId,
                                         Order = _mapper.Map<OrderViewModel>(g.First().Order),
                                         Address = g.First().Order.AddressReturn,
                                         Note = g.First().Note,
@@ -130,12 +131,13 @@ namespace RSSMS.DataService.Services
             else
             {
                 var schedules = Get(x => x.IsActive == true)
-                        .Where(x => x.SheduleDay >= model.DateFrom && x.SheduleDay <= model.DateTo).Include(x => x.Order).Include(x => x.User).ThenInclude(x => x.Images);
+                        .Where(x => x.SheduleDay.Value.Date >= model.DateFrom.Value.Date && x.SheduleDay.Value.Date <= model.DateTo.Value.Date).Include(x => x.Order).Include(x => x.User).ThenInclude(x => x.Images);
                 result = schedules.AsEnumerable().GroupBy(p => (int)p.OrderId)
                                     .Select(g => new ScheduleViewModel
                                     {
                                         Id = g.First().Id,
                                         OrderId = g.Key,
+                                        RequestId = g.First().RequestId,
                                         Address = g.First().Order.AddressReturn,
                                         Note = g.First().Note,
                                         Status = g.First().Order.Status,

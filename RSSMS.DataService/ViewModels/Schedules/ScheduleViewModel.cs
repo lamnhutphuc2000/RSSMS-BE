@@ -9,6 +9,7 @@ namespace RSSMS.DataService.ViewModels.Schedules
     {
         public int Id { get; set; }
         public int? OrderId { get; set; }
+        public int? RequestId { get; set; }
         public DateTime ScheduleDay { get; set; }
         public OrderViewModel Order { get; set; }
         public List<OrderViewModel> Orders { get; set; }
