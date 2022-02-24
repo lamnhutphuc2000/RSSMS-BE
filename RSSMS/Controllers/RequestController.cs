@@ -5,6 +5,7 @@ using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Requests;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -39,7 +40,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(RequestViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(Guid id)
         {
             return Ok(await _requestService.GetById(id));
         }
@@ -65,7 +66,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Update(int id, RequestUpdateViewModel model)
+        public async Task<IActionResult> Update(Guid id, RequestUpdateViewModel model)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _requestService.Update(id, model, accessToken));
@@ -80,7 +81,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             await _requestService.Delete(id);
             return Ok("Deleted");

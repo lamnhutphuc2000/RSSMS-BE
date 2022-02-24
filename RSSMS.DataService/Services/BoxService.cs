@@ -2,15 +2,16 @@
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.UnitOfWorks;
+using System;
 using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
 {
     public interface IBoxService : IBaseService<Box>
     {
-        Task CreateNumberOfBoxes(int shelfId, int num, int productId);
-        Task Delete(int shelfId);
-        Task UpdateBoxSize(int productId, int shelfId);
+        Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId);
+        Task Delete(Guid shelfId);
+        Task UpdateBoxSize(Guid serviceId, Guid shelfId);
     }
     public class BoxService : BaseService<Box>, IBoxService
     {
@@ -18,20 +19,20 @@ namespace RSSMS.DataService.Services
         {
         }
 
-        public async Task CreateNumberOfBoxes(int shelfId, int num, int productId)
+        public async Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId)
         {
             for (int i = 0; i < num; i++)
             {
                 Box box = new Box();
                 box.IsActive = true;
-                box.ProductId = productId;
+                box.ServiceId = serviceId;
                 box.ShelfId = shelfId;
                 box.Status = 0;
                 await CreateAsync(box);
             }
         }
 
-        public async Task Delete(int shelfId)
+        public async Task Delete(Guid shelfId)
         {
             var listBoxes = await Get(x => x.ShelfId == shelfId && x.IsActive == true).ToListAsync();
             if (listBoxes == null) return;
@@ -42,13 +43,13 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public async Task UpdateBoxSize(int productId, int shelfId)
+        public async Task UpdateBoxSize(Guid serviceId, Guid shelfId)
         {
-            var listBoxes = await Get(x => x.ShelfId == shelfId && x.IsActive == true && x.ProductId != productId).ToListAsync();
+            var listBoxes = await Get(x => x.ShelfId == shelfId && x.IsActive == true && x.ServiceId != serviceId).ToListAsync();
             if (listBoxes == null) return;
             foreach (var box in listBoxes)
             {
-                box.ProductId = productId;
+                box.ServiceId = serviceId;
                 await UpdateAsync(box);
             }
         }

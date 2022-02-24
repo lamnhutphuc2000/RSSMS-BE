@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using RSSMS.DataService.Attributes;
 using RSSMS.DataService.ViewModels.Boxes;
+using System;
 using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Shelves
@@ -8,24 +9,22 @@ namespace RSSMS.DataService.ViewModels.Shelves
     public class ShelfViewModel
     {
         public static string[] Fields = {
-            "Id","AreaId","Type","Note","BoxesInWidth","BoxesInHeight","ProductId","SizeType"
+            "Id","AreaId","Name","Type","Status","BoxesInWidth","BoxesInHeight","Boxes"
         };
         [BindNever]
-        public int? Id { get; set; }
-        public int? AreaId { get; set; }
+        public Guid? Id { get; set; }
+        [BindNever]
+        public Guid? AreaId { get; set; }
         [String]
         public string Name { get; set; }
+        [BindNever]
         public int? Type { get; set; }
         [BindNever]
-        public string Note { get; set; }
+        public int? Status { get; set; }
         [BindNever]
         public int? BoxesInWidth { get; set; }
         [BindNever]
         public int? BoxesInHeight { get; set; }
-        [BindNever]
-        public int? ProductId { get; set; }
-        [BindNever]
-        public string SizeType { get; set; }
         [BindNever]
         public virtual ICollection<BoxViewModel> Boxes { get; set; }
     }

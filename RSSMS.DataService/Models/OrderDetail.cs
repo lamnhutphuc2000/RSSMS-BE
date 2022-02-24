@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 #nullable disable
 
@@ -8,20 +9,19 @@ namespace RSSMS.DataService.Models
     {
         public OrderDetail()
         {
-            BoxOrderDetails = new HashSet<BoxOrderDetail>();
+            Boxes = new HashSet<Box>();
             Images = new HashSet<Image>();
         }
 
-        public int OrderId { get; set; }
-        public int ProductId { get; set; }
+        public Guid Id { get; set; }
+        public Guid? OrderId { get; set; }
+        public Guid? ServiceId { get; set; }
         public int? Amount { get; set; }
-        public double? TotalPrice { get; set; }
-        public string Note { get; set; }
-        public int Id { get; set; }
+        public decimal? TotalPrice { get; set; }
 
         public virtual Order Order { get; set; }
-        public virtual Product Product { get; set; }
-        public virtual ICollection<BoxOrderDetail> BoxOrderDetails { get; set; }
+        public virtual Service Service { get; set; }
+        public virtual ICollection<Box> Boxes { get; set; }
         public virtual ICollection<Image> Images { get; set; }
     }
 }

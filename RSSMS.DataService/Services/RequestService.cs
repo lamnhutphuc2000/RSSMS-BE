@@ -20,10 +20,10 @@ namespace RSSMS.DataService.Services
     public interface IRequestService : IBaseService<Request>
     {
         Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestTypes, string[] fields, int page, int size, string accessToken);
-        Task<RequestByIdViewModel> GetById(int id);
+        Task<RequestByIdViewModel> GetById(Guid id);
         Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken);
-        Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model, string accessToken);
-        Task<RequestViewModel> Delete(int id);
+        Task<RequestUpdateViewModel> Update(Guid id, RequestUpdateViewModel model, string accessToken);
+        Task<RequestViewModel> Delete(Guid id);
     }
 
 
@@ -31,30 +31,28 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IScheduleService _scheduleService;
-        private readonly INotificationService _notificationService;
-        private readonly INotificationDetailService _notificationDetailService;
-        private readonly IStaffManageStorageService _staffManageStorageService;
+        private readonly IFirebaseService _firebaseService;
+        private readonly IStaffAssignStoragesService _staffAssignStoragesService;
         private readonly IOrderHistoryExtensionService _orderHistoryExtensionService;
         private readonly IOrderService _orderService;
         public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper
-            , IScheduleService scheduleService, INotificationService notificationService
-            , INotificationDetailService notificationDetailService, IStaffManageStorageService staffManageStorageService
+            , IScheduleService scheduleService
+            , IFirebaseService firebaseService, IStaffAssignStoragesService staffAssignStoragesService
             , IOrderHistoryExtensionService orderHistoryExtensionService
             , IOrderService orderService
             ) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _scheduleService = scheduleService;
-            _notificationService = notificationService;
-            _notificationDetailService = notificationDetailService;
-            _staffManageStorageService = staffManageStorageService;
+            _firebaseService = firebaseService;
+            _staffAssignStoragesService = staffAssignStoragesService;
             _orderHistoryExtensionService = orderHistoryExtensionService;
             _orderService = orderService;
         }
 
-        public async Task<RequestViewModel> Delete(int id)
+        public async Task<RequestViewModel> Delete(Guid id)
         {
-            var entity = await GetAsync<int>(id);
+            var entity = await GetAsync(id);
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
             entity.IsActive = false;
             await UpdateAsync(entity);
@@ -64,51 +62,51 @@ namespace RSSMS.DataService.Services
         public async Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestTypes, string[] fields, int page, int size, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-            var requests = Get(x => x.IsActive == true).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages)
+            var requests = Get(x => x.IsActive == true).Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
                 .Include(x => x.Order)
-                .ThenInclude(x => x.OrderStorageDetails)
-                .ThenInclude(x => x.Storage);
+                .ThenInclude(order => order.Storage);
             if (model.FromDate != null && model.ToDate != null)
             {
                 requests = Get(x => x.IsActive == true && x.ReturnDate.Value.Date >= model.FromDate.Value.Date && x.ReturnDate <= model.ToDate.Value.Date)
-                    .Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages)
+                    .Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
                     .Include(x => x.Order)
-                .ThenInclude(x => x.OrderStorageDetails).ThenInclude(x => x.Storage);
+                    .ThenInclude(order => order.Storage);
             }
 
             if (RequestTypes != null)
             {
                 if (RequestTypes.Count > 0)
                 {
-                    requests = Get(x => x.IsActive == true).Where(x => RequestTypes.Contains((int)x.Type)).Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages).Include(x => x.Order)
-                .ThenInclude(x => x.OrderStorageDetails).ThenInclude(x => x.Storage);
+                    requests = Get(x => x.IsActive == true).Where(x => RequestTypes.Contains((int)x.Type)).Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
+                    .Include(x => x.Order)
+                    .ThenInclude(order => order.Storage);
                 }
             }
             if (role == "Manager")
             {
-                var storageIds = _staffManageStorageService.Get(x => x.UserId == userId).Select(a => a.StorageId).ToList();
-                var staff = _staffManageStorageService.Get(x => storageIds.Contains(x.StorageId)).Select(a => a.UserId).ToList();
-                requests = requests.Where(x => staff.Contains((int)x.UserId) || x.UserId == userId || x.User.Role.Name == "Customer").Include(a => a.Schedules).Include(a => a.User).ThenInclude(b => b.StaffManageStorages)
+                var storageIds = _staffAssignStoragesService.Get(x => x.StaffId == userId).Select(a => a.StorageId).ToList();
+                var staff = _staffAssignStoragesService.Get(x => storageIds.Contains(x.StorageId)).Select(a => a.StaffId).ToList();
+                requests = requests.Where(x => staff.Contains((Guid)x.CreatedBy) || x.CreatedBy == userId || x.CreatedByNavigation.Role.Name == "Customer").Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
                     .Include(x => x.Order)
-                .ThenInclude(x => x.OrderStorageDetails).ThenInclude(x => x.Storage);
+                    .ThenInclude(order => order.Storage);
             }
 
             if (role == "Delivery Staff")
             {
-                requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages).Include(x => x.Order)
-                .ThenInclude(x => x.OrderStorageDetails).ThenInclude(x => x.Storage);
+                requests = requests.Where(x => x.CreatedBy == userId).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages).Include(x => x.Order)
+                .ThenInclude(x => x.Storage);
             }
 
             if (role == "Customer")
             {
-                requests = requests.Where(x => x.UserId == userId).Include(a => a.User).ThenInclude(b => b.StaffManageStorages)
+                requests = requests.Where(x => x.CreatedBy == userId).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
                     .Include(x => x.Order)
-                .ThenInclude(x => x.OrderStorageDetails).ThenInclude(x => x.Storage);
+                    .ThenInclude(x => x.Storage);
             }
-            
+
             var result = requests.OrderByDescending(x => x.CreatedDate).ProjectTo<RequestViewModel>(_mapper.ConfigurationProvider)
                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
@@ -126,11 +124,11 @@ namespace RSSMS.DataService.Services
             return rs;
         }
 
-        public async Task<RequestByIdViewModel> GetById(int id)
+        public async Task<RequestByIdViewModel> GetById(Guid id)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
-                .Include(x => x.OrderHistoryExtensions)
                 .Include(x => x.Order)
+                .ThenInclude(order => order.OrderHistoryExtensions)
                .ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider)
                .FirstOrDefaultAsync();
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
@@ -140,39 +138,30 @@ namespace RSSMS.DataService.Services
         public async Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
             Request request = null;
-            Notification noti = null;
             if (role == "Delivery Staff" && model.Type == 0) // huy lich giao hang
             {
-                var schedules = _scheduleService.Get(x => x.SheduleDay.Value.Date == model.CancelDay.Value.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
+                var schedules = _scheduleService.Get(x => x.ScheduleDay.Value.Date == model.CancelDay.Value.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
                 if (schedules.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Schedule not found");
                 foreach (var schedule in schedules)
                 {
                     request = _mapper.Map<Request>(model);
-                    request.OrderId = schedule.OrderId;
-                    request.UserId = userId;
+                    request.OrderId = schedule.Request.OrderId;
+                    request.CreatedBy = userId;
                     request.Status = 0;
                     await CreateAsync(request);
 
                     schedule.IsActive = false;
-                    schedule.Status = 1;
+                    //schedule.Status = 1;
                     schedule.RequestId = request.Id;
                     await _scheduleService.UpdateAsync(schedule);
                 }
                 var user = schedules.Select(x => x.User).Where(x => x.Id == userId).FirstOrDefault();
-                noti = new Notification
-                {
-                    Description = "Delivery staff " + user.Name + " canceled schedule on " + model.CancelDay,
-                    CreateDate = DateTime.Now,
-                    IsActive = true,
-                    Type = 0
-                };
-                await _notificationService.CreateAsync(noti);
 
-                await _notificationDetailService.PushCancelRequestNoti("Delivery staff " + user.Name + " canceled schedule on " + model.CancelDay, userId, noti.Id);
+                await _firebaseService.PushCancelRequestNoti("Delivery staff " + user.Name + " canceled schedule on " + model.CancelDay, user.Id);
 
                 return model;
             }
@@ -180,25 +169,17 @@ namespace RSSMS.DataService.Services
             if (model.Type == 1) // gia han don
             {
                 request = _mapper.Map<Request>(model);
-                request.UserId = userId;
+                request.CreatedBy = userId;
 
                 await CreateAsync(request);
 
-                noti = new Notification
-                {
-                    Description = "Customer " + userId + " expand the order: " + model.OrderId,
-                    CreateDate = DateTime.Now,
-                    IsActive = true,
-                    Type = 0,
-                    OrderId = model.OrderId
-                };
                 OrderHistoryExtension orderExtend = _mapper.Map<OrderHistoryExtension>(model);
                 orderExtend.ModifiedBy = userId;
                 orderExtend.RequestId = request.Id;
                 await _orderHistoryExtensionService.CreateAsync(orderExtend);
-                var manager = _orderHistoryExtensionService.Get(x => x.OrderId == model.OrderId).Include(x => x.Order).ThenInclude(x => x.Manager).Select(x => x.Order.Manager).FirstOrDefault();
-                await _notificationService.CreateAsync(noti);
-                await _notificationDetailService.SendNoti("Customer " + userId + " expand the order: " + model.OrderId, userId, manager.Id, manager.DeviceTokenId, noti.Id, (int)model.OrderId, request.Id, new
+                var staffAssignInStorage = _orderHistoryExtensionService.Get(x => x.OrderId == model.OrderId).Include(x => x.Order).ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).Select(x => x.Order.Storage.StaffAssignStorages.FirstOrDefault()).FirstOrDefault();
+                
+                await _firebaseService.SendNoti("Customer " + userId + " expand the order: " + model.OrderId, userId, staffAssignInStorage.Staff.DeviceTokenId, (Guid)model.OrderId, request.Id, new
                 {
                     Content = "Customer " + userId + " expand the order: " + model.OrderId,
                     OrderId = model.OrderId,
@@ -209,57 +190,42 @@ namespace RSSMS.DataService.Services
             Order order = null;
             if (model.Type == 2) // rut do ve
             {
-                order = _orderService.Get(x => x.Id == model.OrderId && x.IsActive == true && x.CustomerId == userId).Include(x => x.Manager).FirstOrDefault();
+                order = _orderService.Get(x => x.Id == model.OrderId && x.IsActive == true && x.CustomerId == userId).Include(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).FirstOrDefault();
                 if (order == null)
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-                if (order.Manager == null)
-                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Manager not found");
+                if (order.Storage == null)
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not assigned yet");
                 request = _mapper.Map<Request>(model);
-                request.UserId = userId;
+                request.CreatedBy = userId;
                 await CreateAsync(request);
 
-
-
-                noti = new Notification
-                {
-                    Description = "Customer " + userId + " take back the order: " + model.OrderId,
-                    CreateDate = DateTime.Now,
-                    IsActive = true,
-                    Type = 3,
-                    OrderId = model.OrderId
-                };
-                await _notificationService.CreateAsync(noti);
-                await _notificationDetailService.SendNoti("Customer " + userId + " take back the order: " + model.OrderId, userId, order.Manager.Id, order.Manager.DeviceTokenId, noti.Id, (int)model.OrderId, request.Id, new
+                var staffAssignInStorage = order.Storage.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager" && x.IsActive == true).FirstOrDefault();
+                await _firebaseService.SendNoti("Customer " + userId + " take back the order: " + model.OrderId, userId, staffAssignInStorage.Staff.DeviceTokenId, (Guid)model.OrderId, request.Id, new
                 {
                     Content = "Customer " + userId + " take back the order: " + model.OrderId,
                     OrderId = model.OrderId,
                     RequestId = request.Id
                 });
+
                 return model;
             }
 
             // customer huy don
-            order = _orderService.Get(x => x.Id == model.OrderId && x.IsActive == true && x.CustomerId == userId).Include(x => x.Manager).FirstOrDefault();
+            order = _orderService.Get(x => x.Id == model.OrderId && x.IsActive == true && x.CustomerId == userId).Include(x => x.Storage).FirstOrDefault();
             if (order == null)
                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-            if (order.Manager == null)
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Manager not found");
+            if (order.Storage == null)
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not assigned yet");
             request = _mapper.Map<Request>(model);
-            request.UserId = userId;
+            request.CreatedBy = userId;
             await CreateAsync(request);
             order.RejectedReason = model.Note;
             order.Status = 0;
             await _orderService.UpdateAsync(order);
-            noti = new Notification
-            {
-                Description = "Customer " + userId + " cancel the order: " + model.OrderId,
-                CreateDate = DateTime.Now,
-                IsActive = true,
-                Type = 4,
-                OrderId = model.OrderId
-            };
-            await _notificationService.CreateAsync(noti);
-            await _notificationDetailService.SendNoti("Customer " + userId + " cancel the order: " + model.OrderId, userId, order.Manager.Id, order.Manager.DeviceTokenId, noti.Id, (int)model.OrderId, request.Id, new
+            
+
+            var manager = order.Storage.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager" && x.IsActive == true).FirstOrDefault();
+            await _firebaseService.SendNoti("Customer " + userId + " cancel the order: " + model.OrderId, userId, manager.Staff.DeviceTokenId, (Guid)model.OrderId, request.Id, new
             {
                 Content = "Customer " + userId + " cancel the order: " + model.OrderId,
                 OrderId = model.OrderId,
@@ -269,17 +235,17 @@ namespace RSSMS.DataService.Services
             return model;
         }
 
-        public async Task<RequestUpdateViewModel> Update(int id, RequestUpdateViewModel model, string accessToken)
+        public async Task<RequestUpdateViewModel> Update(Guid id, RequestUpdateViewModel model, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request Id not matched");
 
-            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.OrderHistoryExtensions).FirstOrDefaultAsync();
+            var entity = await Get(x => x.Id == id && x.IsActive == true)/*.Include(x => x.OrderHistoryExtensions)*/.FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
 
-            var orderHistoryExtend = entity.OrderHistoryExtensions.FirstOrDefault();
+            var orderHistoryExtend = entity.Order.OrderHistoryExtensions.Where(x => x.RequestId == id).FirstOrDefault();
             if (orderHistoryExtend == null)
                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order extend not found");
             orderHistoryExtend.PaidDate = DateTime.Now;

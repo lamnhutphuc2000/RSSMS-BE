@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System;
 
 namespace RSSMS.DataService.ViewModels.Areas
 {
@@ -6,19 +7,22 @@ namespace RSSMS.DataService.ViewModels.Areas
     {
 
         public static string[] Fields = {
-            "Id","Name","Usage","Status","Description","IsActive","Type"};
+            "Id","StorageId","Name","Type","Status","Description","Usage"};
         [BindNever]
-        public int? Id { get; set; }
+        public Guid? Id { get; set; }
+        [BindNever]
+        public Guid? StorageId { get; set; }
         [BindNever]
         public string Name { get; set; }
         [BindNever]
         public int? Type { get; set; }
         [BindNever]
+        public int? Status { get; set; }
+        [BindNever]
         public string Description { get; set; }
         [BindNever]
         public int? Usage { get; set; }
-        [BindNever]
-        public int? Status { get; set; }
+
 
     }
 }

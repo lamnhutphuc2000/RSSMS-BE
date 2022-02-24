@@ -4,6 +4,7 @@ using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Shelves;
+using System;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -48,7 +49,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ShelfViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(Guid id)
         {
             return Ok(await _shelfService.GetById(id));
         }
@@ -80,7 +81,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ShelfViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Update(int id, ShelfUpdateViewModel model)
+        public async Task<IActionResult> Update(Guid id, ShelfUpdateViewModel model)
         {
             return Ok(await _shelfService.Update(id, model));
         }
@@ -96,7 +97,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             await _shelfService.Delete(id);
             return Ok("Deleted successfully");

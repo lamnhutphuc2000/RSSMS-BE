@@ -15,7 +15,7 @@ namespace RSSMS.DataService.Models
             Storages = new HashSet<Storage>();
         }
 
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Name { get; set; }
         public decimal? Price { get; set; }
         public string Unit { get; set; }

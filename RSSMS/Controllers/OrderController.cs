@@ -55,7 +55,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(OrderByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(Guid id)
         {
             return Ok(await _orderService.GetById(id));
         }
@@ -87,7 +87,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Update(int id, OrderUpdateViewModel model)
+        public async Task<IActionResult> Update(Guid id, OrderUpdateViewModel model)
         {
             return Ok(await _orderService.Update(id, model));
         }
@@ -117,7 +117,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Done(int id)
+        public async Task<IActionResult> Done(Guid id)
         {
             return Ok(await _orderService.Done(id));
         }
@@ -132,7 +132,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Cancel(int id, OrderCancelViewModel model)
+        public async Task<IActionResult> Cancel(Guid id, OrderCancelViewModel model)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _orderService.Cancel(id, model, accessToken));
@@ -143,12 +143,12 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost("{id}")]
-        [Authorize(Roles = "Delivery Staff")]
+        [Authorize(Roles = "Delivery Staff, Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> SendOrderNoti(int id, OrderViewModel model)
+        public async Task<IActionResult> SendOrderNoti(Guid id, OrderViewModel model)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _orderService.SendOrderNoti(model, accessToken));

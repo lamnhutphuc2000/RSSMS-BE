@@ -26,6 +26,9 @@ namespace RSSMS.DataService.DI
             services.AddScoped<IStaffManageStorageRepository, StaffManageStorageRepository>();
             services.AddScoped<IStaffManageStorageService, StaffManageStorageService>();
 
+            services.AddScoped<IStaffAssignStoragesRepository, StaffAssignStoragesRepository>();
+            services.AddScoped<IStaffAssignStoragesService, StaffAssignStoragesService>();
+
             services.AddScoped<IAreaRepository, AreaRepository>();
             services.AddScoped<IAreaService, AreaService>();
 
@@ -59,8 +62,8 @@ namespace RSSMS.DataService.DI
             services.AddScoped<INotificationDetailRepository, NotificationDetailRepository>();
             services.AddScoped<INotificationDetailService, NotificationDetailService>();
 
-            services.AddScoped<IBoxOrderDetailRepository, BoxOrderDetailRepository>();
-            services.AddScoped<IBoxOrderDetailService, BoxOrderDetailService>();
+            //services.AddScoped<IBoxOrderDetailRepository, BoxOrderDetailRepository>();
+            //services.AddScoped<IBoxOrderDetailService, BoxOrderDetailService>();
 
             services.AddScoped<IOrderHistoryExtensionRepository, OrderHistoryExtensionRepository>();
             services.AddScoped<IOrderHistoryExtensionService, OrderHistoryExtensionService>();

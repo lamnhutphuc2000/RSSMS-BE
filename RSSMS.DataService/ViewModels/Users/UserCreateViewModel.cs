@@ -13,9 +13,9 @@ namespace RSSMS.DataService.ViewModels.Users
         public DateTime? Birthdate { get; set; }
         public string Address { get; set; }
         public string Phone { get; set; }
-        public int? RoleId { get; set; }
+        public Guid? RoleId { get; set; }
         public string DeviceToken { get; set; }
         public virtual ICollection<AvatarImageCreateViewModel> Images { get; set; }
-        public virtual ICollection<int> StorageIds { get; set; }
+        public virtual ICollection<Guid> StorageIds { get; set; }
     }
 }

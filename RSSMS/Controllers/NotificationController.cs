@@ -5,6 +5,7 @@ using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Notifications;
+using System;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -34,7 +35,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(DynamicModelResponse<NotificationViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Get([FromQuery] int userId, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
+        public async Task<IActionResult> Get([FromQuery] Guid userId, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = -1)
         {
             return Ok(await _notifService.GetAll(userId, fields, page, size));
         }

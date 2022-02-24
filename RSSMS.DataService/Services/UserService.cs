@@ -32,11 +32,11 @@ namespace RSSMS.DataService.Services
         Task<TokenViewModel> Login(UserLoginViewModel model);
         Task<UserViewModel> ChangePassword(UserChangePasswordViewModel model);
         Task<DynamicModelResponse<UserViewModel>> GetAll(UserViewModel model, int? storageId, int? orderId, string[] fields, int page, int size, string accessToken);
-        Task<UserViewModel> GetById(int id);
+        Task<UserViewModel> GetById(Guid id);
         Task<UserViewModel> GetByPhone(string phone);
         Task<TokenViewModel> Create(UserCreateViewModel model);
-        Task<UserViewModel> Update(int id, UserUpdateViewModel model);
-        Task<UserViewModel> Delete(int id, string firebaseID);
+        Task<UserViewModel> Update(Guid id, UserUpdateViewModel model);
+        Task<UserViewModel> Delete(Guid id, string firebaseID);
         Task<int> Count(List<UserViewModel> shelves);
         Task<TokenViewModel> CheckLogin(string firebaseID, string deviceToken);
         Task<TokenViewModel> LoginWithFirebaseID(string firebaseID);
@@ -139,7 +139,7 @@ namespace RSSMS.DataService.Services
             return await GetById(userCreate.Id);
         }
 
-        public async Task<UserViewModel> Delete(int id, string firebaseID)
+        public async Task<UserViewModel> Delete(Guid id, string firebaseID)
         {
             var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
@@ -153,7 +153,7 @@ namespace RSSMS.DataService.Services
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
 
-            var user = Get(x => x.Id == Int32.Parse(uid)).Include(x => x.Role).FirstOrDefault();
+            var user = Get(x => x.Id == Guid.Parse(uid)).Include(x => x.Role).FirstOrDefault();
             DateTime? scheduleDay = null;
             ICollection<string> deliveryTimes = null;
             if (model.SheduleDay != null && model.DeliveryTimes != null)
@@ -180,30 +180,30 @@ namespace RSSMS.DataService.Services
             }
             if (storageId != null && storageId != 0)
             {
-                users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
-                    .Where(x => x.StaffManageStorages.Any(a => a.StorageId == storageId)).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
-                    .DynamicFilter(model);
+                //users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
+                //    .Where(x => x.StaffManageStorages.Any(a => a.StorageId == storageId)).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                //    .DynamicFilter(model);
             }
             if (orderId != null && orderId != 0)
             {
-                var order = _orderService.Get(a => a.Id == orderId).FirstOrDefault();
-                var deliveryTime = order.DeliveryTime;
-                var deliveryDate = order.DeliveryDate;
-                var returnDate = order.ReturnDate;
-                var returnTime = order.ReturnTime;
-                users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
-                    .Where(x => x.Schedules.Count == 0 || (!x.Schedules.Any(a => a.OrderId == orderId && a.IsActive == true) && (!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == deliveryTime && a.SheduleDay == deliveryDate) && (!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == returnTime && a.SheduleDay == returnDate))))).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
-                    .DynamicFilter(model);
+                //var order = _orderService.Get(a => a.Id == orderId).FirstOrDefault();
+                //var deliveryTime = order.DeliveryTime;
+                //var deliveryDate = order.DeliveryDate;
+                //var returnDate = order.ReturnDate;
+                //var returnTime = order.ReturnTime;
+                //users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
+                //    .Where(x => x.Schedules.Count == 0 || (!x.Schedules.Any(a => a.OrderId == orderId && a.IsActive == true) && (!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == deliveryTime && a.ScheduleDay == deliveryDate) && (!x.Schedules.Any(a => a.OrderId != orderId && a.IsActive == true && a.DeliveryTime == returnTime && a.SheduleDay == returnDate))))).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider)
+                //    .DynamicFilter(model);
             }
             if (scheduleDay != null && deliveryTimes != null)
             {
-                var usersInDelivery = _scheduleService.Get(x => scheduleDay.Value.Date == x.SheduleDay.Value.Date && deliveryTimes.Contains(x.DeliveryTime) && x.IsActive == true).Select(schedule => schedule.UserId).Distinct().ToList();
-                users = users.Where(x => !usersInDelivery.Contains(x.Id));
+                //var usersInDelivery = _scheduleService.Get(x => scheduleDay.Value.Date == x.ScheduleDay.Value.Date && deliveryTimes.Contains(x.DeliveryTime) && x.IsActive == true).Select(schedule => schedule.UserId).Distinct().ToList();
+                //users = users.Where(x => !usersInDelivery.Contains(x.Id));
             }
             if (user.Role.Name == "Manager")
             {
                 var storageIds = _staffManageStorageService.Get(x => x.UserId == user.Id).Select(x => x.StorageId).ToList();
-                users = users.Where(x => x.StaffManageStorages.Any(x => storageIds.Contains((int)x.StorageId)) || x.StaffManageStorages.Count == 0 || x.RoleName.Equals("Manager"));
+                //users = users.Where(x => x.StaffManageStorages.Any(x => storageIds.Contains(x.StorageId)) || x.StaffManageStorages.Count == 0 || x.RoleName.Equals("Manager"));
             }
             var result = users.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
@@ -221,7 +221,7 @@ namespace RSSMS.DataService.Services
             return rs;
         }
 
-        public async Task<UserViewModel> GetById(int id)
+        public async Task<UserViewModel> GetById(Guid id)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true).ProjectTo<UserViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id not found");
@@ -283,7 +283,7 @@ namespace RSSMS.DataService.Services
         }
 
 
-        public async Task<UserViewModel> Update(int id, UserUpdateViewModel model)
+        public async Task<UserViewModel> Update(Guid id, UserUpdateViewModel model)
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User Id not matched");
 
@@ -303,7 +303,7 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<UserViewModel>(updateEntity);
         }
 
-        private TokenGenerateModel GenerateToken(Models.User user)
+        private TokenGenerateViewModel GenerateToken(Models.User user)
         {
             var storageId = user.StaffManageStorages.FirstOrDefault()?.StorageId.ToString();
             if (storageId == null) storageId = "-1";
@@ -327,7 +327,7 @@ namespace RSSMS.DataService.Services
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
                 );
             TimeSpan expires = DateTime.Now.Subtract(token.ValidTo);
-            return new TokenGenerateModel
+            return new TokenGenerateViewModel
             {
                 IdToken = new JwtSecurityTokenHandler().WriteToken(token),
                 ExpiresIn = expires.TotalMinutes,

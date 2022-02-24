@@ -1,7 +1,9 @@
-﻿namespace RSSMS.DataService.ViewModels.Users
+﻿using System;
+
+namespace RSSMS.DataService.ViewModels.Users
 {
     public class UserListStaffViewModel
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
     }
 }

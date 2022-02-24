@@ -19,12 +19,12 @@ namespace RSSMS.DataService.Services
 
     public interface IAreaService : IBaseService<Area>
     {
-        Task<DynamicModelResponse<AreaViewModel>> GetByStorageId(int id, AreaViewModel model, List<int> types, string[] fields, int page, int size);
+        Task<DynamicModelResponse<AreaViewModel>> GetByStorageId(Guid id, AreaViewModel model, List<int> types, string[] fields, int page, int size);
         Task<AreaViewModel> Create(AreaCreateViewModel model);
-        Task<AreaViewModel> Delete(int id);
-        Task<AreaViewModel> Update(int id, AreaUpdateViewModel model);
-        Task<AreaDetailViewModel> GetById(int id);
-        bool CheckIsUsed(int id);
+        Task<AreaViewModel> Delete(Guid id);
+        Task<AreaViewModel> Update(Guid id, AreaUpdateViewModel model);
+        Task<AreaDetailViewModel> GetById(Guid id);
+        bool CheckIsUsed(Guid id);
     }
     public class AreaService : BaseService<Area>, IAreaService
 
@@ -43,10 +43,10 @@ namespace RSSMS.DataService.Services
             if (area != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area name existed");
             var areaToCreate = _mapper.Map<Area>(model);
             await CreateAsync(areaToCreate);
-            return _mapper.Map<AreaViewModel>(areaToCreate); ;
+            return _mapper.Map<AreaViewModel>(areaToCreate);
         }
 
-        public async Task<AreaViewModel> Delete(int id)
+        public async Task<AreaViewModel> Delete(Guid id)
         {
             var area = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Shelves).FirstOrDefaultAsync();
             if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
@@ -57,7 +57,7 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<AreaViewModel>(area);
         }
 
-        public async Task<AreaDetailViewModel> GetById(int id)
+        public async Task<AreaDetailViewModel> GetById(Guid id)
         {
             var area = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
             if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
@@ -67,7 +67,7 @@ namespace RSSMS.DataService.Services
             return result;
         }
 
-        public async Task<DynamicModelResponse<AreaViewModel>> GetByStorageId(int id, AreaViewModel model, List<int> types, string[] fields, int page, int size)
+        public async Task<DynamicModelResponse<AreaViewModel>> GetByStorageId(Guid id, AreaViewModel model, List<int> types, string[] fields, int page, int size)
         {
             var areas = Get(x => x.StorageId == id && x.IsActive == true)
                 .ProjectTo<AreaViewModel>(_mapper.ConfigurationProvider);
@@ -100,7 +100,7 @@ namespace RSSMS.DataService.Services
             return rs;
         }
 
-        public async Task<AreaViewModel> Update(int id, AreaUpdateViewModel model)
+        public async Task<AreaViewModel> Update(Guid id, AreaUpdateViewModel model)
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area Id not matched");
 
@@ -115,7 +115,7 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<AreaViewModel>(updateEntity);
         }
 
-        public bool CheckIsUsed(int id)
+        public bool CheckIsUsed(Guid id)
         {
             var area = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Shelves).FirstOrDefault();
             if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");

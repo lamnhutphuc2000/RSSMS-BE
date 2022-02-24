@@ -1,8 +1,10 @@
-﻿namespace RSSMS.DataService.ViewModels.StaffManageUser
+﻿using System;
+
+namespace RSSMS.DataService.ViewModels.StaffManageUser
 {
     public class StaffManageStorageCreateViewModel
     {
-        public int UserId { get; set; }
-        public int StorageId { get; set; }
+        public Guid UserId { get; set; }
+        public Guid StorageId { get; set; }
     }
 }

@@ -20,7 +20,7 @@ namespace RSSMS.DataService.Models
             StaffManageStorages = new HashSet<StaffManageStorage>();
         }
 
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public int? RoleId { get; set; }
         public string Name { get; set; }
         public int? Gender { get; set; }

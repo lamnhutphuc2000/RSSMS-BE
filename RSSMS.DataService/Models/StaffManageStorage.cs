@@ -1,12 +1,14 @@
 ﻿#nullable disable
 
+using System;
+
 namespace RSSMS.DataService.Models
 {
     public partial class StaffManageStorage
     {
-        public int Id { get; set; }
-        public int UserId { get; set; }
-        public int StorageId { get; set; }
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public Guid StorageId { get; set; }
         public string StorageName { get; set; }
         public string RoleName { get; set; }
 

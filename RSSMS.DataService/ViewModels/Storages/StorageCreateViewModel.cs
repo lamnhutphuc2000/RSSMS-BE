@@ -13,10 +13,8 @@ namespace RSSMS.DataService.ViewModels.Storages
         public string Address { get; set; }
 
         public int? Status { get; set; }
+        public ImageCreateViewModel Image { get; set; }
 
-
-
-        public virtual ICollection<AvatarImageCreateViewModel> Images { get; set; }
         public virtual ICollection<UserListStaffViewModel> ListStaff { get; set; }
     }
 }

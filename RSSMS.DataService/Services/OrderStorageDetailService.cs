@@ -51,20 +51,20 @@ namespace RSSMS.DataService.Services
 
 
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-            order.ManagerId = userId;
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            //order.ManagerId = userId;
             order.Status = 2;
             await _orderService.UpdateAsync(order);
 
 
             var customer = order.Customer;
-            string description = "Don "+order.Id +" cua khach hang "+customer.Name +" da duoc xu ly ";
+            string description = "Don " + order.Id + " cua khach hang " + customer.Name + " da duoc xu ly ";
             Notification noti = new Notification
             {
-                CreateDate = DateTime.Now,
-                IsActive = true,
-                OrderId = order.Id,
-                Status = 0,
+                //CreateDate = DateTime.Now,
+                //IsActive = true,
+                //OrderId = order.Id,
+                //Status = 0,
                 Type = 6,
                 Description = description,
                 Note = "Don da luu kho",

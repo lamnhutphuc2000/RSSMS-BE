@@ -25,10 +25,11 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<User, TokenViewModel>()
                 .ForMember(des => des.UserId, opt => opt.MapFrom(src => src.Id));
-            mc.CreateMap<TokenGenerateModel, TokenViewModel>();
+            mc.CreateMap<TokenGenerateViewModel, TokenViewModel>();
 
-            mc.CreateMap<User, UserListStaffViewModel>();
-            mc.CreateMap<UserListStaffViewModel, User>();
+
+            mc.CreateMap<Account, UserListStaffViewModel>();
+            mc.CreateMap<UserListStaffViewModel, Account>();
 
             mc.CreateMap<User, StaffManageStorageCreateViewModel>()
                 .ForMember(des => des.UserId, opt => opt.MapFrom(src => src.Id));

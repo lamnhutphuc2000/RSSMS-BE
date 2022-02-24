@@ -14,9 +14,9 @@ namespace RSSMS.DataService.Services
 {
     public interface INotificationDetailService : IBaseService<NotificationDetail>
     {
-        Task<ResponseContent> PushOrderNoti(string description, int SenderId, int NotificationId, int orderId, int? requestId, int notiId); // noti to manager when receive another order
-        Task<ResponseContent> PushCancelRequestNoti(string description, int SenderId, int NotificationId);
-        Task<ResponseContent> SendNoti(string description, int senderId, int receiverId, string registrationId, int NotificationId, int orderId, int? requestId, object data);
+        Task<ResponseContent> PushOrderNoti(string description, Guid SenderId, Guid NotificationId, Guid orderId, Guid? requestId, Guid notiId); // noti to manager when receive another order
+        Task<ResponseContent> PushCancelRequestNoti(string description, Guid SenderId, Guid NotificationId);
+        Task<ResponseContent> SendNoti(string description, Guid senderId, Guid receiverId, string registrationId, Guid NotificationId, Guid orderId, Guid? requestId, object data);
     }
     public class NotificationDetailService : BaseService<NotificationDetail>, INotificationDetailService
     {
@@ -25,7 +25,7 @@ namespace RSSMS.DataService.Services
         {
             _staffManageStorageService = staffManageStorageService;
         }
-        public async Task<ResponseContent> PushOrderNoti(string description, int senderId, int notificationId, int orderId, int? requestId, int notiId)
+        public async Task<ResponseContent> PushOrderNoti(string description, Guid senderId, Guid notificationId, Guid orderId, Guid? requestId, Guid notiId)
         {
             var managers = _staffManageStorageService.Get(x => x.RoleName == "Manager").Include(x => x.User).Select(x => x.User).ToList();
             if (managers.Count == 0) return null;
@@ -84,10 +84,9 @@ namespace RSSMS.DataService.Services
                 return result;
             }
         }
-        public async Task<ResponseContent> PushCancelRequestNoti(string description, int senderId, int notificationId)
+        public async Task<ResponseContent> PushCancelRequestNoti(string description, Guid senderId, Guid notificationId)
         {
-            var storageSenderIn = _staffManageStorageService.Get(x => x.UserId == senderId).Select(a => a.StorageId).FirstOrDefault();
-            if (storageSenderIn == 0) return null;
+            var storageSenderIn = _staffManageStorageService.Get(x => x.UserId == senderId).Select(a => a.StorageId).First();
             var manager = _staffManageStorageService.Get(x => x.RoleName == "Manager" && x.StorageId == storageSenderIn).Include(x => x.User).Select(x => x.User).FirstOrDefault();
             if (manager == null) return null;
 
@@ -140,7 +139,7 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public async Task<ResponseContent> SendNoti(string description, int senderId, int receiverId, string registrationId, int notificationId, int orderId, int? requestId, object data)
+        public async Task<ResponseContent> SendNoti(string description, Guid senderId, Guid receiverId, string registrationId, Guid notificationId, Guid orderId, Guid? requestId, object data)
         {
             var now = DateTime.Now;
             NotificationDetail notiSenderDetail = new NotificationDetail

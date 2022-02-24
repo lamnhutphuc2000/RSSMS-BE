@@ -1,8 +1,10 @@
-﻿namespace RSSMS.DataService.ViewModels.OrderStorages
+﻿using System;
+
+namespace RSSMS.DataService.ViewModels.OrderStorages
 {
     public class OrderStorageDetailViewModel
     {
-        public int OrderId { get; set; }
-        public int StorageId { get; set; }
+        public Guid OrderId { get; set; }
+        public Guid StorageId { get; set; }
     }
 }

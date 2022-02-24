@@ -8,6 +8,7 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Images;
 using RSSMS.DataService.ViewModels.Products;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -18,10 +19,10 @@ namespace RSSMS.DataService.Services
     public interface IProductService : IBaseService<Product>
     {
         Task<Dictionary<string, List<ProductViewAllModel>>> GetAll(ProductViewAllModel model);
-        Task<ProductViewAllModel> GetById(int id);
+        Task<ProductViewAllModel> GetById(Guid id);
         Task<ProductViewModel> Create(ProductCreateViewModel model);
-        Task<ProductUpdateViewModel> Update(int id, ProductUpdateViewModel model);
-        Task<ProductViewAllModel> Delete(int id);
+        Task<ProductUpdateViewModel> Update(Guid id, ProductUpdateViewModel model);
+        Task<ProductViewAllModel> Delete(Guid id);
     }
     public class ProductService : BaseService<Product>, IProductService
     {
@@ -52,9 +53,9 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<ProductViewModel>(product);
         }
 
-        public async Task<ProductViewAllModel> Delete(int id)
+        public async Task<ProductViewAllModel> Delete(Guid id)
         {
-            var entity = await GetAsync<int>(id);
+            var entity = await GetAsync<Guid>(id);
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Product id not found");
             entity.IsActive = false;
             await UpdateAsync(entity);
@@ -81,7 +82,7 @@ namespace RSSMS.DataService.Services
             return result;
         }
 
-        public async Task<ProductViewAllModel> GetById(int id)
+        public async Task<ProductViewAllModel> GetById(Guid id)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
                 .ProjectTo<ProductViewAllModel>(_mapper.ConfigurationProvider)
@@ -90,7 +91,7 @@ namespace RSSMS.DataService.Services
             return result;
         }
 
-        public async Task<ProductUpdateViewModel> Update(int id, ProductUpdateViewModel model)
+        public async Task<ProductUpdateViewModel> Update(Guid id, ProductUpdateViewModel model)
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Product Id not matched");
 
@@ -107,7 +108,7 @@ namespace RSSMS.DataService.Services
             updateEntity.Images = oldImage;
             await UpdateAsync(updateEntity);
 
-            updateEntity.Id = 0;
+            updateEntity.Id = Guid.NewGuid();
             updateEntity.IsActive = true;
             await CreateAsync(updateEntity);
 

@@ -1,4 +1,5 @@
-﻿using RSSMS.DataService.ViewModels.Orders;
+﻿using RSSMS.DataService.ViewModels.Accounts;
+using RSSMS.DataService.ViewModels.Orders;
 using RSSMS.DataService.ViewModels.Users;
 using System;
 using System.Collections.Generic;
@@ -7,9 +8,9 @@ namespace RSSMS.DataService.ViewModels.Schedules
 {
     public class ScheduleViewModel
     {
-        public int Id { get; set; }
-        public int? OrderId { get; set; }
-        public int? RequestId { get; set; }
+        public Guid Id { get; set; }
+        public Guid? OrderId { get; set; }
+        public Guid? RequestId { get; set; }
         public DateTime ScheduleDay { get; set; }
         public OrderViewModel Order { get; set; }
         public List<OrderViewModel> Orders { get; set; }
@@ -18,6 +19,6 @@ namespace RSSMS.DataService.ViewModels.Schedules
 
         public int? Status { get; set; }
         public bool? IsActive { get; set; }
-        public List<UserViewModel> Users { get; set; }
+        public List<AccountsViewModel> Users { get; set; }
     }
 }

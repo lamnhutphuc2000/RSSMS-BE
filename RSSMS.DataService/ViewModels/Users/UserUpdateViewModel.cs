@@ -6,7 +6,7 @@ namespace RSSMS.DataService.ViewModels.Users
 {
     public class UserUpdateViewModel
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Name { get; set; }
         public int? Gender { get; set; }
         public DateTime? Birthdate { get; set; }

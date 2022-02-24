@@ -2,7 +2,6 @@
 using RSSMS.DataService.ViewModels.OrderHistoryExtension;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace RSSMS.DataService.ViewModels.Orders
 {

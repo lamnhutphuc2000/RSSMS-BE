@@ -1,9 +1,11 @@
-﻿namespace RSSMS.DataService.ViewModels.OrderBoxes
+﻿using System;
+
+namespace RSSMS.DataService.ViewModels.OrderBoxes
 {
     public class OrderBoxesMoveViewModel
     {
-        public int OrderId { get; set; }
-        public int BoxId { get; set; }
-        public int NewBoxId { get; set; }
+        public Guid OrderId { get; set; }
+        public Guid BoxId { get; set; }
+        public Guid NewBoxId { get; set; }
     }
 }

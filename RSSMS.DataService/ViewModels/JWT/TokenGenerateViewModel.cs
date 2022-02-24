@@ -1,6 +1,6 @@
 ﻿namespace RSSMS.DataService.ViewModels.JWT
 {
-    public class TokenGenerateModel
+    public class TokenGenerateViewModel
     {
         public string IdToken { get; set; }
         public string RefreshToken { get; set; }

@@ -1,7 +1,9 @@
-﻿namespace RSSMS.DataService.ViewModels.Requests
+﻿using System;
+
+namespace RSSMS.DataService.ViewModels.Requests
 {
     public class RequestUpdateViewModel
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
     }
 }

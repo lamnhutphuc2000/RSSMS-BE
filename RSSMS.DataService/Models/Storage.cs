@@ -10,30 +10,21 @@ namespace RSSMS.DataService.Models
         public Storage()
         {
             Areas = new HashSet<Area>();
-            Images = new HashSet<Image>();
-            OrderStorageDetails = new HashSet<OrderStorageDetail>();
-            StaffManageStorages = new HashSet<StaffManageStorage>();
+            Orders = new HashSet<Order>();
+            StaffAssignStorages = new HashSet<StaffAssignStorage>();
         }
 
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Name { get; set; }
-        public string Size { get; set; }
-        public int? Usage { get; set; }
         public int? Type { get; set; }
-        public string Address { get; set; }
         public int? Status { get; set; }
+        public string Address { get; set; }
+        public string Description { get; set; }
         public bool? IsActive { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public int? CreatedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public int? OrderId { get; set; }
-        public int? ProductId { get; set; }
+        public string ImageUrl { get; set; }
 
-        public virtual Product Product { get; set; }
         public virtual ICollection<Area> Areas { get; set; }
-        public virtual ICollection<Image> Images { get; set; }
-        public virtual ICollection<OrderStorageDetail> OrderStorageDetails { get; set; }
-        public virtual ICollection<StaffManageStorage> StaffManageStorages { get; set; }
+        public virtual ICollection<Order> Orders { get; set; }
+        public virtual ICollection<StaffAssignStorage> StaffAssignStorages { get; set; }
     }
 }

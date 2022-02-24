@@ -1,4 +1,5 @@
 ﻿using RSSMS.DataService.ViewModels.Images;
+using RSSMS.DataService.ViewModels.StaffAssignStorage;
 using RSSMS.DataService.ViewModels.StaffManageUser;
 using System;
 using System.Collections.Generic;
@@ -12,8 +13,8 @@ namespace RSSMS.DataService.ViewModels.JWT
         public double ExpiresIn { get; set; }
         public string LocalId { get; set; }
         public string TokenType { get; set; }
-        public int UserId { get; set; }
-        public int? StorageId { get; set; }
+        public Guid UserId { get; set; }
+        public Guid? StorageId { get; set; }
         public string Name { get; set; }
         public int? Gender { get; set; }
         public DateTime? Birthdate { get; set; }
@@ -21,8 +22,8 @@ namespace RSSMS.DataService.ViewModels.JWT
         public string Address { get; set; }
         public string RoleName { get; set; }
         public string Phone { get; set; }
-        public virtual ICollection<AvatarImageViewModel> Images { get; set; }
-        public virtual ICollection<StaffManageStorageViewModel> StaffManageStorages { get; set; }
+        public virtual string ImageUrl { get; set; }
+        public virtual ICollection<StaffAssignStorageViewModel> StaffAssignStorages { get; set; }
 
     }
 }

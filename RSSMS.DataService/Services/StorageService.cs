@@ -7,6 +7,7 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
+using RSSMS.DataService.ViewModels.StaffAssignStorage;
 using RSSMS.DataService.ViewModels.StaffManageUser;
 using RSSMS.DataService.ViewModels.Storages;
 using RSSMS.DataService.ViewModels.Users;
@@ -21,21 +22,21 @@ namespace RSSMS.DataService.Services
     public interface IStorageService : IBaseService<Storage>
     {
         Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, List<int> types, string[] fields, int page, int size, string accessToken);
-        Task<StorageGetIdViewModel> GetById(int id, string accessToken);
+        Task<StorageDetailViewModel> GetById(Guid id, string accessToken);
         Task<StorageViewModel> Create(StorageCreateViewModel model);
-        Task<StorageUpdateViewModel> Update(int id, StorageUpdateViewModel model);
-        Task<StorageViewModel> Delete(int id);
+        Task<StorageUpdateViewModel> Update(Guid id, StorageUpdateViewModel model);
+        Task<StorageViewModel> Delete(Guid id);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
         private readonly IMapper _mapper;
-        private readonly IStaffManageStorageService _staffManageStorageService;
+        private readonly IStaffAssignStoragesService _staffAssignStoragesService;
         private readonly IAreaService _areaService;
         private readonly IFirebaseService _firebaseService;
-        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IStaffManageStorageService staffManageStorageService, IAreaService areaService, IFirebaseService firebaseService) : base(unitOfWork, repository)
+        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IStaffAssignStoragesService staffAssignStoragesService, IAreaService areaService, IFirebaseService firebaseService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
-            _staffManageStorageService = staffManageStorageService;
+            _staffAssignStoragesService = staffAssignStoragesService;
             _areaService = areaService;
             _firebaseService = firebaseService;
         }
@@ -43,32 +44,37 @@ namespace RSSMS.DataService.Services
         public async Task<StorageViewModel> Create(StorageCreateViewModel model)
         {
             var storage = _mapper.Map<Storage>(model);
-            var images = model.Images;
-            storage.Images = null;
+            var image = model.Image;
+            if(image != null)
+            {
+                if(image.File != null)
+                {
+                    var url = await _firebaseService.UploadImageToFirebase(image.File, "storages", storage.Id, "avatar");
+                    if (url != null)
+                    {
+                        storage.ImageUrl = url;
+                    }
+                    
+                }
+            }
             await CreateAsync(storage);
-
-
-            foreach (var avatar in images)
+            if(model.ListStaff != null)
             {
-                var url = await _firebaseService.UploadImageToFirebase(avatar.File, "storages", storage.Id, "avatar");
-                if (url != null) avatar.Url = url;
+                foreach (UserListStaffViewModel staffAssigned in model.ListStaff)
+                {
+                    StaffAssignStorageCreateViewModel staffAssignModel = new StaffAssignStorageCreateViewModel
+                    {
+                        StorageId = storage.Id,
+                        UserId = staffAssigned.Id
+                    };
+                    await _staffAssignStoragesService.Create(staffAssignModel);
+                }
             }
-            storage.Images = images.AsQueryable().ProjectTo<Image>(_mapper.ConfigurationProvider).ToList();
-
-            await UpdateAsync(storage);
-
-            foreach (UserListStaffViewModel staffAssigned in model.ListStaff)
-            {
-                var staffAssignModel = _mapper.Map<StaffManageStorageCreateViewModel>(storage);
-                staffAssignModel.UserId = staffAssigned.Id;
-                await _staffManageStorageService.Create(staffAssignModel);
-            }
-
-            return _mapper.Map<StorageViewModel>(storage); ;
+            return _mapper.Map<StorageViewModel>(storage);
 
         }
 
-        public async Task<StorageViewModel> Delete(int id)
+        public async Task<StorageViewModel> Delete(Guid id)
         {
             var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Areas).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
@@ -85,11 +91,10 @@ namespace RSSMS.DataService.Services
         public async Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, List<int> types, string[] fields, int page, int size, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-            var storages = Get(x => x.IsActive == true).Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
-                .ThenInclude(a => a.User).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model);
+            var storages = Get(x => x.IsActive == true).Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Manager" && s.IsActive == true)).ThenInclude(a => a.Staff).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model);
 
 
 
@@ -101,8 +106,8 @@ namespace RSSMS.DataService.Services
 
             if (role == "Manager")
             {
-                var storagesManagerManage = _staffManageStorageService.Get(x => x.UserId == userId).Select(x => x.StorageId).ToList();
-                storages = storages.Where(x => storagesManagerManage.Contains((int)x.Id));
+                var storagesManagerManage = _staffAssignStoragesService.Get(x => x.StaffId == userId && x.IsActive == true).Select(x => x.StorageId).ToList();
+                storages = storages.Where(x => storagesManagerManage.Contains(x.Id));
             }
 
 
@@ -123,41 +128,33 @@ namespace RSSMS.DataService.Services
             return rs;
         }
 
-        public async Task<StorageGetIdViewModel> GetById(int id, string accessToken)
+        public async Task<StorageDetailViewModel> GetById(Guid id, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
             var result = await Get(x => x.Id == id && x.IsActive == true)
-                .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Manager"))
-                .ThenInclude(a => a.User).ProjectTo<StorageGetIdViewModel>(_mapper.ConfigurationProvider)
-                .FirstOrDefaultAsync();
+                                .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Manager" && s.IsActive == true && s.StaffId == userId))
+                                .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
+            if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
 
             if (role == "Office staff")
             {
                 result = await Get(x => x.Id == id && x.IsActive == true)
-                .Include(a => a.StaffManageStorages.Where(s => s.RoleName == "Office staff"))
-                .ThenInclude(a => a.User).ProjectTo<StorageGetIdViewModel>(_mapper.ConfigurationProvider)
+                .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Office staff" && s.IsActive == true && s.StaffId == userId))
+                .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
-                if (result != null && result.StaffManageStorages != null)
-                {
-                    if (result.StaffManageStorages.Where(x => x.UserId == userId).FirstOrDefault() == null)
-                    {
-                        throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office staff not manage this storage");
-                    }
-                }
+                if(result.StaffManageStorages == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office staff not manage this storage");
 
             }
 
-
-
-            if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
+            if (result != null && result.StaffManageStorages != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office staff not manage this storage");
 
             return result;
         }
 
-        public async Task<StorageUpdateViewModel> Update(int id, StorageUpdateViewModel model)
+        public async Task<StorageUpdateViewModel> Update(Guid id, StorageUpdateViewModel model)
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage Id not matched");
 
@@ -170,15 +167,17 @@ namespace RSSMS.DataService.Services
                 if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
             }
 
-            var images = model.Images;
-            foreach (var avatar in images)
-            {
-                var url = await _firebaseService.UploadImageToFirebase(avatar.File, "storages", id, "avatar");
-                if (url != null) avatar.Url = url;
-            }
-            model.Images = images;
-
             var updateEntity = _mapper.Map(model, entity);
+
+            var image = model.Image;
+            if(image != null)
+            {
+                if(image.File != null)
+                {
+                    var url = await _firebaseService.UploadImageToFirebase(image.File, "storages", id, "avatar");
+                    if (url != null) updateEntity.ImageUrl = url;
+                }
+            }
             await UpdateAsync(updateEntity);
 
             return _mapper.Map<StorageUpdateViewModel>(updateEntity);

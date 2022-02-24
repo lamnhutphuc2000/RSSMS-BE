@@ -1,8 +1,10 @@
-﻿namespace RSSMS.DataService.ViewModels.Users
+﻿using System;
+
+namespace RSSMS.DataService.ViewModels.Users
 {
     public class UserAssignedViewModel
     {
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public string RoleName { get; set; }
     }
 }

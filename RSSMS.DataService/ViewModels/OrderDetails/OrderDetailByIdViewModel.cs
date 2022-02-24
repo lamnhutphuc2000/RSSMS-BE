@@ -1,8 +1,6 @@
 ﻿using RSSMS.DataService.ViewModels.BoxOrderDetails;
 using RSSMS.DataService.ViewModels.Images;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace RSSMS.DataService.ViewModels.OrderDetails
 {

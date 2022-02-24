@@ -20,12 +20,12 @@ namespace RSSMS.DataService.Services
     public interface IShelfService : IBaseService<Shelf>
     {
         Task<DynamicModelResponse<ShelfViewModel>> GetAll(ShelfViewModel model, string[] fields, int page, int size);
-        Task<ShelfViewModel> GetById(int id);
+        Task<ShelfViewModel> GetById(Guid id);
         Task<ShelfViewModel> Create(ShelfCreateViewModel model);
-        Task<ShelfViewModel> Delete(int id);
-        Task<ShelfViewModel> Update(int id, ShelfUpdateViewModel model);
-        List<BoxUsageViewModel> GetBoxUsageByAreaId(int areaId);
-        bool CheckIsUsed(int id);
+        Task<ShelfViewModel> Delete(Guid id);
+        Task<ShelfViewModel> Update(Guid id, ShelfUpdateViewModel model);
+        List<BoxUsageViewModel> GetBoxUsageByAreaId(Guid areaId);
+        bool CheckIsUsed(Guid id);
     }
     public class ShelfService : BaseService<Shelf>, IShelfService
 
@@ -47,13 +47,13 @@ namespace RSSMS.DataService.Services
             var shelfToCreate = _mapper.Map<Shelf>(model);
             await CreateAsync(shelfToCreate);
             int numberOfShelve = model.BoxesInHeight * model.BoxesInWidth;
-            await _boxService.CreateNumberOfBoxes(shelfToCreate.Id, numberOfShelve, model.ProductId);
+            await _boxService.CreateNumberOfBoxes(shelfToCreate.Id, numberOfShelve, model.ServiceId);
             return _mapper.Map<ShelfViewModel>(shelfToCreate);
         }
 
-        public async Task<ShelfViewModel> Delete(int id)
+        public async Task<ShelfViewModel> Delete(Guid id)
         {
-            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes).ThenInclude(boxes => boxes.BoxOrderDetails).FirstOrDefaultAsync();
+            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes).ThenInclude(boxes => boxes.OrderDetail).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf id not found");
             var shelfIsUsed = CheckIsUsed(id);
             if (shelfIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
@@ -62,14 +62,13 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<ShelfViewModel>(entity);
         }
 
-        public async Task<ShelfViewModel> GetById(int id)
+        public async Task<ShelfViewModel> GetById(Guid id)
         {
             var shelf = await Get(x => x.Id == id && x.IsActive == true)
-                .Include(x => x.Boxes.Where(a => a.IsActive == true))
-                .ThenInclude(x => x.Product)
-                .Include(x => x.Boxes.Where(a => a.IsActive == true))
-                .ThenInclude(x => x.BoxOrderDetails.Where(a => a.IsActive == true))
-                .ThenInclude(x => x.OrderDetail).ThenInclude(x => x.Order).FirstOrDefaultAsync();
+            .Include(x => x.Boxes.Where(a => a.IsActive == true))
+            .ThenInclude(x => x.Service)
+            .Include(x => x.Boxes.Where(a => a.IsActive == true))
+            .ThenInclude(x => x.OrderDetail).ThenInclude(x => x.Order).FirstOrDefaultAsync();
             if (shelf == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf id not found");
             var result = _mapper.Map<ShelfViewModel>(shelf);
             var boxes = result.Boxes;
@@ -103,11 +102,11 @@ namespace RSSMS.DataService.Services
             return result;
         }
 
-        public async Task<ShelfViewModel> Update(int id, ShelfUpdateViewModel model)
+        public async Task<ShelfViewModel> Update(Guid id, ShelfUpdateViewModel model)
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf Id not matched");
 
-            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes).ThenInclude(boxes => boxes.BoxOrderDetails).FirstOrDefaultAsync();
+            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes).ThenInclude(boxes => boxes.OrderDetail).FirstOrDefaultAsync();
             var shelf = Get(x => x.Name == model.Name && x.AreaId == entity.AreaId && x.Id != id && x.IsActive == true).Include(x => x.Boxes.Where(x => x.IsActive == true)).FirstOrDefault();
             if (shelf != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf name is existed");
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf not found");
@@ -119,27 +118,27 @@ namespace RSSMS.DataService.Services
             {
                 if (entity.Type != model.Type) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
                 if (shelfSize != newShelfSize) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
-                if (model.ProductId != entity.Boxes.FirstOrDefault().ProductId) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
+                if (model.ServiceId != entity.Boxes.FirstOrDefault().ServiceId) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
             }
 
             if (entity.BoxesInHeight != model.BoxesInHeight || entity.BoxesInWidth != model.BoxesInWidth)
             {
                 await _boxService.Delete(id);
-                await _boxService.CreateNumberOfBoxes(id, model.BoxesInWidth * model.BoxesInHeight, model.ProductId);
+                await _boxService.CreateNumberOfBoxes(id, model.BoxesInWidth * model.BoxesInHeight, (Guid)model.ServiceId);
             }
 
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);
-            await _boxService.UpdateBoxSize(model.ProductId, id);
+            await _boxService.UpdateBoxSize((Guid)model.ServiceId, id);
             return _mapper.Map<ShelfViewModel>(updateEntity);
         }
         public async Task<DynamicModelResponse<ShelfViewModel>> GetAll(ShelfViewModel model, string[] fields, int page, int size)
         {
             var shelves = Get(x => x.IsActive == true)
                 .Include(x => x.Boxes.Where(a => a.IsActive == true))
-                .ThenInclude(x => x.Product)
+                .ThenInclude(x => x.Service)
                 .Include(x => x.Boxes.Where(a => a.IsActive == true))
-                .ThenInclude(x => x.BoxOrderDetails.Where(a => a.IsActive == true)).ThenInclude(x => x.OrderDetail)
+                .ThenInclude(x => x.OrderDetail)
                 .ProjectTo<ShelfViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
@@ -157,9 +156,9 @@ namespace RSSMS.DataService.Services
             return rs;
         }
 
-        public List<BoxUsageViewModel> GetBoxUsageByAreaId(int areaId)
+        public List<BoxUsageViewModel> GetBoxUsageByAreaId(Guid areaId)
         {
-            var shelves = Get(x => x.AreaId == areaId && x.IsActive == true).Include(x => x.Boxes).ThenInclude(x => x.Product).ToList();
+            var shelves = Get(x => x.AreaId == areaId && x.IsActive == true).Include(x => x.Boxes).ThenInclude(x => x.Service).ToList();
             var result = new List<BoxUsageViewModel>();
             var shelfSelfStorage = shelves.Where(x => x.Type == 2).FirstOrDefault();
             var products = _productService.Get(x => (x.Type == 2 || x.Type == 4) && x.IsActive == true).ToList();
@@ -195,7 +194,7 @@ namespace RSSMS.DataService.Services
             {
                 if (shelf.Boxes != null)
                 {
-                    var boxes = shelf.Boxes.Where(x => x.IsActive == true && x.Product.Name == sizeName);
+                    var boxes = shelf.Boxes.Where(x => x.IsActive == true && x.Service.Name == sizeName);
                     totalBox += boxes.ToList().Count;
 
                     var boxesNotUsed = boxes.Where(x => x.Status == 0).ToList().Count;
@@ -215,11 +214,11 @@ namespace RSSMS.DataService.Services
             return result;
         }
 
-        public bool CheckIsUsed(int id)
+        public bool CheckIsUsed(Guid id)
         {
-            var entity = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes).ThenInclude(boxes => boxes.BoxOrderDetails).FirstOrDefault();
+            var entity = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes)/*.ThenInclude(boxes => boxes.BoxOrderDetails)*/.FirstOrDefault();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf id not found");
-            var BoxAssignedToOrder = entity.Boxes.Where(x => x.BoxOrderDetails.Any(a => a.IsActive == true)).ToList();
+            var BoxAssignedToOrder = entity.Boxes.Where(x => x.OrderDetail != null).ToList();
             if (BoxAssignedToOrder.Count() > 0) return true;
             return false;
         }

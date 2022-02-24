@@ -6,7 +6,7 @@ namespace RSSMS.DataService.ViewModels.Orders
 {
     public class OrderUpdateViewModel
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public bool? IsUserDelivery { get; set; }
         public bool? IsPaid { get; set; }
         public int? PaymentMethod { get; set; }

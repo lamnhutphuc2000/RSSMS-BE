@@ -9,17 +9,13 @@ namespace RSSMS.DataService.Models
     {
         public Role()
         {
-            Users = new HashSet<User>();
+            Accounts = new HashSet<Account>();
         }
 
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Name { get; set; }
         public bool? IsActive { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public int? CreatedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
-        public int? ModifiedBy { get; set; }
 
-        public virtual ICollection<User> Users { get; set; }
+        public virtual ICollection<Account> Accounts { get; set; }
     }
 }

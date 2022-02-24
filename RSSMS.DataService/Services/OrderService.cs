@@ -23,41 +23,34 @@ namespace RSSMS.DataService.Services
     {
         Task<OrderCreateViewModel> Create(OrderCreateViewModel model, string accessToken);
         Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, IList<int> OrderStatuses, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken);
-        Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model);
-        Task<OrderByIdViewModel> GetById(int id);
-        Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model, string accessToken);
+        Task<OrderUpdateViewModel> Update(Guid id, OrderUpdateViewModel model);
+        Task<OrderByIdViewModel> GetById(Guid id);
+        Task<OrderViewModel> Cancel(Guid id, OrderCancelViewModel model, string accessToken);
         Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken);
-        Task<OrderByIdViewModel> Done(int id);
+        Task<OrderByIdViewModel> Done(Guid id);
         Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model);
     }
     class OrderService : BaseService<Order>, IOrderService
     {
         private readonly IMapper _mapper;
         private readonly IOrderDetailService _orderDetailService;
-        private readonly IStaffManageStorageService _staffmanageStorageService;
-        private readonly INotificationService _notificationService;
-        private readonly INotificationDetailService _notificationDetailService;
         private readonly IFirebaseService _firebaseService;
 
-        public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository, IOrderDetailService orderDetailService, IStaffManageStorageService staffmanageStorageService, INotificationService notificationService, INotificationDetailService notificationDetailService, IFirebaseService firebaseService, IMapper mapper) : base(unitOfWork, repository)
+        public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository, IOrderDetailService orderDetailService ,IFirebaseService firebaseService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _orderDetailService = orderDetailService;
-            _staffmanageStorageService = staffmanageStorageService;
-            _notificationService = notificationService;
-            _notificationDetailService = notificationDetailService;
             _firebaseService = firebaseService;
         }
-        public async Task<OrderByIdViewModel> GetById(int id)
+        public async Task<OrderByIdViewModel> GetById(Guid id)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
                 .Include(x => x.OrderHistoryExtensions)
-                .Include(x => x.OrderStorageDetails)
+                .Include(x => x.Storage)
                 .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.Images)
                 .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.BoxOrderDetails.Where(boxOrderDetail => boxOrderDetail.IsActive == true))
-                .ThenInclude(boxOrderDetail => boxOrderDetail.Box)
+                .ThenInclude(orderDetail => orderDetail.Boxes)
                 .ThenInclude(box => box.Shelf)
                 .ThenInclude(shelf => shelf.Area)
                 .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
@@ -69,18 +62,18 @@ namespace RSSMS.DataService.Services
         public async Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, IList<int> OrderStatuses, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
 
             var order = Get(x => x.IsActive == true)
                 .Include(x => x.OrderHistoryExtensions)
-                .Include(x => x.OrderStorageDetails)
-                .Include(x => x.Schedules)
-                .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.Images)
-                .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.Product);
+            .Include(x => x.Storage)
+            .Include(x => x.Requests).ThenInclude(request => request.Schedules)
+            .Include(x => x.OrderDetails)
+            .ThenInclude(orderDetail => orderDetail.Images)
+            .Include(x => x.OrderDetails)
+            .ThenInclude(orderDetail => orderDetail.Service);
 
             if (OrderStatuses != null)
             {
@@ -88,11 +81,11 @@ namespace RSSMS.DataService.Services
                 {
                     order = Get(x => x.IsActive == true).Where(x => OrderStatuses.Contains((int)x.Status))
                         .Include(x => x.OrderHistoryExtensions)
-                        .Include(x => x.OrderStorageDetails).Include(x => x.Schedules)
+                        .Include(x => x.Storage).Include(x => x.Requests).ThenInclude(request => request.Schedules)
                         .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.Images)
-                    .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.Product);
+                        .ThenInclude(orderDetail => orderDetail.Images)
+                        .Include(x => x.OrderDetails)
+                        .ThenInclude(orderDetail => orderDetail.Service);
                 }
             }
 
@@ -102,32 +95,32 @@ namespace RSSMS.DataService.Services
                 order = order
                     .Where(x => (x.ReturnDate >= dateFrom && x.ReturnDate <= dateTo) || (x.DeliveryDate >= dateFrom && x.DeliveryDate <= dateTo))
                 .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.Product);
+                .ThenInclude(orderDetail => orderDetail.Service);
             }
             if (role == "Manager")
             {
-                order = order.Where(x => x.OrderStorageDetails.Count == 0 || x.ManagerId.HasValue == false || x.ManagerId == userId)
-                    .Include(x => x.OrderStorageDetails)
-                    .Include(x => x.Schedules)
+                order = order.Where(x => x.StorageId == null || x.Storage.StaffAssignStorages.Where(x => x.StaffId == userId).First() != null)
+                    .Include(x => x.Storage)
+                    .Include(x => x.Requests).ThenInclude(request => request.Schedules)
                     .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.Product);
+                    .ThenInclude(orderDetail => orderDetail.Service);
             }
 
             if (role == "Office staff")
             {
-                var storageId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
-                order = order.Where(x => x.OrderStorageDetails.Any(a => a.StorageId == storageId) || x.OrderStorageDetails.Count == 0)
-                    .Include(x => x.OrderStorageDetails)
+                var storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
+                order = order.Where(x => x.StorageId == storageId || x.StorageId == null)
+                    .Include(x => x.Storage)
                     .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.Product);
+                    .ThenInclude(orderDetail => orderDetail.Service);
             }
 
             if (role == "Customer")
             {
                 order = order.Where(x => x.CustomerId == userId)
-                    .Include(x => x.OrderStorageDetails)
+                    .Include(x => x.Storage)
                     .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.Product);
+                    .ThenInclude(orderDetail => orderDetail.Service);
             }
 
             var result = order.OrderByDescending(x => x.CreatedDate)
@@ -154,21 +147,16 @@ namespace RSSMS.DataService.Services
         public async Task<OrderCreateViewModel> Create(OrderCreateViewModel model, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-            int storageId = -1;
+            Guid? storageId = null;
             var order = _mapper.Map<Order>(model);
 
-            if (role == "Manager")
-            {
-                order.ManagerId = userId;
-            }
 
             if (role == "Office staff")
             {
-                storageId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
-                var managerId = _staffmanageStorageService.Get(x => x.StorageId == storageId && x.RoleName == "Manager").Select(x => x.UserId).FirstOrDefault();
-                if (managerId != 0) order.ManagerId = managerId;
+                storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
+                order.StorageId = storageId;
             }
 
             if (role == "Customer")
@@ -177,30 +165,17 @@ namespace RSSMS.DataService.Services
             }
 
             //Check Type of Order
-            if (order.TypeOrder == 1)
+            if (order.Type == 1)
             {
                 order.ReturnDate = order.DeliveryDate.Value.AddDays((double)model.Duration);
             }
-            else if (order.TypeOrder == 0)
+            else if (order.Type == 0)
             {
                 order.ReturnDate = order.DeliveryDate.Value.AddMonths((int)model.Duration);
             }
 
             await CreateAsync(order);
 
-            if (role == "Office staff")
-            {
-                OrderStorageDetail orderStorage = new OrderStorageDetail();
-                orderStorage.IsActive = true;
-                orderStorage.OrderId = order.Id = order.Id;
-                if (storageId != -1)
-                {
-                    orderStorage.StorageId = storageId;
-                    order.Status = 2;
-                    order.OrderStorageDetails.Add(orderStorage);
-                    await UpdateAsync(order);
-                }
-            }
 
             //Create order detail
             foreach (ProductOrderViewModel product in model.ListProduct)
@@ -208,27 +183,19 @@ namespace RSSMS.DataService.Services
                 await _orderDetailService.Create(product, order.Id);
             }
 
-            Notification noti = new Notification
-            {
-                Description = "New order arrive!",
-                CreateDate = DateTime.Now,
-                IsActive = true,
-                Type = 0,
-                OrderId = order.Id
-            };
-            await _notificationService.CreateAsync(noti);
+            
 
-            await _notificationDetailService.PushOrderNoti("New order arrive!", userId, noti.Id, order.Id, null, noti.Id);
+            await _firebaseService.PushOrderNoti("New order arrive!", userId, order.Id, null);
 
             return model;
         }
 
-        public async Task<OrderUpdateViewModel> Update(int id, OrderUpdateViewModel model)
+        public async Task<OrderUpdateViewModel> Update(Guid id, OrderUpdateViewModel model)
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order Id not matched");
 
             var entity = await Get(x => x.Id == id && x.IsActive == true)
-                .Include(x => x.Schedules)
+                .Include(x => x.Requests).ThenInclude(request => request.Schedules)
                 .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetails => orderDetails.Images).AsNoTracking().FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
@@ -243,10 +210,10 @@ namespace RSSMS.DataService.Services
             return model;
         }
 
-        public async Task<OrderViewModel> Cancel(int id, OrderCancelViewModel model, string accessToken)
+        public async Task<OrderViewModel> Cancel(Guid id, OrderCancelViewModel model, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id not matched");
             var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
@@ -261,26 +228,15 @@ namespace RSSMS.DataService.Services
         public async Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Int32.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
             var order = await Get(x => x.IsActive == true && x.Id == model.Id).Include(x => x.Customer).FirstOrDefaultAsync();
 
             if (role == "Delivery Staff")
             {
-                int customerId = (int)order.CustomerId;
+                Guid customerId = (Guid)order.CustomerId;
                 var registrationId = order.Customer.DeviceTokenId;
                 string description = "Please commit order changes";
-                Notification noti = new Notification
-                {
-                    CreateDate = DateTime.Now,
-                    IsActive = true,
-                    OrderId = order.Id,
-                    Status = 0,
-                    Type = 2,
-                    Description = description,
-                    Note = "Delivery staff id: " + userId + " has commit the order: " + order.Id + " changes",
-                };
-                await _notificationService.CreateAsync(noti);
 
 
                 // Get list of images
@@ -304,26 +260,26 @@ namespace RSSMS.DataService.Services
                 }
                 model.OrderDetails = orderDetails;
 
-                var result = await _notificationDetailService.SendNoti(description, userId, customerId, registrationId, noti.Id, order.Id, null, model);
+                var result = await _firebaseService.SendNoti(description, customerId, registrationId, order.Id, null, model);
             }
             return _mapper.Map<OrderViewModel>(order);
         }
 
-        public async Task<OrderByIdViewModel> Done(int id)
+        public async Task<OrderByIdViewModel> Done(Guid id)
         {
-            var order = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.OrderDetails).ThenInclude(orderDetail => orderDetail.BoxOrderDetails).FirstOrDefaultAsync();
-            if(order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+            var order = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.OrderDetails).ThenInclude(orderDetail => orderDetail.Boxes).FirstOrDefaultAsync();
+            if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
             var orderDetails = order.OrderDetails;
-            foreach(var orderDetail in orderDetails)
+            foreach (var orderDetail in orderDetails)
             {
-                if(orderDetail.BoxOrderDetails != null)
+                if (orderDetail.Boxes != null)
                 {
-                    var boxOrderDetail = orderDetail.BoxOrderDetails;
-                    foreach(var box in boxOrderDetail)
+                    var boxOrderDetail = orderDetail.Boxes;
+                    foreach (var box in boxOrderDetail)
                     {
                         box.IsActive = false;
                     }
-                    orderDetail.BoxOrderDetails = boxOrderDetail;
+                    orderDetail.Boxes = boxOrderDetail;
                 }
             }
             order.Status = 6;
@@ -336,10 +292,10 @@ namespace RSSMS.DataService.Services
         {
             var orderIds = model.Select(x => x.Id);
             var orders = await Get(x => orderIds.Contains(x.Id) && x.IsActive == true).ToListAsync();
-            if(orders == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-            if(orders.Count < model.Count) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+            if (orders == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+            if (orders.Count < model.Count) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
 
-            foreach(var order in orders)
+            foreach (var order in orders)
             {
                 order.Status = model.Where(a => a.Id == order.Id).First().Status;
                 await UpdateAsync(order);

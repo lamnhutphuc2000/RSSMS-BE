@@ -1,9 +1,11 @@
-﻿namespace RSSMS.DataService.ViewModels.Schedules
+﻿using System;
+
+namespace RSSMS.DataService.ViewModels.Schedules
 {
     public class ScheduleDeliveryViewModel
     {
-        public string DeliveryTime { get; set; }
-        public int? OrderId { get; set; }
-        public int? RequestId { get; set; }
+        public string ScheduleTime { get; set; }
+        public Guid? OrderId { get; set; }
+        public Guid? RequestId { get; set; }
     }
 }

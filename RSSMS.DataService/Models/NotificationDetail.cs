@@ -6,9 +6,9 @@ namespace RSSMS.DataService.Models
 {
     public partial class NotificationDetail
     {
-        public int Id { get; set; }
-        public int? UserId { get; set; }
-        public int? NotificationId { get; set; }
+        public Guid Id { get; set; }
+        public Guid? UserId { get; set; }
+        public Guid? NotificationId { get; set; }
         public bool? IsOwn { get; set; }
         public bool? IsRead { get; set; }
         public bool? IsActive { get; set; }

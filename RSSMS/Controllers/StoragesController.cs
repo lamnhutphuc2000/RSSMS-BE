@@ -5,6 +5,7 @@ using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Storages;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -49,10 +50,10 @@ namespace RSSMS.API.Controllers
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin,Manager,Office staff")]
         [MapToApiVersion("1")]
-        [ProducesResponseType(typeof(StorageGetIdViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(StorageDetailViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(Guid id)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _storagesService.GetById(id, accessToken));
@@ -84,7 +85,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Update(int id, StorageUpdateViewModel model)
+        public async Task<IActionResult> Update(Guid id, StorageUpdateViewModel model)
         {
             return Ok(await _storagesService.Update(id, model));
         }
@@ -99,7 +100,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             await _storagesService.Delete(id);
             return Ok("Deleted");

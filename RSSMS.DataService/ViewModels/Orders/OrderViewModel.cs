@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
-using RSSMS.DataService.ViewModels.Boxes;
-using RSSMS.DataService.ViewModels.BoxOrderDetails;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.OrderHistoryExtension;
 using System;
@@ -17,7 +15,7 @@ namespace RSSMS.DataService.ViewModels.Orders
                 ,"IsUserDelivery","PaymentMethod","DeliveryTime","DeliveryDate","ReturnDate","DurationDays","DurationMonths","Status","IsPaid","OrderBoxDetails","OrderHistoryExtensions"
         };
         [JsonProperty("id")]
-        public int? Id { get; set; }
+        public Guid? Id { get; set; }
         [JsonProperty("customerName")]
         [BindNever]
         public string CustomerName { get; set; }
