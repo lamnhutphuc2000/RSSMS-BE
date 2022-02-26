@@ -50,6 +50,9 @@ namespace RSSMS.DataService.DI
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IProductService, ProductService>();
 
+            services.AddScoped<IServicesRepository, ServicesRepository>();
+            services.AddScoped<IServicesService, ServicesService>();
+
             services.AddScoped<IRequestRepository, RequestRepository>();
             services.AddScoped<IRequestService, RequestService>();
 

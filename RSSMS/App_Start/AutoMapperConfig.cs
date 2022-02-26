@@ -24,6 +24,7 @@ namespace RSSMS.API.App_Start
                 mc.ConfigOrderStorageDetailModule();
                 mc.ConfigOrderBoxDetailModule();
                 mc.ConfigProductModule();
+                mc.ConfigServicesModule();
                 mc.ConfigRequestModule();
                 mc.ConfigRequestDetailsModule();
                 mc.ConfigScheduleModule();
