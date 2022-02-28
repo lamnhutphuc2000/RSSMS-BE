@@ -7,6 +7,7 @@ namespace RSSMS.DataService.ViewModels.Shelves
         public Guid? Id { get; set; }
         public int? Type { get; set; }
         public string Name { get; set; }
+        public int? Status { get; set; }
         public int BoxesInWidth { get; set; }
         public int BoxesInHeight { get; set; }
         public int BoxSize { get; set; }

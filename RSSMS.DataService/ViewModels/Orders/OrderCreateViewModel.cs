@@ -1,4 +1,4 @@
-﻿using RSSMS.DataService.ViewModels.Products;
+﻿using RSSMS.DataService.ViewModels.Services;
 using System;
 using System.Collections.Generic;
 
@@ -6,7 +6,7 @@ namespace RSSMS.DataService.ViewModels.Orders
 {
     public class OrderCreateViewModel
     {
-        public int? CustomerId { get; set; }
+        public Guid? CustomerId { get; set; }
         public string DeliveryAddress { get; set; }
         public string AddressReturn { get; set; }
         public decimal? TotalPrice { get; set; }
@@ -18,7 +18,7 @@ namespace RSSMS.DataService.ViewModels.Orders
         public int? Duration { get; set; }
 
 
-        public virtual ICollection<ProductOrderViewModel> ListProduct { get; set; }
+        public virtual ICollection<ServicesOrderViewModel> ListService { get; set; }
 
 
     }

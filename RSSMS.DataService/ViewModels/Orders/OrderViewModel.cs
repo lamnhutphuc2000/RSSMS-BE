@@ -69,7 +69,7 @@ namespace RSSMS.DataService.ViewModels.Orders
         public bool? IsPaid { get; set; }
         [JsonProperty("storageId")]
         [BindNever]
-        public int? StorageId { get; set; }
+        public Guid? StorageId { get; set; }
         [JsonProperty("storageName")]
         [BindNever]
         public string StorageName { get; set; }

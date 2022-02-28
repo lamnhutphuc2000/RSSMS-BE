@@ -2,6 +2,7 @@
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Products;
+using RSSMS.DataService.ViewModels.Services;
 
 namespace RSSMS.DataService.AutoMapper
 {
@@ -9,11 +10,11 @@ namespace RSSMS.DataService.AutoMapper
     {
         public static void ConfigOrderDetailModule(this IMapperConfigurationExpression mc)
         {
-            mc.CreateMap<OrderDetail, ProductOrderViewModel>();
-            mc.CreateMap<ProductOrderViewModel, OrderDetail>();
+            mc.CreateMap<OrderDetail, ServicesOrderViewModel>();
+            mc.CreateMap<ServicesOrderViewModel, OrderDetail>();
 
             mc.CreateMap<OrderDetail, OrderDetailsViewModel>()
-                .ForMember(des => des.ProductImages, opt => opt.MapFrom(src => src.Service.ImageUrl))
+                .ForMember(des => des.ServiceImageUrl, opt => opt.MapFrom(src => src.Service.ImageUrl))
                 .ForMember(des => des.Price, opt => opt.MapFrom(src => src.Service.Price));
             mc.CreateMap<OrderDetailsViewModel, OrderDetail>();
 

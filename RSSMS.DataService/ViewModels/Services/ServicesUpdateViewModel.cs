@@ -15,7 +15,6 @@ namespace RSSMS.DataService.ViewModels.Services
         public int? Type { get; set; }
         public string Unit { get; set; }
         public string Tooltip { get; set; }
-        public int? Status { get; set; }
         public AvatarImageViewModel Image { get; set; }
     }
 }

@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json;
+using System;
 
 namespace RSSMS.DataService.ViewModels.Images
 {
     public partial class AvatarImageViewModel
     {
         [JsonProperty("id")]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [JsonProperty("file")]
         public string File { get; set; }
         [JsonProperty("url")]

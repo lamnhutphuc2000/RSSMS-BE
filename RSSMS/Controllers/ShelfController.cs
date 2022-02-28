@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
@@ -66,7 +67,8 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Add(ShelfCreateViewModel model)
         {
-            return Ok(await _shelfService.Create(model));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _shelfService.Create(model,accessToken));
         }
 
         /// <summary>
@@ -83,7 +85,8 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Update(Guid id, ShelfUpdateViewModel model)
         {
-            return Ok(await _shelfService.Update(id, model));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _shelfService.Update(id, model, accessToken));
         }
 
         /// <summary>

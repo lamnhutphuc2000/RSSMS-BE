@@ -39,15 +39,13 @@ namespace RSSMS.DataService.Services
         {
             var service = _mapper.Map<Service>(model);
             var image = model.Image;
-
-            await CreateAsync(service);
             if (image != null)
             {
                 var url = await _firebaseService.UploadImageToFirebase(image.File, "services", service.Id, "avatar");
                 if (url != null) service.ImageUrl = url;
             }
+            await CreateAsync(service);
             
-            await UpdateAsync(service);
 
             return _mapper.Map<ServicesViewModel>(service);
         }
@@ -96,10 +94,11 @@ namespace RSSMS.DataService.Services
 
             var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Service not found");
+            entity.IsActive = false;
+            await UpdateAsync(entity);
 
             var updateEntity = _mapper.Map(model, entity);
-            updateEntity.IsActive = false;
-            await UpdateAsync(updateEntity);
+            
             var image = model.Image;
             if(image != null)
             {

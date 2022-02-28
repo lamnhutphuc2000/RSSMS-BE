@@ -9,8 +9,8 @@ namespace RSSMS.DataService.Services
 {
     public interface IBoxService : IBaseService<Box>
     {
-        Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId);
-        Task Delete(Guid shelfId);
+        Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId, Guid staffId);
+        Task Delete(Guid shelfId, Guid staffId);
         Task UpdateBoxSize(Guid serviceId, Guid shelfId);
     }
     public class BoxService : BaseService<Box>, IBoxService
@@ -19,7 +19,7 @@ namespace RSSMS.DataService.Services
         {
         }
 
-        public async Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId)
+        public async Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId, Guid staffId)
         {
             for (int i = 0; i < num; i++)
             {
@@ -28,17 +28,19 @@ namespace RSSMS.DataService.Services
                 box.ServiceId = serviceId;
                 box.ShelfId = shelfId;
                 box.Status = 0;
+                box.ModifiedBy = staffId;
                 await CreateAsync(box);
             }
         }
 
-        public async Task Delete(Guid shelfId)
+        public async Task Delete(Guid shelfId, Guid staffId)
         {
             var listBoxes = await Get(x => x.ShelfId == shelfId && x.IsActive == true).ToListAsync();
             if (listBoxes == null) return;
             foreach (var box in listBoxes)
             {
                 box.IsActive = false;
+                box.ModifiedBy = staffId;
                 await UpdateAsync(box);
             }
         }

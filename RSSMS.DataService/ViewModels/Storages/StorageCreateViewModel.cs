@@ -11,6 +11,8 @@ namespace RSSMS.DataService.ViewModels.Storages
         public string Size { get; set; }
 
         public string Address { get; set; }
+        public string Description { get; set; }
+        public int? Type { get; set; }
 
         public int? Status { get; set; }
         public ImageCreateViewModel Image { get; set; }

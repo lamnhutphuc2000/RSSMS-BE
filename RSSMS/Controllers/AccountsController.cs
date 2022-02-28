@@ -115,7 +115,7 @@ namespace RSSMS.API.Controllers
         /// </summary>
         /// <param name="phone"></param>
         /// <returns></returns>
-        [HttpGet("{phone}")]
+        [HttpGet("account/{phone}")]
         [Authorize(Roles = "Admin,Manager,Office staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(AccountsViewModel), (int)HttpStatusCode.OK)]

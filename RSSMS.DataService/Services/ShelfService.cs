@@ -11,6 +11,7 @@ using RSSMS.DataService.ViewModels.Boxes;
 using RSSMS.DataService.ViewModels.Shelves;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -21,9 +22,9 @@ namespace RSSMS.DataService.Services
     {
         Task<DynamicModelResponse<ShelfViewModel>> GetAll(ShelfViewModel model, string[] fields, int page, int size);
         Task<ShelfViewModel> GetById(Guid id);
-        Task<ShelfViewModel> Create(ShelfCreateViewModel model);
+        Task<ShelfViewModel> Create(ShelfCreateViewModel model, string accessToken);
         Task<ShelfViewModel> Delete(Guid id);
-        Task<ShelfViewModel> Update(Guid id, ShelfUpdateViewModel model);
+        Task<ShelfViewModel> Update(Guid id, ShelfUpdateViewModel model, string accessToken);
         List<BoxUsageViewModel> GetBoxUsageByAreaId(Guid areaId);
         bool CheckIsUsed(Guid id);
     }
@@ -32,22 +33,25 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IBoxService _boxService;
-        private readonly IProductService _productService;
-        public ShelfService(IUnitOfWork unitOfWork, IBoxService boxService, IShelfRepository repository, IProductService productService, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IServicesService _servicesService;
+        public ShelfService(IUnitOfWork unitOfWork, IBoxService boxService, IShelfRepository repository, IServicesService servicesService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _boxService = boxService;
-            _productService = productService;
+            _servicesService = servicesService;
         }
 
-        public async Task<ShelfViewModel> Create(ShelfCreateViewModel model)
+        public async Task<ShelfViewModel> Create(ShelfCreateViewModel model, string accessToken)
         {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
             var shelf = Get(x => x.Name == model.Name && x.AreaId == model.AreaId && x.IsActive == true).FirstOrDefault();
             if (shelf != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf name is existed");
             var shelfToCreate = _mapper.Map<Shelf>(model);
             await CreateAsync(shelfToCreate);
             int numberOfShelve = model.BoxesInHeight * model.BoxesInWidth;
-            await _boxService.CreateNumberOfBoxes(shelfToCreate.Id, numberOfShelve, model.ServiceId);
+            await _boxService.CreateNumberOfBoxes(shelfToCreate.Id, numberOfShelve, model.ServiceId, userId);
             return _mapper.Map<ShelfViewModel>(shelfToCreate);
         }
 
@@ -102,7 +106,7 @@ namespace RSSMS.DataService.Services
             return result;
         }
 
-        public async Task<ShelfViewModel> Update(Guid id, ShelfUpdateViewModel model)
+        public async Task<ShelfViewModel> Update(Guid id, ShelfUpdateViewModel model, string accessToken)
         {
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf Id not matched");
 
@@ -110,6 +114,9 @@ namespace RSSMS.DataService.Services
             var shelf = Get(x => x.Name == model.Name && x.AreaId == entity.AreaId && x.Id != id && x.IsActive == true).Include(x => x.Boxes.Where(x => x.IsActive == true)).FirstOrDefault();
             if (shelf != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf name is existed");
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Shelf not found");
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
 
             var shelfSize = entity.BoxesInHeight * entity.BoxesInWidth;
             var newShelfSize = model.BoxesInWidth * model.BoxesInHeight;
@@ -123,8 +130,8 @@ namespace RSSMS.DataService.Services
 
             if (entity.BoxesInHeight != model.BoxesInHeight || entity.BoxesInWidth != model.BoxesInWidth)
             {
-                await _boxService.Delete(id);
-                await _boxService.CreateNumberOfBoxes(id, model.BoxesInWidth * model.BoxesInHeight, (Guid)model.ServiceId);
+                await _boxService.Delete(id, userId);
+                await _boxService.CreateNumberOfBoxes(id, model.BoxesInWidth * model.BoxesInHeight, (Guid)model.ServiceId, userId);
             }
 
             var updateEntity = _mapper.Map(model, entity);
@@ -161,10 +168,14 @@ namespace RSSMS.DataService.Services
             var shelves = Get(x => x.AreaId == areaId && x.IsActive == true).Include(x => x.Boxes).ThenInclude(x => x.Service).ToList();
             var result = new List<BoxUsageViewModel>();
             var shelfSelfStorage = shelves.Where(x => x.Type == 2).FirstOrDefault();
-            var products = _productService.Get(x => (x.Type == 2 || x.Type == 4) && x.IsActive == true).ToList();
+            var products = _servicesService.Get(x => (x.Type == 2 || x.Type == 4) && x.IsActive == true).ToList();
             if (shelfSelfStorage != null)
             {
-                products = _productService.Get(x => x.Type == 0 && x.IsActive == true).ToList();
+                products = _servicesService.Get(x => x.Type == 0 && x.IsActive == true).ToList();
+            }
+            if(products == null)
+            {
+                return null;
             }
             foreach (var product in products)
             {

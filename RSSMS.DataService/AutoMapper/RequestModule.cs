@@ -33,7 +33,7 @@ namespace RSSMS.DataService.AutoMapper
             //.ForMember(des => des.OrderType, otp => otp.MapFrom(src => src.OrderHistoryExtensions.Count > 0 ? src.OrderHistoryExtensions.First().Order.TypeOrder : null))
             //.ForMember(des => des.ReturnDate, otp => otp.MapFrom(src => src.OrderHistoryExtensions.Count > 0 ? src.OrderHistoryExtensions.First().ReturnDate : src.ReturnDate))
             //.ForMember(des => des.TotalPrice, otp => otp.MapFrom(src => src.OrderHistoryExtensions.Count > 0 ? src.OrderHistoryExtensions.First().TotalPrice : null))
-            //.ForMember(des => des.DurationMonths, otp => otp.MapFrom(src => src.OrderHistoryExtensions.Count > 0 ? (int?)(src.OrderHistoryExtensions.First().ReturnDate - src.OrderHistoryExtensions.First().OldReturnDate).Value.Days/30 : null))
+            //.ForMember(des => des.DurationMonths, otp => otp.MapFrom(src => src.OrderHistoryExtensions.Count > 0 ? (int?)(src.OrderHistoryExtensions.First().ReturnDate - src.OrderHistoryExtensions.First().OldReturnDate).Value.Days / 30 : null))
             //.ForMember(des => des.CancelBy, otp => otp.MapFrom(src => src.User.Name))
             //.ForMember(des => des.CancelByPhone, otp => otp.MapFrom(src => src.User.Phone))
             //.ForMember(des => des.DurationDays, opt =>

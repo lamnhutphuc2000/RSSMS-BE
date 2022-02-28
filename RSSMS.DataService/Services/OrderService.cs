@@ -10,6 +10,7 @@ using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Images;
 using RSSMS.DataService.ViewModels.Orders;
 using RSSMS.DataService.ViewModels.Products;
+using RSSMS.DataService.ViewModels.Services;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -75,18 +76,15 @@ namespace RSSMS.DataService.Services
             .Include(x => x.OrderDetails)
             .ThenInclude(orderDetail => orderDetail.Service);
 
-            if (OrderStatuses != null)
+            if (OrderStatuses.Count > 0)
             {
-                if (OrderStatuses.Count > 0)
-                {
-                    order = Get(x => x.IsActive == true).Where(x => OrderStatuses.Contains((int)x.Status))
-                        .Include(x => x.OrderHistoryExtensions)
-                        .Include(x => x.Storage).Include(x => x.Requests).ThenInclude(request => request.Schedules)
-                        .Include(x => x.OrderDetails)
-                        .ThenInclude(orderDetail => orderDetail.Images)
-                        .Include(x => x.OrderDetails)
-                        .ThenInclude(orderDetail => orderDetail.Service);
-                }
+                order = Get(x => x.IsActive == true).Where(x => OrderStatuses.Contains((int)x.Status))
+                    .Include(x => x.OrderHistoryExtensions)
+                    .Include(x => x.Storage).Include(x => x.Requests).ThenInclude(request => request.Schedules)
+                    .Include(x => x.OrderDetails)
+                    .ThenInclude(orderDetail => orderDetail.Images)
+                    .Include(x => x.OrderDetails)
+                    .ThenInclude(orderDetail => orderDetail.Service);
             }
 
 
@@ -127,7 +125,8 @@ namespace RSSMS.DataService.Services
                 .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+            var meo = result.Item2.ToList();
+            if(result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
 
 
             var rs = new DynamicModelResponse<OrderViewModel>
@@ -178,7 +177,7 @@ namespace RSSMS.DataService.Services
 
 
             //Create order detail
-            foreach (ProductOrderViewModel product in model.ListProduct)
+            foreach (ServicesOrderViewModel product in model.ListService)
             {
                 await _orderDetailService.Create(product, order.Id);
             }

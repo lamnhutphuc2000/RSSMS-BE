@@ -113,15 +113,15 @@ namespace RSSMS.DataService.Services
             await CreateAsync(updateEntity);
 
 
-            foreach (var avatar in images)
-            {
-                var url = await _firebaseService.UploadImageToFirebase(avatar.File, "products", updateEntity.Id, "avatar");
-                if (url != null)
-                {
-                    avatar.Id = 0;
-                    avatar.Url = url;
-                }
-            }
+            //foreach (var avatar in images)
+            //{
+            //    var url = await _firebaseService.UploadImageToFirebase(avatar.File, "products", updateEntity.Id, "avatar");
+            //    if (url != null)
+            //    {
+            //        avatar.Id = 0;
+            //        avatar.Url = url;
+            //    }
+            //}
             updateEntity.Images = images.AsQueryable().ProjectTo<Image>(_mapper.ConfigurationProvider).ToList();
 
             await UpdateAsync(updateEntity);

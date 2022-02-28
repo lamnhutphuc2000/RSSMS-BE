@@ -3,6 +3,7 @@ using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.ViewModels.Products;
+using RSSMS.DataService.ViewModels.Services;
 using System;
 using System.Threading.Tasks;
 
@@ -11,7 +12,7 @@ namespace RSSMS.DataService.Services
 
     public interface IOrderDetailService : IBaseService<OrderDetail>
     {
-        Task<ProductOrderViewModel> Create(ProductOrderViewModel model, Guid orderID);
+        Task<ServicesOrderViewModel> Create(ServicesOrderViewModel model, Guid orderID);
     }
     class OrderDetailService : BaseService<OrderDetail>, IOrderDetailService
     {
@@ -22,7 +23,7 @@ namespace RSSMS.DataService.Services
             _mapper = mapper;
         }
 
-        public async Task<ProductOrderViewModel> Create(ProductOrderViewModel model, Guid orderID)
+        public async Task<ServicesOrderViewModel> Create(ServicesOrderViewModel model, Guid orderID)
         {
             var orderDetails = _mapper.Map<OrderDetail>(model);
 
