@@ -33,7 +33,6 @@ namespace RSSMS.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [MapToApiVersion("1")]
-        [Authorize(Roles = "Admin,Manager,Office staff, Customer")]
         [ProducesResponseType(typeof(DynamicModelResponse<Role>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]

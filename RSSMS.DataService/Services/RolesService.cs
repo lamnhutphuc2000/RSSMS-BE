@@ -30,19 +30,50 @@ namespace RSSMS.DataService.Services
         }
         public async Task<DynamicModelResponse<Role>> GetAll(string[] fields, int page, int size, string accessToken)
         {
-            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
             var roles = Get(x => x.Name != "Admin" && x.IsActive == true)
                 .ProjectTo<Role>(_mapper.ConfigurationProvider);
+            (int, IQueryable<Role>) result;
+            DynamicModelResponse<Role> rs;
+            if (accessToken == null)
+            {
+                roles = roles.Where(x => x.Name == "Customer");
+                result = roles.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+                if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Roles not found");
+                rs = new DynamicModelResponse<Role>
+                {
+
+                    Metadata = new PagingMetaData
+                    {
+                        Page = page,
+                        Size = size,
+                        Total = result.Item1,
+                        TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
+                    },
+                    Data = result.Item2.ToList()
+                };
+
+                return rs;
+            }
+
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+
+
+
+            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+
+            
+            if (role == "Manager") roles = roles.Where(x => x.Name != "Manager");
+            if (role == "Office staff") roles = roles.Where(x => x.Name == "Office staff");
             if (role == "Customer") roles = roles.Where(x => x.Name == "Customer");
-            var result = roles.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+            result = roles.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Roles not found");
 
 
 
-            var rs = new DynamicModelResponse<Role>
+            rs = new DynamicModelResponse<Role>
             {
 
                 Metadata = new PagingMetaData
