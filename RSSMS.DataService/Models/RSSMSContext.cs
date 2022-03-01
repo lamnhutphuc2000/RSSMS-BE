@@ -385,9 +385,15 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Description).HasMaxLength(255);
 
+                entity.Property(e => e.Height).HasColumnType("decimal(18, 3)");
+
                 entity.Property(e => e.ImageUrl).HasMaxLength(255);
 
+                entity.Property(e => e.Length).HasColumnType("decimal(18, 3)");
+
                 entity.Property(e => e.Name).HasMaxLength(255);
+
+                entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
             });
 
             OnModelCreatingPartial(modelBuilder);

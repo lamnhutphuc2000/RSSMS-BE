@@ -20,8 +20,11 @@ namespace RSSMS.DataService.Models
         public int? Status { get; set; }
         public string Address { get; set; }
         public string Description { get; set; }
-        public bool? IsActive { get; set; }
         public string ImageUrl { get; set; }
+        public decimal? Height { get; set; }
+        public decimal? Width { get; set; }
+        public decimal? Length { get; set; }
+        public bool? IsActive { get; set; }
 
         public virtual ICollection<Area> Areas { get; set; }
         public virtual ICollection<Order> Orders { get; set; }

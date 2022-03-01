@@ -10,6 +10,7 @@ namespace RSSMS.API.App_Start
         {
             var mappingConfig = new MapperConfiguration(mc =>
             {
+                mc.ConfigRolesModule();
                 mc.ConfigAccountsModule();
                 mc.ConfigUserModule();
                 mc.ConfigImageModule();

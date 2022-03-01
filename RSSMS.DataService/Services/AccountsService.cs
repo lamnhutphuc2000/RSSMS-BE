@@ -126,6 +126,7 @@ namespace RSSMS.DataService.Services
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
+            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
             var user = Get(x => x.Id == Guid.Parse(uid)).Include(x => x.Role).FirstOrDefault();
             DateTime? scheduleDay = null;
@@ -137,49 +138,55 @@ namespace RSSMS.DataService.Services
             }
             model.SheduleDay = null;
             model.DeliveryTimes = null;
-            var users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin")).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
-                .DynamicFilter(model);
-            if (storageId == null)
-            {
-                var staff = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer") && !x.Role.Name.Equals("Manager") && x.StaffAssignStorages.Count == 0);
-                users = staff.ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
-                    .DynamicFilter(model);
-                if (user.Role.Name == "Admin")
-                {
-                    var manager = Get(x => x.IsActive == true && x.Role.Name.Equals("Manager"));
-                    users = staff.Union(manager).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
-                    .DynamicFilter(model);
-                }
-
-            }
-            if (storageId != null)
-            {
-                users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
-                    .Where(x => x.StaffAssignStorages.Any(a => a.StorageId == storageId && a.IsActive == true)).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
-                    .DynamicFilter(model);
-            }
-            if (orderId != null)
-            {
-                var order = _orderService.Get(a => a.Id == orderId).FirstOrDefault();
-                var deliveryTime = order.DeliveryTime;
-                var deliveryDate = order.DeliveryDate;
-                var returnDate = order.ReturnDate;
-                var returnTime = order.ReturnTime;
-                users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
-                    .Where(x => x.Schedules.Count == 0 || (!x.Schedules.Any(a => a.Request.OrderId == orderId && a.IsActive == true && a.Request.IsActive == true) && (!x.Schedules.Any(a => a.Request.OrderId != orderId && a.IsActive == true && a.Request.IsActive == true && a.ScheduleTime == deliveryTime && a.ScheduleDay == deliveryDate) && (!x.Schedules.Any(a => a.Request.OrderId != orderId && a.IsActive == true && a.ScheduleTime == returnTime && a.ScheduleDay == returnDate))))).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
-                    .DynamicFilter(model);
-            }
-            if (scheduleDay != null && deliveryTimes != null)
-            {
-                var usersInDelivery = _scheduleService.Get(x => scheduleDay.Value.Date == x.ScheduleDay.Value.Date && deliveryTimes.Contains(x.ScheduleTime) && x.IsActive == true).Select(schedule => schedule.UserId).Distinct().ToList();
-                users = users.Where(x => !usersInDelivery.Contains(x.Id));
-            }
+            var users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin")).Include(x => x.Role);
             if (user.Role.Name == "Manager")
             {
                 var storageIds = _staffAssignStoragesService.Get(x => x.StaffId == user.Id && x.IsActive == true).Select(x => x.StorageId).ToList();
-                users = users.Where(x => x.StaffAssignStorages.Any(x => storageIds.Contains((Guid)x.StorageId)) || x.StaffAssignStorages.Count == 0 || x.RoleName.Equals("Manager"));
+                users = users.Where(x => x.Role.Name != "Manager").Include(x => x.Role);
+                users = users.Where(x => x.StaffAssignStorages.Any(x => storageIds.Contains((Guid)x.StorageId)) || x.StaffAssignStorages.Count == 0 )
+                    .Include(x => x.Role);
             }
-            var result = users.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+            if (role == "Office staff")
+                users = users.Where(x => x.Role.Name == "Customer").Include(x => x.Role);
+
+            //if (storageId == null)
+            //{
+            //    var staff = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer") && !x.Role.Name.Equals("Manager") && x.StaffAssignStorages.Count == 0);
+            //    users = staff.ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
+            //        .DynamicFilter(model);
+            //    if (user.Role.Name == "Admin")
+            //    {
+            //        var manager = Get(x => x.IsActive == true && x.Role.Name.Equals("Manager"));
+            //        users = staff.Union(manager).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
+            //        .DynamicFilter(model);
+            //    }
+
+            //}
+            //if (storageId != null)
+            //{
+            //    users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
+            //        .Where(x => x.StaffAssignStorages.Any(a => a.StorageId == storageId && a.IsActive == true)).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
+            //        .DynamicFilter(model);
+            //}
+            //if (orderId != null)
+            //{
+            //    var order = _orderService.Get(a => a.Id == orderId).FirstOrDefault();
+            //    var deliveryTime = order.DeliveryTime;
+            //    var deliveryDate = order.DeliveryDate;
+            //    var returnDate = order.ReturnDate;
+            //    var returnTime = order.ReturnTime;
+            //    users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
+            //        .Where(x => x.Schedules.Count == 0 || (!x.Schedules.Any(a => a.Request.OrderId == orderId && a.IsActive == true && a.Request.IsActive == true) && (!x.Schedules.Any(a => a.Request.OrderId != orderId && a.IsActive == true && a.Request.IsActive == true && a.ScheduleTime == deliveryTime && a.ScheduleDay == deliveryDate) && (!x.Schedules.Any(a => a.Request.OrderId != orderId && a.IsActive == true && a.ScheduleTime == returnTime && a.ScheduleDay == returnDate))))).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
+            //        .DynamicFilter(model);
+            //}
+            //if (scheduleDay != null && deliveryTimes != null)
+            //{
+            //    var usersInDelivery = _scheduleService.Get(x => scheduleDay.Value.Date == x.ScheduleDay.Value.Date && deliveryTimes.Contains(x.ScheduleTime) && x.IsActive == true).Select(schedule => schedule.UserId).Distinct().ToList();
+            //    users = users.Where(x => !usersInDelivery.Contains(x.Id));
+            //}
+
+            var result = users.ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
+                .DynamicFilter(model).PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
             var rs = new DynamicModelResponse<AccountsViewModel>
             {
@@ -286,6 +293,7 @@ namespace RSSMS.DataService.Services
 
             string url = entity.ImageUrl;
             var updateEntity = _mapper.Map(model, entity);
+            updateEntity.ImageUrl = url;
             if(image != null)
             {
                 url = await _firebaseService.UploadImageToFirebase(image.File, "users", id, "avatar");

@@ -6,6 +6,7 @@ using RSSMS.DataService.Constants;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
+using RSSMS.DataService.ViewModels.Roles;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace RSSMS.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [MapToApiVersion("1")]
-        [ProducesResponseType(typeof(DynamicModelResponse<Role>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(DynamicModelResponse<RolesViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Get([FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
