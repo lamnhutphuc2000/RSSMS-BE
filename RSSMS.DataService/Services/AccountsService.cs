@@ -284,11 +284,11 @@ namespace RSSMS.DataService.Services
 
             var image = model.Image;
 
+            string url = entity.ImageUrl;
             var updateEntity = _mapper.Map(model, entity);
             if(image != null)
             {
-                var url = await _firebaseService.UploadImageToFirebase(image.File, "users", id, "avatar");
-
+                url = await _firebaseService.UploadImageToFirebase(image.File, "users", id, "avatar");
                 if (url != null)
                 {
                     updateEntity.ImageUrl = url;
