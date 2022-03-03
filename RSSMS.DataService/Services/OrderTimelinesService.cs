@@ -31,7 +31,7 @@ namespace RSSMS.DataService.Services
 
         public async Task<DynamicModelResponse<OrderTimelinesViewModel>> Get(OrderTimelinesViewModel model, string[] fields, int page, int size)
         {
-            var timelines = Get()
+            var timelines = Get().OrderByDescending(x => x.Date).ThenByDescending(x => x.Time)
                 .ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider);
 
 
