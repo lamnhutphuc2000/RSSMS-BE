@@ -11,6 +11,7 @@ namespace RSSMS.DataService.Models
         public Guid? OrderDetailId { get; set; }
         public Guid? ShelfId { get; set; }
         public Guid? ServiceId { get; set; }
+        public string Name { get; set; }
         public int? Status { get; set; }
         public Guid? ModifiedBy { get; set; }
         public bool? IsActive { get; set; }

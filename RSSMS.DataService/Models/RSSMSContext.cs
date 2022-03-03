@@ -105,6 +105,10 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.Name)
+                    .HasMaxLength(20)
+                    .IsFixedLength(true);
+
                 entity.HasOne(d => d.OrderDetail)
                     .WithMany(p => p.Boxes)
                     .HasForeignKey(d => d.OrderDetailId)

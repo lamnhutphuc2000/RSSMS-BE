@@ -11,7 +11,7 @@ namespace RSSMS.DataService.Services
 {
     public interface IBoxService : IBaseService<Box>
     {
-        Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId, Guid staffId);
+        Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId, string serviceName, Guid staffId);
         Task Delete(Guid shelfId, Guid staffId);
         Task UpdateBoxSize(Guid serviceId, Guid shelfId);
         Task<OrderBoxesDetailViewModel> Create(OrderBoxesDetailViewModel model);
@@ -26,7 +26,7 @@ namespace RSSMS.DataService.Services
             _orderSerivce = orderSerivce;
         }
 
-        public async Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId, Guid staffId)
+        public async Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId, string serviceName, Guid staffId)
         {
             for (int i = 0; i < num; i++)
             {
@@ -34,6 +34,7 @@ namespace RSSMS.DataService.Services
                 box.IsActive = true;
                 box.ServiceId = serviceId;
                 box.ShelfId = shelfId;
+                box.Name = serviceName + " - " + i + 1;
                 box.Status = 0;
                 box.ModifiedBy = staffId;
                 await CreateAsync(box);
