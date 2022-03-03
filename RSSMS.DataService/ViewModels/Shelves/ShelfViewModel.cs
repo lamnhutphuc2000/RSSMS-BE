@@ -9,7 +9,7 @@ namespace RSSMS.DataService.ViewModels.Shelves
     public class ShelfViewModel
     {
         public static string[] Fields = {
-            "Id","AreaId","Name","Type","Status","BoxesInWidth","BoxesInHeight","Boxes"
+            "Id","AreaId","Name","Type","Status","BoxesInWidth","BoxesInHeight","ServiceId","Boxes"
         };
         [BindNever]
         public Guid? Id { get; set; }
@@ -25,6 +25,8 @@ namespace RSSMS.DataService.ViewModels.Shelves
         public int? BoxesInWidth { get; set; }
         [BindNever]
         public int? BoxesInHeight { get; set; }
+        [BindNever]
+        public Guid? ServiceId { get; set; }
         [BindNever]
         public virtual ICollection<BoxViewModel> Boxes { get; set; }
     }

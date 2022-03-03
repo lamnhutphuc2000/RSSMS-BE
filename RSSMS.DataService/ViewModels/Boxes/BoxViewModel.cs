@@ -6,6 +6,7 @@ namespace RSSMS.DataService.ViewModels.Boxes
     {
         public Guid Id { get; set; }
         public Guid? OrderId { get; set; }
+        public string Name { get; set; }
         public DateTime? ReturnDate { get; set; }
         public int? Status { get; set; }
         public Guid? ShelfId { get; set; }

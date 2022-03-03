@@ -10,9 +10,7 @@ namespace RSSMS.DataService.AutoMapper
         public static void ConfigBoxModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Box, BoxViewModel>()
-                .ForMember(dest => dest.ReturnDate,
-                   opt => opt.MapFrom
-                   (src => src.OrderDetail.Order.ReturnDate))
+                .ForMember(dest => dest.ReturnDate,opt => opt.MapFrom(src => src.OrderDetail.Order.ReturnDate))
                 .ForMember(des => des.SizeType, opt => opt.MapFrom(des => des.Service.Name))
                 .ForMember(dest => dest.OrderId, opt => opt.MapFrom(src => src.OrderDetailId));
 
