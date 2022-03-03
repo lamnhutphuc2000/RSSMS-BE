@@ -8,7 +8,7 @@ namespace RSSMS.DataService.ViewModels.Services
     public class ServicesViewModel
     {
         public static string[] Fields = {
-            "Id","Name","Price","Name","Size","Description","Type","Unit","Tooltip","ImageUrl"
+            "Id","Name","Price","Name","Height","Width","Length","Description","Type","Unit","Tooltip","ImageUrl"
         };
         [BindNever]
         public Guid? Id { get; set; }
@@ -17,7 +17,11 @@ namespace RSSMS.DataService.ViewModels.Services
         [BindNever]
         public decimal? Price { get; set; }
         [BindNever]
-        public string Size { get; set; }
+        public decimal? Height { get; set; }
+        [BindNever]
+        public decimal? Width { get; set; }
+        [BindNever]
+        public decimal? Length { get; set; }
         [BindNever]
         public string Description { get; set; }
         public int? Type { get; set; }

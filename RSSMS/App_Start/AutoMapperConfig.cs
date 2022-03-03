@@ -19,6 +19,7 @@ namespace RSSMS.API.App_Start
                 mc.ConfigStaffAssignStoragesModule();
                 mc.ConfigAreaModule();
                 mc.ConfigOrderModule();
+                mc.ConfigOrderTimelinesModule();
                 mc.ConfigShelfModule();
                 mc.ConfigBoxModule();
                 mc.ConfigOrderDetailModule();

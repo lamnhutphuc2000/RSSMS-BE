@@ -11,6 +11,7 @@ namespace RSSMS.DataService.Models
         {
             OrderDetails = new HashSet<OrderDetail>();
             OrderHistoryExtensions = new HashSet<OrderHistoryExtension>();
+            OrderTimelines = new HashSet<OrderTimeline>();
             Requests = new HashSet<Request>();
         }
 
@@ -40,6 +41,7 @@ namespace RSSMS.DataService.Models
         public virtual Storage Storage { get; set; }
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
         public virtual ICollection<OrderHistoryExtension> OrderHistoryExtensions { get; set; }
+        public virtual ICollection<OrderTimeline> OrderTimelines { get; set; }
         public virtual ICollection<Request> Requests { get; set; }
     }
 }

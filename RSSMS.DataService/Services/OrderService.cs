@@ -177,9 +177,9 @@ namespace RSSMS.DataService.Services
 
 
             //Create order detail
-            foreach (ServicesOrderViewModel product in model.ListService)
+            foreach (ServicesOrderViewModel service in model.ListService)
             {
-                await _orderDetailService.Create(product, order.Id);
+                await _orderDetailService.Create(service, order.Id);
             }
 
             

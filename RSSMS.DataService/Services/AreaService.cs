@@ -40,7 +40,7 @@ namespace RSSMS.DataService.Services
         public async Task<AreaViewModel> Create(AreaCreateViewModel model)
         {
             var area = Get(x => x.StorageId == model.StorageId && x.Name == model.Name && x.IsActive == true).FirstOrDefault();
-            if (area != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area name existed");
+            if (area != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
             var areaToCreate = _mapper.Map<Area>(model);
             await CreateAsync(areaToCreate);
             return _mapper.Map<AreaViewModel>(areaToCreate);
@@ -80,7 +80,7 @@ namespace RSSMS.DataService.Services
             var result = areas
                  .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
+            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area not found");
 
 
 
@@ -108,7 +108,7 @@ namespace RSSMS.DataService.Services
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area not found");
 
             var area = Get(x => x.Id != id && x.Name == model.Name && x.StorageId == entity.StorageId && x.IsActive == true).FirstOrDefault();
-            if (area != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area name existed");
+            if (area != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);
 

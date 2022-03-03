@@ -25,6 +25,7 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
         public virtual DbSet<OrderHistoryExtension> OrderHistoryExtensions { get; set; }
+        public virtual DbSet<OrderTimeline> OrderTimelines { get; set; }
         public virtual DbSet<Request> Requests { get; set; }
         public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<Schedule> Schedules { get; set; }
@@ -245,6 +246,24 @@ namespace RSSMS.DataService.Models
                     .HasConstraintName("FK_OrderHistoryExtension_Order");
             });
 
+            modelBuilder.Entity<OrderTimeline>(entity =>
+            {
+                entity.ToTable("OrderTimeline");
+
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.Property(e => e.Date).HasColumnType("date");
+
+                entity.Property(e => e.Description).HasMaxLength(255);
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.OrderTimelines)
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_OrderTimeLine_Order");
+            });
+
             modelBuilder.Entity<Request>(entity =>
             {
                 entity.ToTable("Request");
@@ -318,7 +337,11 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Description).HasMaxLength(255);
 
+                entity.Property(e => e.Height).HasColumnType("decimal(18, 3)");
+
                 entity.Property(e => e.ImageUrl).HasMaxLength(255);
+
+                entity.Property(e => e.Length).HasColumnType("decimal(18, 3)");
 
                 entity.Property(e => e.Name).HasMaxLength(255);
 
@@ -326,13 +349,11 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Price).HasColumnType("decimal(18, 3)");
 
-                entity.Property(e => e.Size)
-                    .HasMaxLength(30)
-                    .IsUnicode(false);
-
                 entity.Property(e => e.ToolTip).HasMaxLength(255);
 
                 entity.Property(e => e.Unit).HasMaxLength(20);
+
+                entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
 
                 entity.HasOne(d => d.Account)
                     .WithMany(p => p.Services)

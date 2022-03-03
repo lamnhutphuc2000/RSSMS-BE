@@ -11,7 +11,7 @@ namespace RSSMS.DataService.AutoMapper
         public static void ConfigStorageModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Storage, StorageViewModel>()
-                .ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffAssignStorages.FirstOrDefault().Staff.Name));
+                .ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffAssignStorages.Where(x => x.RoleName == "Manager" && x.IsActive == true).FirstOrDefault() != null ? des.StaffAssignStorages.Where(x => x.RoleName == "Manager").FirstOrDefault().Staff.Name : null));
             mc.CreateMap<StorageViewModel, Storage>();
 
 
@@ -25,7 +25,7 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<Storage, StorageUpdateViewModel>();
 
             mc.CreateMap<Storage, StorageDetailViewModel>()
-                .ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffAssignStorages.FirstOrDefault().Staff.Name));
+                .ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffAssignStorages.Where(x => x.RoleName == "Manager" && x.IsActive == true).FirstOrDefault() != null? des.StaffAssignStorages.Where(x => x.RoleName == "Manager").FirstOrDefault().Staff.Name : null));
 
             mc.CreateMap<Storage, StorageGetIdViewModel>();
             //.ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffManageStorages.FirstOrDefault().User.Name));
