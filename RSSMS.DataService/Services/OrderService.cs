@@ -186,6 +186,15 @@ namespace RSSMS.DataService.Services
                 Status = 0
             };
 
+            OrderTimeline deliveryTimeline = new OrderTimeline
+            {
+                CreatedDate = DateTime.Now,
+                OrderId = order.Id,
+                Date = order.DeliveryDate,
+                Description = "Delivery date of order",
+            };
+
+            order.OrderTimelines.Add(deliveryTimeline);
             order.Requests.Add(request);
             await CreateAsync(order);
 
