@@ -34,7 +34,8 @@ namespace RSSMS.DataService.Services
                 box.IsActive = true;
                 box.ServiceId = serviceId;
                 box.ShelfId = shelfId;
-                box.Name = serviceName + " - " + i + 1;
+                int boxName = i + 1;
+                box.Name = serviceName + " - " + boxName;
                 box.Status = 0;
                 box.ModifiedBy = staffId;
                 await CreateAsync(box);

@@ -151,6 +151,7 @@ namespace RSSMS.DataService.Services
             Guid? storageId = null;
             var order = _mapper.Map<Order>(model);
 
+            order.Id = new Guid();
 
             if (role == "Office staff")
             {
@@ -173,6 +174,19 @@ namespace RSSMS.DataService.Services
                 order.ReturnDate = order.DeliveryDate.Value.AddMonths((int)model.Duration);
             }
 
+            //Create request for order
+            Request request = new Request
+            {
+                CreatedBy = userId,
+                CreatedDate = DateTime.Now,
+                IsActive = true,
+                Note = "Request for delivery staff to get order",
+                Type = 0,
+                OrderId = order.Id,
+                Status = 0
+            };
+
+            order.Requests.Add(request);
             await CreateAsync(order);
 
 
