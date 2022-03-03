@@ -99,9 +99,7 @@ namespace RSSMS.DataService.Services
 
 
             if (types.Count > 0)
-            {
                 storages = storages.Where(x => types.Contains((int)x.Type));
-            }
 
 
             if (role == "Manager")
@@ -135,7 +133,7 @@ namespace RSSMS.DataService.Services
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
             var result = await Get(x => x.Id == id && x.IsActive == true)
-                                .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Manager" && s.IsActive == true && s.StaffId == userId))
+                                .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Manager" && s.IsActive == true))
                                 .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
 

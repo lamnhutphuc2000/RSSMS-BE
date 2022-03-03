@@ -38,6 +38,7 @@ namespace RSSMS.DataService.Services
         Task<AccountsViewModel> Update(Guid id, AccountsUpdateViewModel model);
         Task<AccountsViewModel> Delete(Guid id);
         Task<TokenViewModel> CheckLogin(string firebaseID, string deviceToken);
+        Task<List<AccountsViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName);
     }
     public class AccountsService : BaseService<Account>, IAccountsService
     {
@@ -440,5 +441,25 @@ namespace RSSMS.DataService.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        public async Task<List<AccountsViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName)
+        {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
+            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+
+            var staffs = Get(x => x.IsActive == true && x.Role.Name != "Admin" && x.Role.Name != "Customer").Include(x => x.StaffAssignStorages);
+            if (roleName.Count > 0) staffs = Get(x => x.IsActive == true && roleName.Contains(x.Role.Name)).Include(x => x.StaffAssignStorages);
+            if (role == "Manager")
+                staffs = staffs.Where(x => x.Role.Name != "Manager").Include(x => x.StaffAssignStorages);
+
+            if (storageId == null)
+                staffs = staffs.Where(x => x.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).Count() == 0).Include(x => x.StaffAssignStorages);
+            
+            else
+                staffs = staffs.Where(x => x.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId && staffAssignStorage.IsActive == true)).Include(x => x.StaffAssignStorages);
+
+            var result = await staffs.ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToListAsync();
+            return result;
+        }
     }
 }

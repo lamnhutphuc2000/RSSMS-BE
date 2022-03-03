@@ -95,6 +95,24 @@ namespace RSSMS.API.Controllers
         }
 
         /// <summary>
+        /// Get staffs
+        /// </summary>
+        /// <param name="storageId"></param>
+        /// <param name="roleName"></param>
+        /// <returns></returns>
+        [HttpGet("staffs")]
+        [MapToApiVersion("1")]
+        [Authorize(Roles = "Admin,Manager")]
+        [ProducesResponseType(typeof(List<AccountsViewModel>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetStaffs([FromQuery] Guid? storageId, [FromQuery] List<string> roleName)
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _accountsService.GetStaff(storageId, accessToken, roleName));
+        }
+
+        /// <summary>
         /// Get account by Id
         /// </summary>
         /// <param name="id"></param>
