@@ -13,7 +13,7 @@ namespace RSSMS.DataService.ViewModels.Shelves
         };
         [BindNever]
         public Guid? Id { get; set; }
-        [BindNever]
+        [Guid]
         public Guid? AreaId { get; set; }
         [String]
         public string Name { get; set; }

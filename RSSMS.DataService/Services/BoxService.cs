@@ -13,9 +13,8 @@ namespace RSSMS.DataService.Services
     {
         Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId, string serviceName, Guid staffId);
         Task Delete(Guid shelfId, Guid staffId);
-        Task UpdateBoxSize(Guid serviceId, Guid shelfId);
+        Task UpdateBoxSize(Guid serviceId, string serviceName, Guid shelfId);
         Task<OrderBoxesDetailViewModel> Create(OrderBoxesDetailViewModel model);
-
         Task<OrderBoxesMoveViewModel> Update(OrderBoxesMoveViewModel model);
     }
     public class BoxService : BaseService<Box>, IBoxService
@@ -54,14 +53,16 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public async Task UpdateBoxSize(Guid serviceId, Guid shelfId)
+        public async Task UpdateBoxSize(Guid serviceId, string serviceName, Guid shelfId)
         {
             var listBoxes = await Get(x => x.ShelfId == shelfId && x.IsActive == true && x.ServiceId != serviceId).ToListAsync();
             if (listBoxes == null) return;
-            foreach (var box in listBoxes)
+            for(int i = 0; i < listBoxes.Count; i++)
             {
-                box.ServiceId = serviceId;
-                await UpdateAsync(box);
+                int boxName = i + 1;
+                listBoxes[i].Name = serviceName + " - " + boxName;
+                listBoxes[i].ServiceId = serviceId;
+                await UpdateAsync(listBoxes[i]);
             }
         }
 
@@ -99,5 +100,6 @@ namespace RSSMS.DataService.Services
             //return model;
             return null;
         }
+
     }
 }

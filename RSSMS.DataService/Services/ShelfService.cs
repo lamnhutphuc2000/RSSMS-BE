@@ -140,17 +140,16 @@ namespace RSSMS.DataService.Services
             if (entity.BoxesInHeight != model.BoxesInHeight || entity.BoxesInWidth != model.BoxesInWidth)
             {
                 await _boxService.Delete(id, userId);
-                await _boxService.CreateNumberOfBoxes(id, model.BoxesInWidth * model.BoxesInHeight, (Guid)model.ServiceId, service.Name, userId);
+                await _boxService.CreateNumberOfBoxes(id, model.BoxesInWidth * model.BoxesInHeight, model.ServiceId, service.Name, userId);
             }
 
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);
-            await _boxService.UpdateBoxSize((Guid)model.ServiceId, id);
             return _mapper.Map<ShelfViewModel>(updateEntity);
         }
         public async Task<DynamicModelResponse<ShelfViewModel>> GetAll(ShelfViewModel model, string[] fields, int page, int size)
         {
-            var shelves = Get(x => x.IsActive == true)
+                var shelves = Get(x => x.IsActive == true)
                 .Include(x => x.Boxes.Where(a => a.IsActive == true))
                 .ThenInclude(x => x.Service)
                 .Include(x => x.Boxes.Where(a => a.IsActive == true))
@@ -158,18 +157,18 @@ namespace RSSMS.DataService.Services
                 .ProjectTo<ShelfViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-            var rs = new DynamicModelResponse<ShelfViewModel>
-            {
-                Metadata = new PagingMetaData
+                var rs = new DynamicModelResponse<ShelfViewModel>
                 {
-                    Page = page,
-                    Size = size,
-                    Total = shelves.Item1,
-                    TotalPage = (int)Math.Ceiling((double)shelves.Item1 / size)
-                },
-                Data = shelves.Item2.ToList()
-            };
-            return rs;
+                    Metadata = new PagingMetaData
+                    {
+                        Page = page,
+                        Size = size,
+                        Total = shelves.Item1,
+                        TotalPage = (int)Math.Ceiling((double)shelves.Item1 / size)
+                    },
+                    Data = shelves.Item2.ToList()
+                };
+                return rs;
         }
 
         public List<BoxUsageViewModel> GetBoxUsageByAreaId(Guid areaId)
@@ -177,18 +176,18 @@ namespace RSSMS.DataService.Services
             var shelves = Get(x => x.AreaId == areaId && x.IsActive == true).Include(x => x.Boxes).ThenInclude(x => x.Service).ToList();
             var result = new List<BoxUsageViewModel>();
             var shelfSelfStorage = shelves.Where(x => x.Type == 2).FirstOrDefault();
-            var products = _servicesService.Get(x => (x.Type == 2 || x.Type == 4) && x.IsActive == true).ToList();
+            var services = _servicesService.Get(x => (x.Type == 2 || x.Type == 4) && x.IsActive == true).ToList();
             if (shelfSelfStorage != null)
             {
-                products = _servicesService.Get(x => x.Type == 0 && x.IsActive == true).ToList();
+                services = _servicesService.Get(x => x.Type == 0 && x.IsActive == true).ToList();
             }
-            if(products == null)
+            if(services == null)
             {
                 return null;
             }
-            foreach (var product in products)
+            foreach (var service in services)
             {
-                result.Add(GetBoxUsageBySizeType(product.Name, (int)product.Type, shelves));
+                result.Add(GetBoxUsageBySizeType(service.Name, (int)service.Type, shelves));
             }
 
             return result;
@@ -236,7 +235,7 @@ namespace RSSMS.DataService.Services
 
         public bool CheckIsUsed(Guid id)
         {
-            var entity = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes)/*.ThenInclude(boxes => boxes.BoxOrderDetails)*/.FirstOrDefault();
+            var entity = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Boxes).FirstOrDefault();
             if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf id not found");
             var BoxAssignedToOrder = entity.Boxes.Where(x => x.OrderDetail != null).ToList();
             if (BoxAssignedToOrder.Count() > 0) return true;

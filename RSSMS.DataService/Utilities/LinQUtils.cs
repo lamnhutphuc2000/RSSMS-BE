@@ -23,6 +23,10 @@ namespace RSSMS.DataService.Utilities
                     DateTime dt = (DateTime)propertyVal;
                     source = source.Where($"{item.Name} >= @0 && { item.Name} < @1", dt.Date, dt.Date.AddDays(1));
                 }
+                else if (item.CustomAttributes.Any(a => a.AttributeType == typeof(GuidAttribute)))
+                {
+                    source = source.Where($"{item.Name} == @0", propertyVal);
+                }
                 else if (item.CustomAttributes.Any(a => a.AttributeType == typeof(ContainAttribute)))
                 {
                     var array = (IList)propertyVal;
