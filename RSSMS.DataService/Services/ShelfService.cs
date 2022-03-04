@@ -142,6 +142,7 @@ namespace RSSMS.DataService.Services
                 await _boxService.Delete(id, userId);
                 await _boxService.CreateNumberOfBoxes(id, model.BoxesInWidth * model.BoxesInHeight, model.ServiceId, service.Name, userId);
             }
+            else await _boxService.UpdateBoxSize(model.ServiceId, service.Name, id);
 
             var updateEntity = _mapper.Map(model, entity);
             await UpdateAsync(updateEntity);
