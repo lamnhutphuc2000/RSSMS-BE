@@ -13,12 +13,14 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<Order, OrderCreateViewModel>();
             mc.CreateMap<OrderCreateViewModel, Order>()
+                .ForMember(des => des.Type, opt => opt.MapFrom(src => src.TypeOrder))
                 .ForMember(des => des.PaymentMethod, opt => opt.MapFrom(src => 0))
                   .ForMember(des => des.Status, opt => opt.MapFrom(src => 1))
                   .ForMember(des => des.IsActive, opt => opt.MapFrom(src => 1))
                   .ForMember(des => des.CreatedDate, otp => otp.MapFrom(src => DateTime.Now));
 
             mc.CreateMap<Order, OrderViewModel>()
+                .ForMember(des => des.TypeOrder, opt => opt.MapFrom(src => src.Type))
                 //.ForMember(des => des.OrderBoxDetails, opt => opt.MapFrom(src => src.OrderDetails.Select(x => x.BoxOrderDetails.Where(a => a.IsActive == true)).Select(a => a.)))
                 //.ForMember(des => des.Status, opt => opt.MapFrom(src => src.Schedules.Any(x => x.Status == 1) ? 6 : src.Status))
                 //.ForMember(des => des.StorageId, opt => opt.MapFrom(src => src.OrderStorageDetails.Where(x => x.IsActive == true).FirstOrDefault().StorageId))
