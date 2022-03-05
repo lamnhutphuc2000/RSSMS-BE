@@ -16,6 +16,6 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
         public virtual ICollection<AvatarImageViewModel> ProductImages { get; set; }
 
-        public BoxOrderViewModel BoxDetails { get; set; }
+        //public BoxOrderViewModel BoxDetails { get; set; }
     }
 }
