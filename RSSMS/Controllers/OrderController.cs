@@ -153,5 +153,21 @@ namespace RSSMS.API.Controllers
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _orderService.SendOrderNoti(model, accessToken));
         }
+
+        /// <summary>
+        /// Assign order to stage
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPost("assign order")]
+        [Authorize(Roles = "Manager")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> Add(OrderAssignStorageViewModel model)
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _orderService.AssignStorage(model, accessToken));
+        }
     }
 }

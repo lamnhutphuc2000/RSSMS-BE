@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using RSSMS.DataService.Models;
+using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Shelves;
 using System.Linq;
 

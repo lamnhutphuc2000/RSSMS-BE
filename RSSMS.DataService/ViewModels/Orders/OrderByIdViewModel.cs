@@ -7,7 +7,7 @@ namespace RSSMS.DataService.ViewModels.Orders
 {
     public class OrderByIdViewModel
     {
-        public int? Id { get; set; }
+        public Guid? Id { get; set; }
         public string CustomerName { get; set; }
         public string CustomerPhone { get; set; }
         public string DeliveryAddress { get; set; }

@@ -19,10 +19,8 @@ namespace RSSMS.DataService.Services
     }
     public class BoxService : BaseService<Box>, IBoxService
     {
-        private readonly IOrderService _orderSerivce;
-        public BoxService(IUnitOfWork unitOfWork,IOrderService orderSerivce, IBoxRepository repository) : base(unitOfWork, repository)
+        public BoxService(IUnitOfWork unitOfWork, IBoxRepository repository) : base(unitOfWork, repository)
         {
-            _orderSerivce = orderSerivce;
         }
 
         public async Task CreateNumberOfBoxes(Guid shelfId, int num, Guid serviceId, string serviceName, Guid staffId)

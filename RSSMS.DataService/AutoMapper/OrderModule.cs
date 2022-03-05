@@ -29,6 +29,7 @@ namespace RSSMS.DataService.AutoMapper
                 .ForMember(des => des.DurationMonths, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)((src.ReturnDate - src.DeliveryDate).Value.Days) / 30 : null));
 
             mc.CreateMap<Order, OrderByIdViewModel>()
+                .ForMember(des => des.TypeOrder, opt => opt.MapFrom(src => src.Type))
                 //.ForMember(des => des.OrderBoxDetails, opt => opt.MapFrom(src => src.OrderDetails.Select(x => x.BoxOrderDetails.Where(a => a.IsActive == true)).Select(a => a.)))
                 //.ForMember(des => des.Status, opt => opt.MapFrom(src => src.Schedules.Any(x => x.Status == 1) ? 6 : src.Status))
                 //.ForMember(des => des.StorageId, opt => opt.MapFrom(src => src.OrderStorageDetails.Where(x => x.IsActive == true).FirstOrDefault().StorageId))

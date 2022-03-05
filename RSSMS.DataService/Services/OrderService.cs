@@ -30,18 +30,23 @@ namespace RSSMS.DataService.Services
         Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken);
         Task<OrderByIdViewModel> Done(Guid id);
         Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model);
+        Task<OrderViewModel> AssignStorage(OrderAssignStorageViewModel model, string accessToken);
     }
     class OrderService : BaseService<Order>, IOrderService
     {
         private readonly IMapper _mapper;
         private readonly IOrderDetailService _orderDetailService;
         private readonly IFirebaseService _firebaseService;
+        private readonly IStorageService _storageService;
 
-        public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository, IOrderDetailService orderDetailService ,IFirebaseService firebaseService, IMapper mapper) : base(unitOfWork, repository)
+        public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository, IOrderDetailService orderDetailService 
+            ,IFirebaseService firebaseService,
+            IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _orderDetailService = orderDetailService;
             _firebaseService = firebaseService;
+            _storageService = storageService;
         }
         public async Task<OrderByIdViewModel> GetById(Guid id)
         {
@@ -193,7 +198,7 @@ namespace RSSMS.DataService.Services
                 Date = order.DeliveryDate,
                 Description = "Delivery date of order",
             };
-
+            order.Status = 0;
             order.OrderTimelines.Add(deliveryTimeline);
             order.Requests.Add(request);
             await CreateAsync(order);
@@ -324,6 +329,31 @@ namespace RSSMS.DataService.Services
             }
 
             return null;
+        }
+
+        public async Task<OrderViewModel> AssignStorage(OrderAssignStorageViewModel model, string accessToken)
+        {
+            var storageId = model.StorageId;
+            var storage = await _storageService.Get(x => x.Id == storageId && x.IsActive == true).Include(x => x.StaffAssignStorages.Where(staff => staff.IsActive == true)).ThenInclude(staffAssign => staffAssign.Staff).FirstOrDefaultAsync();
+            if (storage == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
+            var order = await Get(x => x.Id == model.OrderId && x.IsActive == true).Include(x => x.Customer).FirstOrDefaultAsync();
+            if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+            if (order.Status > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order had assigned to storage");
+
+            order.Status = 2;
+            order.StorageId = storageId;
+            await UpdateAsync(order);
+
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+
+            var manager = storage.StaffAssignStorages.Where(x => x.IsActive == true && x.RoleName == "Manager").Select(x => x.Staff).FirstOrDefault();
+            var customer = order.Customer;
+            string description = "Don " + order.Id + " cua khach hang " + customer.Name + " da duoc xu ly ";
+
+            await _firebaseService.SendNoti(description, manager.Id, manager.DeviceTokenId, order.Id, null, null);
+            return _mapper.Map<OrderViewModel>(order);
         }
     }
 }
