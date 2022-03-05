@@ -25,7 +25,7 @@ namespace RSSMS.DataService.ViewModels.Orders
         public int? DurationMonths { get; set; }
         public int? Status { get; set; }
         public bool? IsPaid { get; set; }
-        public int? StorageId { get; set; }
+        public Guid? StorageId { get; set; }
         public string StorageName { get; set; }
         public virtual ICollection<OrderDetailByIdViewModel> OrderDetails { get; set; }
         public virtual ICollection<OrderHistoryExtensionViewModel> OrderHistoryExtensions { get; set; }

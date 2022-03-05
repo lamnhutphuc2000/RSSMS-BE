@@ -11,7 +11,7 @@ namespace RSSMS.DataService.AutoMapper
         public static void ConfigShelfModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Shelf, ShelfViewModel>()
-                .ForMember(des => des.Boxes, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).OrderBy(x => x.Name)))
+                .ForMember(des => des.Boxes, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).OrderByDescending(x => x.CreatedDate)))
                 //.ForMember(des => des.SizeType, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).FirstOrDefault().Service.Size))
                 .ForMember(des => des.ServiceId, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).FirstOrDefault().ServiceId));
 

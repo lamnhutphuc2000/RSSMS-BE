@@ -105,9 +105,9 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
-                entity.Property(e => e.Name)
-                    .HasMaxLength(20)
-                    .IsFixedLength(true);
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.HasOne(d => d.OrderDetail)
                     .WithMany(p => p.Boxes)
@@ -260,12 +260,12 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Date).HasColumnType("date");
 
-                entity.Property(e => e.Description).HasMaxLength(255);
+                entity.Property(e => e.Description).HasMaxLength(25);
 
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderTimelines)
                     .HasForeignKey(d => d.OrderId)
-                    .HasConstraintName("FK_OrderTimeLine_Order");
+                    .HasConstraintName("FK_OrderTimeline_Order");
             });
 
             modelBuilder.Entity<Request>(entity =>

@@ -27,14 +27,17 @@ namespace RSSMS.DataService.Services
         {
             for (int i = 0; i < num; i++)
             {
-                Box box = new Box();
-                box.IsActive = true;
-                box.ServiceId = serviceId;
-                box.ShelfId = shelfId;
                 int boxName = i + 1;
-                box.Name = serviceName + " - " + boxName;
-                box.Status = 0;
-                box.ModifiedBy = staffId;
+                Box box = new Box()
+                {
+                    IsActive = true,
+                    ServiceId = serviceId,
+                    ShelfId = shelfId,
+                    Name = serviceName + " - " + boxName,
+                    Status = 0,
+                    ModifiedBy = staffId,
+                    CreatedDate = DateTime.Now
+                };
                 await CreateAsync(box);
             }
         }
