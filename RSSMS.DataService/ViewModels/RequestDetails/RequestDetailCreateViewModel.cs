@@ -1,7 +1,9 @@
-﻿namespace RSSMS.DataService.ViewModels.RequestDetails
+﻿using System;
+
+namespace RSSMS.DataService.ViewModels.RequestDetails
 {
     public class RequestDetailCreateViewModel
     {
-        public int BoxId { get; set; }
+        public Guid BoxId { get; set; }
     }
 }

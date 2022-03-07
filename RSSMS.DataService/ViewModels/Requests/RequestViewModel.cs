@@ -12,11 +12,11 @@ namespace RSSMS.DataService.ViewModels.Requests
             "Id","OrderId","UserId","Type","Status","Note","DeliveryStaffName","ReturnDate","StorageId","StorageName","ReturnTime","ReturnAddress","FromDate","ToDate","DeliveryStaffPhone","CustomerName","CustomerPhone","RequestDetails","Schedules"
         };
         [BindNever]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [BindNever]
-        public int? OrderId { get; set; }
+        public Guid? OrderId { get; set; }
         [BindNever]
-        public int? UserId { get; set; }
+        public Guid? UserId { get; set; }
         [BindNever]
         public int? Type { get; set; }
         [BindNever]

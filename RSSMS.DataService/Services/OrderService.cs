@@ -199,7 +199,7 @@ namespace RSSMS.DataService.Services
                 Date = order.DeliveryDate,
                 Description = "Delivery date of order",
             };
-            order.Status = 0;
+            order.Status = 1;
             order.OrderTimelines.Add(deliveryTimeline);
             order.Requests.Add(request);
 

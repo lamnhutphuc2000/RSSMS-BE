@@ -8,9 +8,9 @@ namespace RSSMS.DataService.ViewModels.Requests
 {
     public class RequestByIdViewModel
     {
-        public int Id { get; set; }
-        public int? OrderId { get; set; }
-        public int? UserId { get; set; }
+        public Guid Id { get; set; }
+        public Guid? OrderId { get; set; }
+        public Guid? UserId { get; set; }
         public decimal? TotalPrice { get; set; }
         public string ReturnAddress { get; set; }
         public string ReturnTime { get; set; }
