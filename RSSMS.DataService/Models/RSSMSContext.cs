@@ -186,6 +186,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("date");
 
+                entity.Property(e => e.Name).HasMaxLength(20);
+
                 entity.Property(e => e.RejectedReason).HasMaxLength(255);
 
                 entity.Property(e => e.ReturnAddress).HasMaxLength(255);

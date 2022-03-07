@@ -154,8 +154,9 @@ namespace RSSMS.DataService.Services
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
             Guid? storageId = null;
+            string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             var order = _mapper.Map<Order>(model);
-
+            var now = DateTime.Now;
             order.Id = new Guid();
 
             if (role == "Office staff")
@@ -183,7 +184,7 @@ namespace RSSMS.DataService.Services
             Request request = new Request
             {
                 CreatedBy = userId,
-                CreatedDate = DateTime.Now,
+                CreatedDate = now,
                 IsActive = true,
                 Note = "Request for delivery staff to get order",
                 Type = 0,
@@ -193,7 +194,7 @@ namespace RSSMS.DataService.Services
 
             OrderTimeline deliveryTimeline = new OrderTimeline
             {
-                CreatedDate = DateTime.Now,
+                CreatedDate = now,
                 OrderId = order.Id,
                 Date = order.DeliveryDate,
                 Description = "Delivery date of order",
@@ -201,6 +202,10 @@ namespace RSSMS.DataService.Services
             order.Status = 0;
             order.OrderTimelines.Add(deliveryTimeline);
             order.Requests.Add(request);
+
+            // random a name for order
+            Random random = new Random();
+            order.Name = now.Day + now.Month + now.Year + now.Minute + now.Hour + new string(Enumerable.Repeat(chars, 5).Select(s => s[random.Next(s.Length)]).ToArray());
             await CreateAsync(order);
 
 

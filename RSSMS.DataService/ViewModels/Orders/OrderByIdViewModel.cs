@@ -10,6 +10,7 @@ namespace RSSMS.DataService.ViewModels.Orders
         public Guid? Id { get; set; }
         public string CustomerName { get; set; }
         public string CustomerPhone { get; set; }
+        public string Name { get; set; }
         public string DeliveryAddress { get; set; }
         public string AddressReturn { get; set; }
         public decimal? TotalPrice { get; set; }
