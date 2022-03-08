@@ -10,7 +10,6 @@ namespace RSSMS.DataService.Models
         public Storage()
         {
             Areas = new HashSet<Area>();
-            Orders = new HashSet<Order>();
             StaffAssignStorages = new HashSet<StaffAssignStorage>();
         }
 
@@ -27,7 +26,6 @@ namespace RSSMS.DataService.Models
         public decimal? Length { get; set; }
 
         public virtual ICollection<Area> Areas { get; set; }
-        public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<StaffAssignStorage> StaffAssignStorages { get; set; }
     }
 }

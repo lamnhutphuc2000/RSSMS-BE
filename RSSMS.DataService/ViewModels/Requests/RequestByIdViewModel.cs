@@ -12,10 +12,9 @@ namespace RSSMS.DataService.ViewModels.Requests
         public Guid? OrderId { get; set; }
         public Guid? UserId { get; set; }
         public decimal? TotalPrice { get; set; }
-        public string ReturnAddress { get; set; }
-        public string ReturnTime { get; set; }
-        public DateTime? OldReturnDate { get; set; }
-        public DateTime? ReturnDate { get; set; }
+        public DateTime? DeliveryDate { get; set; }
+        public string DeliveryTime { get; set; }
+        public string DeliveryAddress { get; set; }
         public int? Durations { get; set; }
         public int? Type { get; set; }
         [BindNever]

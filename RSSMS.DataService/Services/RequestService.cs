@@ -70,7 +70,7 @@ namespace RSSMS.DataService.Services
                 .ThenInclude(order => order.Storage);
             if (model.FromDate != null && model.ToDate != null)
             {
-                requests = Get(x => x.IsActive == true && x.ReturnDate.Value.Date >= model.FromDate.Value.Date && x.ReturnDate <= model.ToDate.Value.Date)
+                requests = Get(x => x.IsActive == true && x.DeliveryDate.Value.Date >= model.FromDate.Value.Date && x.DeliveryDate <= model.ToDate.Value.Date)
                     .Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
                     .Include(x => x.Order)
                     .ThenInclude(order => order.Storage);

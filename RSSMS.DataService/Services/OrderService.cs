@@ -185,11 +185,14 @@ namespace RSSMS.DataService.Services
             {
                 CreatedBy = userId,
                 CreatedDate = now,
+                DeliveryAddress = order.DeliveryAddress,
+                DeliveryDate = order.DeliveryDate,
+                DeliveryTime = order.DeliveryTime,
                 IsActive = true,
                 Note = "Request for delivery staff to get order",
-                Type = 0,
+                Type = 1,
                 OrderId = order.Id,
-                Status = 0
+                Status = 1
             };
 
             OrderTimeline deliveryTimeline = new OrderTimeline

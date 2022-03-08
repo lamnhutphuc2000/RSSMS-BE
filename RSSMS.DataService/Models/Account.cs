@@ -10,7 +10,6 @@ namespace RSSMS.DataService.Models
         public Account()
         {
             Notifications = new HashSet<Notification>();
-            Orders = new HashSet<Order>();
             Requests = new HashSet<Request>();
             Schedules = new HashSet<Schedule>();
             Services = new HashSet<Service>();
@@ -34,7 +33,6 @@ namespace RSSMS.DataService.Models
 
         public virtual Role Role { get; set; }
         public virtual ICollection<Notification> Notifications { get; set; }
-        public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<Request> Requests { get; set; }
         public virtual ICollection<Schedule> Schedules { get; set; }
         public virtual ICollection<Service> Services { get; set; }

@@ -186,7 +186,9 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("date");
 
-                entity.Property(e => e.Name).HasMaxLength(20);
+                entity.Property(e => e.Name)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.RejectedReason).HasMaxLength(255);
 
@@ -199,16 +201,6 @@ namespace RSSMS.DataService.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 3)");
-
-                entity.HasOne(d => d.Customer)
-                    .WithMany(p => p.Orders)
-                    .HasForeignKey(d => d.CustomerId)
-                    .HasConstraintName("FK_Order_Account");
-
-                entity.HasOne(d => d.Storage)
-                    .WithMany(p => p.Orders)
-                    .HasForeignKey(d => d.StorageId)
-                    .HasConstraintName("FK_Order_Storage");
             });
 
             modelBuilder.Entity<OrderDetail>(entity =>
@@ -278,15 +270,15 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.CreatedDate).HasColumnType("date");
 
-                entity.Property(e => e.Note).HasMaxLength(255);
+                entity.Property(e => e.DeliveryAddress).HasMaxLength(255);
 
-                entity.Property(e => e.ReturnAddress).HasMaxLength(255);
+                entity.Property(e => e.DeliveryDate).HasColumnType("date");
 
-                entity.Property(e => e.ReturnDate).HasColumnType("date");
-
-                entity.Property(e => e.ReturnTime)
+                entity.Property(e => e.DeliveryTime)
                     .HasMaxLength(20)
                     .IsUnicode(false);
+
+                entity.Property(e => e.Note).HasMaxLength(255);
 
                 entity.HasOne(d => d.CreatedByNavigation)
                     .WithMany(p => p.Requests)

@@ -20,7 +20,6 @@ namespace RSSMS.DataService.Models
         public Guid? StorageId { get; set; }
         public string DeliveryAddress { get; set; }
         public string ReturnAddress { get; set; }
-        public string Name { get; set; }
         public decimal? TotalPrice { get; set; }
         public string RejectedReason { get; set; }
         public int? Type { get; set; }
@@ -37,6 +36,7 @@ namespace RSSMS.DataService.Models
         public Guid? CreatedBy { get; set; }
         public Guid? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
+        public string Name { get; set; }
 
         public virtual Account Customer { get; set; }
         public virtual Storage Storage { get; set; }

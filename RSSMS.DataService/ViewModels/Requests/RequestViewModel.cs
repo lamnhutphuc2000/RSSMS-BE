@@ -30,15 +30,15 @@ namespace RSSMS.DataService.ViewModels.Requests
         [BindNever]
         public string CustomerPhone { get; set; }
         [BindNever]
-        public int? StorageId { get; set; }
+        public Guid? StorageId { get; set; }
         [BindNever]
         public string StorageName { get; set; }
         [BindNever]
-        public DateTime? ReturnDate { get; set; }
+        public DateTime? DeliveryDate { get; set; }
         [BindNever]
-        public string ReturnTime { get; set; }
+        public string DeliveryTime { get; set; }
         [BindNever]
-        public string ReturnAddress { get; set; }
+        public string DeliveryAddress { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
         [BindNever]
