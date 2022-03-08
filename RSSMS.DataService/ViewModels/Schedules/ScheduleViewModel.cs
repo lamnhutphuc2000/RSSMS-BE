@@ -13,6 +13,7 @@ namespace RSSMS.DataService.ViewModels.Schedules
         public Guid? RequestId { get; set; }
         public DateTime ScheduleDay { get; set; }
         public string ScheduleTime { get; set; }
+        public int? RequestType { get; set; }
         public OrderViewModel Order { get; set; }
         public List<OrderViewModel> Orders { get; set; }
         public string Address { get; set; }

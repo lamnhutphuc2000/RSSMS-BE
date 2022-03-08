@@ -107,12 +107,14 @@ namespace RSSMS.DataService.Services
                                         Id = g.First().Id,
                                         OrderId = g.Key,
                                         RequestId = g.First().RequestId,
+                                        RequestType = g.First().Request.Type,
                                         Order = _mapper.Map<OrderViewModel>(g.First().Request.Order),
                                         Address = g.First().Request.Order.ReturnAddress,
                                         Note = g.First().Note,
                                         Status = g.First().Request.Order.Status,
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().ScheduleDay,
+                                        ScheduleTime = g.First().ScheduleTime,
                                         Users = Get(x => x.Request.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToList()
                                     });
                 result = tmp.AsEnumerable().GroupBy(p => (DateTime)p.ScheduleDay)
