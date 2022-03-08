@@ -41,7 +41,7 @@ namespace RSSMS.DataService.Services
             if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedules null");
             var listSchedules = Get().Include(x => x.Request).ThenInclude(request => request.Order).ToList();
 
-            var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.RequestId == x.RequestId) &&  x.ScheduleDay.Value.Date == model.SheduleDay.Value.Date);
+            var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.RequestId == x.RequestId) &&  x.ScheduleDay.Value.Date == model.ScheduleDay.Value.Date);
 
 
 
@@ -62,6 +62,8 @@ namespace RSSMS.DataService.Services
                 for (int j = 0; j < schedules.Count; j++)
                 {
                     var scheduleToCreate = _mapper.Map<Schedule>(model);
+                    scheduleToCreate.Address = schedules[j].DeliveryAddress;
+                    scheduleToCreate.ScheduleDay = model.ScheduleDay;
                     scheduleToCreate.UserId = userIds[i];
                     scheduleToCreate.RequestId = schedules[j].RequestId;
                     scheduleToCreate.ScheduleTime = schedules[j].ScheduleTime;

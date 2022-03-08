@@ -6,6 +6,7 @@ namespace RSSMS.DataService.ViewModels.Schedules
     {
         public string ScheduleTime { get; set; }
         public Guid? OrderId { get; set; }
+        public string DeliveryAddress { get; set; }
         public Guid? RequestId { get; set; }
     }
 }
