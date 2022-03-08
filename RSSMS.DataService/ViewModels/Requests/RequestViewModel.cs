@@ -9,12 +9,14 @@ namespace RSSMS.DataService.ViewModels.Requests
     public class RequestViewModel
     {
         public static string[] Fields = {
-            "Id","OrderId","UserId","Type","Status","Note","DeliveryStaffName","ReturnDate","StorageId","StorageName","ReturnTime","ReturnAddress","FromDate","ToDate","DeliveryStaffPhone","CustomerName","CustomerPhone","RequestDetails","Schedules"
+            "Id","OrderId","OrderName","UserId","Type","Status","Note","DeliveryStaffName","DeliveryDate","StorageId","StorageName","DeliveryTime","DeliveryAddress","FromDate","ToDate","DeliveryStaffPhone","CustomerName","CustomerPhone","RequestDetails","Schedules"
         };
         [BindNever]
         public Guid Id { get; set; }
         [BindNever]
         public Guid? OrderId { get; set; }
+        [BindNever]
+        public string OrderName { get; set; }
         [BindNever]
         public Guid? UserId { get; set; }
         [BindNever]
