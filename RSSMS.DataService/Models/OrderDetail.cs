@@ -16,6 +16,9 @@ namespace RSSMS.DataService.Models
         public Guid Id { get; set; }
         public Guid OrderId { get; set; }
         public Guid? FloorId { get; set; }
+        public decimal? Height { get; set; }
+        public decimal? Width { get; set; }
+        public decimal? Length { get; set; }
 
         public virtual Floor Floor { get; set; }
         public virtual Order Order { get; set; }

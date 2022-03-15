@@ -12,7 +12,7 @@ namespace RSSMS.DataService.AutoMapper
         public static void ConfigFloorModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Floor, FloorInSpaceViewModel>()
-                .ForMember(des => des.Usage, opt => opt.MapFrom(src => 0));
+                .ForMember(des => des.Usage, opt => opt.MapFrom(src => (double)0));
 
         }
     }

@@ -251,6 +251,12 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.Height).HasColumnType("decimal(18, 3)");
+
+                entity.Property(e => e.Length).HasColumnType("decimal(18, 3)");
+
+                entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
+
                 entity.HasOne(d => d.Floor)
                     .WithMany(p => p.OrderDetails)
                     .HasForeignKey(d => d.FloorId)

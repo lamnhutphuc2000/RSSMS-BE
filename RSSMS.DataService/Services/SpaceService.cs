@@ -27,19 +27,15 @@ namespace RSSMS.DataService.Services
         Task<SpaceViewModel> Update(Guid id, SpaceUpdateViewModel model, string accessToken);
         List<BoxUsageViewModel> GetBoxUsageByAreaId(Guid areaId);
         bool CheckIsUsed(Guid id);
+
     }
     public class SpaceService : BaseService<Space>, ISpaceService
-
     {
         private readonly IMapper _mapper;
-        private readonly IBoxService _boxService;
-        private readonly IServicesService _servicesService;
         private readonly IFloorsService _floorsService;
-        public SpaceService(IUnitOfWork unitOfWork, IBoxService boxService, IFloorsService floorsService, ISpaceRepository repository, IServicesService servicesService, IMapper mapper) : base(unitOfWork, repository)
+        public SpaceService(IUnitOfWork unitOfWork, IFloorsService floorsService, ISpaceRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
-            _boxService = boxService;
-            _servicesService = servicesService;
             _floorsService = floorsService;
         }
 
@@ -54,6 +50,7 @@ namespace RSSMS.DataService.Services
 
 
             var spaceToCreate = _mapper.Map<Space>(model);
+            spaceToCreate.ModifiedBy = userId;
             await CreateAsync(spaceToCreate);
 
             await _floorsService.CreateNumberOfFloor(spaceToCreate.Id, model.NumberOfFloor, model.FloorHeight, model.FloorWidth, model.FloorHeight, DateTime.Now);
@@ -97,25 +94,16 @@ namespace RSSMS.DataService.Services
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
             Space spaceToUpdate = null;
-            //var shelfSize = entity.BoxesInHeight * entity.BoxesInWidth;
-            //var newShelfSize = model.BoxesInWidth * model.BoxesInHeight;
-            //var shelfIsUsed = CheckIsUsed(id);
-            //if (shelfIsUsed)
-            //{
-            //    if (entity.Type != model.Type) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
-            //    if (shelfSize != newShelfSize) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
-            //    if (model.ServiceId != entity.Boxes.FirstOrDefault().ServiceId) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
-            //}
-
-
-            var oldNumberOfFloor = space.Floors.Where(floor => floor.IsActive == true).Count();
-            var floor = space.Floors.FirstOrDefault();
-            if(floor == null)
+            var floor = entity.Floors.FirstOrDefault();
+            if (floor == null)
             {
                 spaceToUpdate = _mapper.Map(model, entity);
                 await UpdateAsync(spaceToUpdate);
                 return _mapper.Map<SpaceViewModel>(spaceToUpdate);
             }
+
+            var oldNumberOfFloor = entity.Floors.Where(floor => floor.IsActive == true).Count();
+            
             if(oldNumberOfFloor != model.NumberOfFloor || floor.Height != model.FloorHeight || floor.Width != model.FloorWidth || floor.Length != model.FloorLength)
             {
                 await _floorsService.RemoveFloors(id);
@@ -124,30 +112,38 @@ namespace RSSMS.DataService.Services
 
 
             spaceToUpdate = _mapper.Map(model, entity);
+            spaceToUpdate.ModifiedBy = userId;
             await UpdateAsync(spaceToUpdate);
             return _mapper.Map<SpaceViewModel>(spaceToUpdate);
         }
         public async Task<DynamicModelResponse<SpaceViewModel>> GetAll(SpaceViewModel model, string[] fields, int page, int size)
         {
-                var shelves = Get(x => x.IsActive == true)
-                .Include(x => x.Floors.Where(a => a.IsActive == true))
+            var spaces = Get(x => x.IsActive == true)
                 .Include(x => x.Floors.Where(a => a.IsActive == true))
                 .ThenInclude(x => x.OrderDetails)
                 .ProjectTo<SpaceViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-                var rs = new DynamicModelResponse<SpaceViewModel>
+
+            var result = spaces.Item2.ToList();
+            if (result.Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space not found");
+            foreach (var space in result)
+            {
+                space.Floors = _floorsService.GetFloorInSpace((Guid)space.Id);
+            }
+
+            var rs = new DynamicModelResponse<SpaceViewModel>
                 {
                     Metadata = new PagingMetaData
                     {
                         Page = page,
                         Size = size,
-                        Total = shelves.Item1,
-                        TotalPage = (int)Math.Ceiling((double)shelves.Item1 / size)
+                        Total = spaces.Item1,
+                        TotalPage = (int)Math.Ceiling((double)spaces.Item1 / size)
                     },
-                    Data = shelves.Item2.ToList()
-                };
-                return rs;
+                    Data = result
+            };
+            return rs;
         }
 
         public List<BoxUsageViewModel> GetBoxUsageByAreaId(Guid areaId)
@@ -221,5 +217,6 @@ namespace RSSMS.DataService.Services
             if (BoxAssignedToOrder.Count() > 0) return true;
             return false;
         }
+
     }
 }

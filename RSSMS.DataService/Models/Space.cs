@@ -17,6 +17,7 @@ namespace RSSMS.DataService.Models
         public string Name { get; set; }
         public int? Type { get; set; }
         public bool IsActive { get; set; }
+        public Guid? ModifiedBy { get; set; }
 
         public virtual Area Area { get; set; }
         public virtual ICollection<Floor> Floors { get; set; }

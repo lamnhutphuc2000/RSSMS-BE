@@ -3,6 +3,7 @@ using RSSMS.DataService.Attributes;
 using RSSMS.DataService.ViewModels.Floors;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace RSSMS.DataService.ViewModels.Spaces
 {
@@ -22,5 +23,6 @@ namespace RSSMS.DataService.ViewModels.Spaces
 
         [BindNever]
         public virtual ICollection<FloorInSpaceViewModel> Floors { get; set; }
+
     }
 }
