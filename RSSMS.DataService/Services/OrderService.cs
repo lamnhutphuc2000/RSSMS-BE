@@ -57,7 +57,7 @@ namespace RSSMS.DataService.Services
                 .ThenInclude(orderDetail => orderDetail.Images)
                 .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.Floor)
-                .ThenInclude(floor => floor.Shelf)
+                .ThenInclude(floor => floor.Space)
                 .ThenInclude(shelf => shelf.Area)
                 .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();

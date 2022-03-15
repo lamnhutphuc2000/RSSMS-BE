@@ -32,7 +32,7 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<Schedule> Schedules { get; set; }
         public virtual DbSet<Service> Services { get; set; }
-        public virtual DbSet<Shelf> Shelves { get; set; }
+        public virtual DbSet<Space> Spaces { get; set; }
         public virtual DbSet<StaffAssignStorage> StaffAssignStorages { get; set; }
         public virtual DbSet<Storage> Storages { get; set; }
 
@@ -133,9 +133,9 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
 
-                entity.HasOne(d => d.Shelf)
+                entity.HasOne(d => d.Space)
                     .WithMany(p => p.Floors)
-                    .HasForeignKey(d => d.ShelfId)
+                    .HasForeignKey(d => d.SpaceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Floor_Shelf");
             });
@@ -423,16 +423,16 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
             });
 
-            modelBuilder.Entity<Shelf>(entity =>
+            modelBuilder.Entity<Space>(entity =>
             {
-                entity.ToTable("Shelf");
+                entity.ToTable("Space");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Name).HasMaxLength(255);
 
                 entity.HasOne(d => d.Area)
-                    .WithMany(p => p.Shelves)
+                    .WithMany(p => p.Spaces)
                     .HasForeignKey(d => d.AreaId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Shelf_Area");

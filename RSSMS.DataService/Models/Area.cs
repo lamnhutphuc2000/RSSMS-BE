@@ -9,7 +9,7 @@ namespace RSSMS.DataService.Models
     {
         public Area()
         {
-            Shelves = new HashSet<Shelf>();
+            Spaces = new HashSet<Space>();
         }
 
         public Guid Id { get; set; }
@@ -23,6 +23,6 @@ namespace RSSMS.DataService.Models
         public bool IsActive { get; set; }
 
         public virtual Storage Storage { get; set; }
-        public virtual ICollection<Shelf> Shelves { get; set; }
+        public virtual ICollection<Space> Spaces { get; set; }
     }
 }

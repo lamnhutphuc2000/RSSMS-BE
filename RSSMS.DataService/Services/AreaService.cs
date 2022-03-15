@@ -30,11 +30,11 @@ namespace RSSMS.DataService.Services
 
     {
         private readonly IMapper _mapper;
-        private readonly IShelfService _shelfService;
-        public AreaService(IUnitOfWork unitOfWork, IShelfService shelfService, IAreaRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly ISpaceService _spaceService;
+        public AreaService(IUnitOfWork unitOfWork, ISpaceService spaceService, IAreaRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
-            _shelfService = shelfService;
+            _spaceService = spaceService;
         }
 
         public async Task<AreaViewModel> Create(AreaCreateViewModel model)
@@ -48,7 +48,7 @@ namespace RSSMS.DataService.Services
 
         public async Task<AreaViewModel> Delete(Guid id)
         {
-            var area = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Shelves).FirstOrDefaultAsync();
+            var area = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Spaces).FirstOrDefaultAsync();
             if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
             var areaIsUsed = CheckIsUsed(id);
             if (areaIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area is in used");
@@ -62,7 +62,7 @@ namespace RSSMS.DataService.Services
             var area = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
             if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
             var result = _mapper.Map<AreaDetailViewModel>(area);
-            var boxUsage = _shelfService.GetBoxUsageByAreaId(id);
+            var boxUsage = _spaceService.GetBoxUsageByAreaId(id);
             result.BoxUsage = boxUsage;
             return result;
         }
@@ -117,12 +117,12 @@ namespace RSSMS.DataService.Services
 
         public bool CheckIsUsed(Guid id)
         {
-            var area = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Shelves).FirstOrDefault();
+            var area = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Spaces).FirstOrDefault();
             if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
-            var shelves = area.Shelves;
-            foreach (var shelf in shelves)
+            var spaces = area.Spaces;
+            foreach (var space in spaces)
             {
-                if (_shelfService.CheckIsUsed(shelf.Id)) return true;
+                if (_spaceService.CheckIsUsed(space.Id)) return true;
             }
             return false;
         }

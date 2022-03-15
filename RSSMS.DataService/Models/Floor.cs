@@ -13,7 +13,7 @@ namespace RSSMS.DataService.Models
         }
 
         public Guid Id { get; set; }
-        public Guid ShelfId { get; set; }
+        public Guid SpaceId { get; set; }
         public string Name { get; set; }
         public decimal Height { get; set; }
         public decimal Width { get; set; }
@@ -21,7 +21,7 @@ namespace RSSMS.DataService.Models
         public bool IsActive { get; set; }
         public DateTime CreatedDate { get; set; }
 
-        public virtual Shelf Shelf { get; set; }
+        public virtual Space Space { get; set; }
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
     }
 }

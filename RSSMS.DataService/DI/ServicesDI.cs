@@ -38,8 +38,11 @@ namespace RSSMS.DataService.DI
             services.AddScoped<IAreaRepository, AreaRepository>();
             services.AddScoped<IAreaService, AreaService>();
 
-            services.AddScoped<IShelfRepository, ShelfRepository>();
-            services.AddScoped<IShelfService, ShelfService>();
+            services.AddScoped<ISpaceRepository, SpaceRepository>();
+            services.AddScoped<ISpaceService, SpaceService>();
+
+            services.AddScoped<IFloorsRepository, FloorsRepository>();
+            services.AddScoped<IFloorsService, FloorsService>();
 
             services.AddScoped<IBoxRepository, BoxRepository>();
             services.AddScoped<IBoxService, BoxService>();
