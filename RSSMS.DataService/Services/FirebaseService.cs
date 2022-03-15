@@ -78,8 +78,7 @@ namespace RSSMS.DataService.Services
                     ReceiverId = managerId,
                     Description = "Don hang moi da den!",
                     CreatedDate = DateTime.Now,
-                    IsRead = false,
-                    Type = 0
+                    IsRead = false
                 };
                 await _notificationService.CreateAsync(noti);
             }
@@ -115,8 +114,7 @@ namespace RSSMS.DataService.Services
                 ReceiverId = receiverId,
                 Description = description,
                 CreatedDate = DateTime.Now,
-                IsRead = false,
-                Type = 0
+                IsRead = false
             };
             await _notificationService.CreateAsync(noti);
 
@@ -158,8 +156,7 @@ namespace RSSMS.DataService.Services
                 ReceiverId = managerId,
                 Description = description,
                 CreatedDate = DateTime.Now,
-                IsRead = false,
-                Type = 0
+                IsRead = false
             };
             await _notificationService.CreateAsync(noti);
 

@@ -28,7 +28,7 @@ namespace RSSMS.DataService.Services
             var orderDetails = _mapper.Map<OrderDetail>(model);
 
             orderDetails.OrderId = orderID;
-            orderDetails.TotalPrice = (decimal?)(model.Price * model.Amount);
+            //orderDetails.TotalPrice = (decimal?)(model.Price * model.Amount);
 
             await CreateAsync(orderDetails);
             return model;

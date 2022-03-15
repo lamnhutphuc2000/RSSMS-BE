@@ -144,7 +144,7 @@ namespace RSSMS.DataService.Services
             Request request = null;
             if (role == "Delivery Staff" && model.Type == 0) // huy lich giao hang
             {
-                var schedules = _scheduleService.Get(x => x.ScheduleDay.Value.Date == model.CancelDay.Value.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
+                var schedules = _scheduleService.Get(x => x.ScheduleDay.Date == model.CancelDay.Value.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
                 if (schedules.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Schedule not found");
                 foreach (var schedule in schedules)
                 {

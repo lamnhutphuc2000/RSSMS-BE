@@ -9,19 +9,17 @@ namespace RSSMS.DataService.Models
     {
         public OrderDetail()
         {
-            Boxes = new HashSet<Box>();
             Images = new HashSet<Image>();
+            OrderDetailServiceMaps = new HashSet<OrderDetailServiceMap>();
         }
 
         public Guid Id { get; set; }
-        public Guid? OrderId { get; set; }
-        public Guid? ServiceId { get; set; }
-        public int? Amount { get; set; }
-        public decimal? TotalPrice { get; set; }
+        public Guid OrderId { get; set; }
+        public Guid? FloorId { get; set; }
 
+        public virtual Floor Floor { get; set; }
         public virtual Order Order { get; set; }
-        public virtual Service Service { get; set; }
-        public virtual ICollection<Box> Boxes { get; set; }
         public virtual ICollection<Image> Images { get; set; }
+        public virtual ICollection<OrderDetailServiceMap> OrderDetailServiceMaps { get; set; }
     }
 }

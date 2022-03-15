@@ -8,8 +8,8 @@ namespace RSSMS.DataService.Models
     public partial class OrderTimeline
     {
         public Guid Id { get; set; }
-        public Guid? OrderId { get; set; }
-        public DateTime? Date { get; set; }
+        public Guid OrderId { get; set; }
+        public DateTime Date { get; set; }
         public TimeSpan? Time { get; set; }
         public string Description { get; set; }
         public DateTime? CreatedDate { get; set; }

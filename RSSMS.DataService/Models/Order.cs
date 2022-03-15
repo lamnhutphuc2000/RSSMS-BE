@@ -16,14 +16,15 @@ namespace RSSMS.DataService.Models
         }
 
         public Guid Id { get; set; }
-        public Guid? CustomerId { get; set; }
+        public Guid CustomerId { get; set; }
         public Guid? StorageId { get; set; }
+        public string Name { get; set; }
         public string DeliveryAddress { get; set; }
         public string ReturnAddress { get; set; }
-        public decimal? TotalPrice { get; set; }
+        public decimal TotalPrice { get; set; }
         public string RejectedReason { get; set; }
         public int? Type { get; set; }
-        public bool? IsPaid { get; set; }
+        public bool IsPaid { get; set; }
         public int? PaymentMethod { get; set; }
         public bool? IsUserDelivery { get; set; }
         public DateTime? DeliveryDate { get; set; }
@@ -31,12 +32,11 @@ namespace RSSMS.DataService.Models
         public DateTime? ReturnDate { get; set; }
         public string ReturnTime { get; set; }
         public int? Status { get; set; }
-        public bool? IsActive { get; set; }
-        public DateTime? CreatedDate { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime CreatedDate { get; set; }
         public Guid? CreatedBy { get; set; }
         public Guid? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
-        public string Name { get; set; }
 
         public virtual Account Customer { get; set; }
         public virtual Storage Storage { get; set; }

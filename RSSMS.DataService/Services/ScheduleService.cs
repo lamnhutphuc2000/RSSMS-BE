@@ -41,7 +41,7 @@ namespace RSSMS.DataService.Services
             if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedules null");
             var listSchedules = Get().Include(x => x.Request).ThenInclude(request => request.Order).ToList();
 
-            var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.RequestId == x.RequestId) &&  x.ScheduleDay.Value.Date == model.ScheduleDay.Value.Date);
+            var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.RequestId == x.RequestId) &&  x.ScheduleDay.Date == model.ScheduleDay.Value.Date);
 
 
 
@@ -63,7 +63,7 @@ namespace RSSMS.DataService.Services
                 {
                     var scheduleToCreate = _mapper.Map<Schedule>(model);
                     scheduleToCreate.Address = schedules[j].DeliveryAddress;
-                    scheduleToCreate.ScheduleDay = model.ScheduleDay;
+                    scheduleToCreate.ScheduleDay = (DateTime)model.ScheduleDay;
                     scheduleToCreate.UserId = userIds[i];
                     scheduleToCreate.RequestId = schedules[j].RequestId;
                     scheduleToCreate.ScheduleTime = schedules[j].ScheduleTime;
@@ -94,7 +94,7 @@ namespace RSSMS.DataService.Services
             if (role == "Delivery Staff")
             {
                 var schedules = Get(x => x.IsActive == true && x.UserId == userId)
-                        .Where(x => x.ScheduleDay.Value.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Value.Date <= model.DateTo.Value.Date).Include(x => x.Request)
+                        .Where(x => x.ScheduleDay.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Date <= model.DateTo.Value.Date).Include(x => x.Request)
                         .ThenInclude(request => request.Order)
                         .ThenInclude(order => order.Customer)
                         .Include(x => x.Request)
@@ -127,7 +127,7 @@ namespace RSSMS.DataService.Services
             else
             {
                 var schedules = Get(x => x.IsActive == true)
-                        .Where(x => x.ScheduleDay.Value.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Value.Date <= model.DateTo.Value.Date).Include(x => x.Request)
+                        .Where(x => x.ScheduleDay.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Date <= model.DateTo.Value.Date).Include(x => x.Request)
                         .ThenInclude(request => request.Order)
                         .ThenInclude(order => order.Customer)
                         .Include(x => x.Request)

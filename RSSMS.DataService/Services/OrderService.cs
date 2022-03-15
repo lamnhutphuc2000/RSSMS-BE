@@ -56,8 +56,8 @@ namespace RSSMS.DataService.Services
                 .Include(x => x.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.Images)
                 .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.Boxes)
-                .ThenInclude(box => box.Shelf)
+                .ThenInclude(orderDetail => orderDetail.Floor)
+                .ThenInclude(floor => floor.Shelf)
                 .ThenInclude(shelf => shelf.Area)
                 .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
@@ -79,7 +79,7 @@ namespace RSSMS.DataService.Services
             .Include(x => x.OrderDetails)
             .ThenInclude(orderDetail => orderDetail.Images)
             .Include(x => x.OrderDetails)
-            .ThenInclude(orderDetail => orderDetail.Service);
+            .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
 
             if (OrderStatuses.Count > 0)
             {
@@ -89,7 +89,7 @@ namespace RSSMS.DataService.Services
                     .Include(x => x.OrderDetails)
                     .ThenInclude(orderDetail => orderDetail.Images)
                     .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.Service);
+                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
             }
 
 
@@ -98,7 +98,7 @@ namespace RSSMS.DataService.Services
                 order = order
                     .Where(x => (x.ReturnDate >= dateFrom && x.ReturnDate <= dateTo) || (x.DeliveryDate >= dateFrom && x.DeliveryDate <= dateTo))
                 .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.Service);
+                .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
             }
             if (role == "Manager")
             {
@@ -106,7 +106,7 @@ namespace RSSMS.DataService.Services
                     .Include(x => x.Storage)
                     .Include(x => x.Requests).ThenInclude(request => request.Schedules)
                     .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.Service);
+                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
             }
 
             if (role == "Office staff")
@@ -115,7 +115,7 @@ namespace RSSMS.DataService.Services
                 order = order.Where(x => x.StorageId == storageId || x.StorageId == null)
                     .Include(x => x.Storage)
                     .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.Service);
+                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
             }
 
             if (role == "Customer")
@@ -123,7 +123,7 @@ namespace RSSMS.DataService.Services
                 order = order.Where(x => x.CustomerId == userId)
                     .Include(x => x.Storage)
                     .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.Service);
+                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
             }
 
             var result = order.OrderByDescending(x => x.CreatedDate)
@@ -199,7 +199,7 @@ namespace RSSMS.DataService.Services
             {
                 CreatedDate = now,
                 OrderId = order.Id,
-                Date = order.DeliveryDate,
+                Date = order.DeliveryDate.Value,
                 Description = "Delivery date of order",
             };
             order.Status = 1;
@@ -302,23 +302,24 @@ namespace RSSMS.DataService.Services
 
         public async Task<OrderByIdViewModel> Done(Guid id)
         {
-            var order = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.OrderDetails).ThenInclude(orderDetail => orderDetail.Boxes).FirstOrDefaultAsync();
+            var order = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor).FirstOrDefaultAsync();
             if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-            var orderDetails = order.OrderDetails;
-            foreach (var orderDetail in orderDetails)
-            {
-                if (orderDetail.Boxes != null)
-                {
-                    var boxOrderDetail = orderDetail.Boxes;
-                    foreach (var box in boxOrderDetail)
-                    {
-                        box.IsActive = false;
-                    }
-                    orderDetail.Boxes = boxOrderDetail;
-                }
-            }
+            //var orderDetails = order.OrderDetails;
+            //foreach (var orderDetail in orderDetails)
+            //{
+            //    if (orderDetail.Floor != null)
+            //    {
+            //        var boxOrderDetail = orderDetail.Floor;
+            //        orderDetail.
+            //        foreach (var box in boxOrderDetail)
+            //        {
+            //            box.IsActive = false;
+            //        }
+            //        orderDetail.Floor = boxOrderDetail;
+            //    }
+            //}
             order.Status = 6;
-            order.OrderDetails = orderDetails;
+            //order.OrderDetails = orderDetails;
             await UpdateAsync(order);
             return await GetById(id);
         }

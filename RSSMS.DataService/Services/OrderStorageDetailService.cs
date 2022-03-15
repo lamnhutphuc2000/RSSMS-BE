@@ -65,7 +65,6 @@ namespace RSSMS.DataService.Services
                 //IsActive = true,
                 //OrderId = order.Id,
                 //Status = 0,
-                Type = 6,
                 Description = description,
                 Note = "Don da luu kho",
             };

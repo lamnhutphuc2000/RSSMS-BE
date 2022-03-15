@@ -19,11 +19,13 @@ namespace RSSMS.DataService.Models
 
         public virtual DbSet<Account> Accounts { get; set; }
         public virtual DbSet<Area> Areas { get; set; }
-        public virtual DbSet<Box> Boxes { get; set; }
+        public virtual DbSet<Floor> Floors { get; set; }
+        public virtual DbSet<FloorOrderDetailMap> FloorOrderDetailMaps { get; set; }
         public virtual DbSet<Image> Images { get; set; }
         public virtual DbSet<Notification> Notifications { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
+        public virtual DbSet<OrderDetailServiceMap> OrderDetailServiceMaps { get; set; }
         public virtual DbSet<OrderHistoryExtension> OrderHistoryExtensions { get; set; }
         public virtual DbSet<OrderTimeline> OrderTimelines { get; set; }
         public virtual DbSet<Request> Requests { get; set; }
@@ -59,6 +61,7 @@ namespace RSSMS.DataService.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.Email)
+                    .IsRequired()
                     .HasMaxLength(255)
                     .IsUnicode(false);
 
@@ -68,9 +71,13 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.ImageUrl).HasMaxLength(255);
 
-                entity.Property(e => e.Name).HasMaxLength(255);
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(255);
 
-                entity.Property(e => e.Password).HasMaxLength(255);
+                entity.Property(e => e.Password)
+                    .IsRequired()
+                    .HasMaxLength(255);
 
                 entity.Property(e => e.Phone)
                     .HasMaxLength(11)
@@ -91,38 +98,57 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Description).HasMaxLength(255);
 
-                entity.Property(e => e.Name).HasMaxLength(255);
+                entity.Property(e => e.Height).HasColumnType("decimal(18, 3)");
+
+                entity.Property(e => e.Length).HasColumnType("decimal(18, 3)");
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(255);
+
+                entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
 
                 entity.HasOne(d => d.Storage)
                     .WithMany(p => p.Areas)
                     .HasForeignKey(d => d.StorageId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Area_Storage");
             });
 
-            modelBuilder.Entity<Box>(entity =>
+            modelBuilder.Entity<Floor>(entity =>
             {
-                entity.ToTable("Box");
+                entity.ToTable("Floor");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
-                entity.Property(e => e.Name).HasMaxLength(50);
+                entity.Property(e => e.Height).HasColumnType("decimal(18, 3)");
 
-                entity.HasOne(d => d.OrderDetail)
-                    .WithMany(p => p.Boxes)
-                    .HasForeignKey(d => d.OrderDetailId)
-                    .HasConstraintName("FK_Box_OrderDetail");
+                entity.Property(e => e.Length).HasColumnType("decimal(18, 3)");
 
-                entity.HasOne(d => d.Service)
-                    .WithMany(p => p.Boxes)
-                    .HasForeignKey(d => d.ServiceId)
-                    .HasConstraintName("FK_Box_Service");
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
 
                 entity.HasOne(d => d.Shelf)
-                    .WithMany(p => p.Boxes)
+                    .WithMany(p => p.Floors)
                     .HasForeignKey(d => d.ShelfId)
-                    .HasConstraintName("FK_Box_Shelf");
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Floor_Shelf");
+            });
+
+            modelBuilder.Entity<FloorOrderDetailMap>(entity =>
+            {
+                entity.ToTable("FloorOrderDetailMap");
+
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
             });
 
             modelBuilder.Entity<Image>(entity =>
@@ -136,12 +162,14 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Note).HasMaxLength(255);
 
                 entity.Property(e => e.Url)
+                    .IsRequired()
                     .HasMaxLength(255)
                     .IsUnicode(false);
 
                 entity.HasOne(d => d.OrderDetail)
                     .WithMany(p => p.Images)
                     .HasForeignKey(d => d.OrderDetailid)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Image_OrderDetail");
             });
 
@@ -153,13 +181,16 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
-                entity.Property(e => e.Description).HasMaxLength(255);
+                entity.Property(e => e.Description)
+                    .IsRequired()
+                    .HasMaxLength(255);
 
                 entity.Property(e => e.Note).HasMaxLength(255);
 
                 entity.HasOne(d => d.Receiver)
                     .WithMany(p => p.Notifications)
                     .HasForeignKey(d => d.ReceiverId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Notification_Account");
 
                 entity.HasOne(d => d.Request)
@@ -174,7 +205,7 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
-                entity.Property(e => e.CreatedDate).HasColumnType("date");
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.DeliveryAddress).HasMaxLength(255);
 
@@ -184,7 +215,7 @@ namespace RSSMS.DataService.Models
                     .HasMaxLength(20)
                     .IsUnicode(false);
 
-                entity.Property(e => e.ModifiedDate).HasColumnType("date");
+                entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.Name)
                     .HasMaxLength(30)
@@ -201,6 +232,17 @@ namespace RSSMS.DataService.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 3)");
+
+                entity.HasOne(d => d.Customer)
+                    .WithMany(p => p.Orders)
+                    .HasForeignKey(d => d.CustomerId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Order_Account");
+
+                entity.HasOne(d => d.Storage)
+                    .WithMany(p => p.Orders)
+                    .HasForeignKey(d => d.StorageId)
+                    .HasConstraintName("FK_Order_Storage");
             });
 
             modelBuilder.Entity<OrderDetail>(entity =>
@@ -209,17 +251,35 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
-                entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 3)");
+                entity.HasOne(d => d.Floor)
+                    .WithMany(p => p.OrderDetails)
+                    .HasForeignKey(d => d.FloorId)
+                    .HasConstraintName("FK_OrderDetail_Floor");
 
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderDetails)
                     .HasForeignKey(d => d.OrderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OrderDetail_Order");
+            });
+
+            modelBuilder.Entity<OrderDetailServiceMap>(entity =>
+            {
+                entity.ToTable("OrderDetailServiceMap");
+
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 3)");
+
+                entity.HasOne(d => d.OrderDetail)
+                    .WithMany(p => p.OrderDetailServiceMaps)
+                    .HasForeignKey(d => d.OrderDetailId)
+                    .HasConstraintName("FK_OrderDetailServiceMap_OrderDetail");
 
                 entity.HasOne(d => d.Service)
-                    .WithMany(p => p.OrderDetails)
+                    .WithMany(p => p.OrderDetailServiceMaps)
                     .HasForeignKey(d => d.ServiceId)
-                    .HasConstraintName("FK_OrderDetail_Service");
+                    .HasConstraintName("FK_OrderDetailServiceMap_Service");
             });
 
             modelBuilder.Entity<OrderHistoryExtension>(entity =>
@@ -241,6 +301,7 @@ namespace RSSMS.DataService.Models
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderHistoryExtensions)
                     .HasForeignKey(d => d.OrderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OrderHistoryExtension_Order");
             });
 
@@ -259,6 +320,7 @@ namespace RSSMS.DataService.Models
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderTimelines)
                     .HasForeignKey(d => d.OrderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OrderTimeline_Order");
             });
 
@@ -288,6 +350,7 @@ namespace RSSMS.DataService.Models
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.Requests)
                     .HasForeignKey(d => d.OrderId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Request_Order");
             });
 
@@ -298,6 +361,7 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Name)
+                    .IsRequired()
                     .HasMaxLength(25)
                     .IsUnicode(false);
             });
@@ -314,7 +378,9 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.ScheduleDay).HasColumnType("date");
 
-                entity.Property(e => e.ScheduleTime).HasMaxLength(12);
+                entity.Property(e => e.ScheduleTime)
+                    .IsRequired()
+                    .HasMaxLength(12);
 
                 entity.HasOne(d => d.Request)
                     .WithMany(p => p.Schedules)
@@ -324,6 +390,7 @@ namespace RSSMS.DataService.Models
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.Schedules)
                     .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Schedule_Account");
             });
 
@@ -341,7 +408,9 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Length).HasColumnType("decimal(18, 3)");
 
-                entity.Property(e => e.Name).HasMaxLength(255);
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(255);
 
                 entity.Property(e => e.Note).HasMaxLength(255);
 
@@ -352,11 +421,6 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Unit).HasMaxLength(20);
 
                 entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
-
-                entity.HasOne(d => d.Account)
-                    .WithMany(p => p.Services)
-                    .HasForeignKey(d => d.AccountId)
-                    .HasConstraintName("FK_Service_Account");
             });
 
             modelBuilder.Entity<Shelf>(entity =>
@@ -370,6 +434,7 @@ namespace RSSMS.DataService.Models
                 entity.HasOne(d => d.Area)
                     .WithMany(p => p.Shelves)
                     .HasForeignKey(d => d.AreaId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Shelf_Area");
             });
 
@@ -386,11 +451,13 @@ namespace RSSMS.DataService.Models
                 entity.HasOne(d => d.Staff)
                     .WithMany(p => p.StaffAssignStorages)
                     .HasForeignKey(d => d.StaffId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_StaffAssignStorage_Account");
 
                 entity.HasOne(d => d.Storage)
                     .WithMany(p => p.StaffAssignStorages)
                     .HasForeignKey(d => d.StorageId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_StaffAssignStorage_Storage");
             });
 
@@ -410,7 +477,9 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Length).HasColumnType("decimal(18, 3)");
 
-                entity.Property(e => e.Name).HasMaxLength(255);
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(255);
 
                 entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
             });

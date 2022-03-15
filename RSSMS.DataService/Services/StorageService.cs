@@ -105,7 +105,7 @@ namespace RSSMS.DataService.Services
             if (role == "Manager")
             {
                 var storagesManagerManage = _staffAssignStoragesService.Get(x => x.StaffId == userId && x.IsActive == true).Select(x => x.StorageId).ToList();
-                storages = storages.Where(x => storagesManagerManage.Contains(x.Id));
+                storages = storages.Where(x => storagesManagerManage.Contains((Guid)x.Id));
             }
 
 

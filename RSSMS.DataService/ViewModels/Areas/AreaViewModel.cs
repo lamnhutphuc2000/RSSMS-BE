@@ -7,13 +7,19 @@ namespace RSSMS.DataService.ViewModels.Areas
     {
 
         public static string[] Fields = {
-            "Id","StorageId","Name","Type","Status","Description","Usage"};
+            "Id","StorageId","Name","Height","Width","Length","Type","Status","Description","Usage"};
         [BindNever]
         public Guid? Id { get; set; }
         [BindNever]
         public Guid? StorageId { get; set; }
         [BindNever]
         public string Name { get; set; }
+        [BindNever]
+        public decimal? Height { get; set; }
+        [BindNever]
+        public decimal? Width { get; set; }
+        [BindNever]
+        public decimal? Length { get; set; }
         [BindNever]
         public int? Type { get; set; }
         [BindNever]
