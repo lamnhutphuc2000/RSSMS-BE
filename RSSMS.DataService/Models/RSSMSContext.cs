@@ -345,7 +345,6 @@ namespace RSSMS.DataService.Models
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.Requests)
                     .HasForeignKey(d => d.OrderId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Request_Order");
             });
 

@@ -15,7 +15,7 @@ namespace RSSMS.DataService.Models
         }
 
         public Guid Id { get; set; }
-        public Guid OrderId { get; set; }
+        public Guid? OrderId { get; set; }
         public int Type { get; set; }
         public int? Status { get; set; }
         public DateTime? DeliveryDate { get; set; }
