@@ -15,6 +15,6 @@ namespace RSSMS.DataService.Models
         public string Note { get; set; }
 
         public virtual Request Request { get; set; }
-        public virtual Service RequestNavigation { get; set; }
+        public virtual Service Service { get; set; }
     }
 }

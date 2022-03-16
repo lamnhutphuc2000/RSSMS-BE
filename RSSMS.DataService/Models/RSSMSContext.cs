@@ -361,10 +361,10 @@ namespace RSSMS.DataService.Models
                     .HasForeignKey(d => d.RequestId)
                     .HasConstraintName("FK_RequestDetail_Request");
 
-                entity.HasOne(d => d.RequestNavigation)
+                entity.HasOne(d => d.Service)
                     .WithMany(p => p.RequestDetails)
-                    .HasForeignKey(d => d.RequestId)
-                    .HasConstraintName("FK_RequestDetail_Service");
+                    .HasForeignKey(d => d.ServiceId)
+                    .HasConstraintName("FK_RequestDetail_Service1");
             });
 
             modelBuilder.Entity<Role>(entity =>
