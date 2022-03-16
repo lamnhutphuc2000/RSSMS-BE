@@ -355,6 +355,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.Note).HasMaxLength(255);
+
                 entity.HasOne(d => d.Request)
                     .WithMany(p => p.RequestDetails)
                     .HasForeignKey(d => d.RequestId)
