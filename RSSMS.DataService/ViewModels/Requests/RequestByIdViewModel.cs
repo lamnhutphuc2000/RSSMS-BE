@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using RSSMS.DataService.ViewModels.RequestDetail;
 using RSSMS.DataService.ViewModels.Schedules;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,8 @@ namespace RSSMS.DataService.ViewModels.Requests
         public int? OrderType { get; set; }
         public int? DurationDays { get; set; }
         public int? DurationMonths { get; set; }
+        [BindNever]
+        public virtual ICollection<RequestDetailViewModel> RequestDetails { get; set; }
         [BindNever]
         public virtual ICollection<ScheduleViewModel> Schedules { get; set; }
     }
