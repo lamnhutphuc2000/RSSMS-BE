@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using RSSMS.DataService.Models;
-using RSSMS.DataService.ViewModels.RequestDetails;
+using RSSMS.DataService.ViewModels.RequestDetail;
 
 namespace RSSMS.DataService.AutoMapper
 {
@@ -8,10 +8,7 @@ namespace RSSMS.DataService.AutoMapper
     {
         public static void ConfigRequestDetailsModule(this IMapperConfigurationExpression mc)
         {
-            mc.CreateMap<RequestDetail, RequestDetailCreateViewModel>();
             mc.CreateMap<RequestDetailCreateViewModel, RequestDetail>();
-
-
         }
     }
 }

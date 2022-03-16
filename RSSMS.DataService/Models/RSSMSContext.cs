@@ -20,7 +20,6 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<Account> Accounts { get; set; }
         public virtual DbSet<Area> Areas { get; set; }
         public virtual DbSet<Floor> Floors { get; set; }
-        public virtual DbSet<FloorOrderDetailMap> FloorOrderDetailMaps { get; set; }
         public virtual DbSet<Image> Images { get; set; }
         public virtual DbSet<Notification> Notifications { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
@@ -29,6 +28,7 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<OrderHistoryExtension> OrderHistoryExtensions { get; set; }
         public virtual DbSet<OrderTimeline> OrderTimelines { get; set; }
         public virtual DbSet<Request> Requests { get; set; }
+        public virtual DbSet<RequestDetail> RequestDetails { get; set; }
         public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<Schedule> Schedules { get; set; }
         public virtual DbSet<Service> Services { get; set; }
@@ -138,17 +138,6 @@ namespace RSSMS.DataService.Models
                     .HasForeignKey(d => d.SpaceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Floor_Shelf");
-            });
-
-            modelBuilder.Entity<FloorOrderDetailMap>(entity =>
-            {
-                entity.ToTable("FloorOrderDetailMap");
-
-                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-
-                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
-
-                entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
             });
 
             modelBuilder.Entity<Image>(entity =>
@@ -358,6 +347,23 @@ namespace RSSMS.DataService.Models
                     .HasForeignKey(d => d.OrderId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Request_Order");
+            });
+
+            modelBuilder.Entity<RequestDetail>(entity =>
+            {
+                entity.ToTable("RequestDetail");
+
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.HasOne(d => d.Request)
+                    .WithMany(p => p.RequestDetails)
+                    .HasForeignKey(d => d.RequestId)
+                    .HasConstraintName("FK_RequestDetail_Request");
+
+                entity.HasOne(d => d.RequestNavigation)
+                    .WithMany(p => p.RequestDetails)
+                    .HasForeignKey(d => d.RequestId)
+                    .HasConstraintName("FK_RequestDetail_Service");
             });
 
             modelBuilder.Entity<Role>(entity =>

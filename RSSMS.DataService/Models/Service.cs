@@ -10,6 +10,7 @@ namespace RSSMS.DataService.Models
         public Service()
         {
             OrderDetailServiceMaps = new HashSet<OrderDetailServiceMap>();
+            RequestDetails = new HashSet<RequestDetail>();
         }
 
         public Guid Id { get; set; }
@@ -27,5 +28,6 @@ namespace RSSMS.DataService.Models
         public bool IsActive { get; set; }
 
         public virtual ICollection<OrderDetailServiceMap> OrderDetailServiceMaps { get; set; }
+        public virtual ICollection<RequestDetail> RequestDetails { get; set; }
     }
 }

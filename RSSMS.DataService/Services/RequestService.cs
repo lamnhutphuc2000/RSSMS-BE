@@ -2,6 +2,7 @@
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
+using RSSMS.DataService.Enums;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
@@ -142,7 +143,7 @@ namespace RSSMS.DataService.Services
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
             Request request = null;
-            if (role == "Delivery Staff" && model.Type == 0) // huy lich giao hang
+            if (role == "Delivery Staff" && model.Type == (int)RequestType.Cancel_Order) // huy lich giao hang
             {
                 var schedules = _scheduleService.Get(x => x.ScheduleDay.Date == model.CancelDay.Value.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
                 if (schedules.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Schedule not found");
@@ -166,7 +167,7 @@ namespace RSSMS.DataService.Services
                 return model;
             }
 
-            if (model.Type == 1) // gia han don
+            if (model.Type == (int)RequestType.Extend_Order) // gia han don
             {
                 request = _mapper.Map<Request>(model);
                 request.CreatedBy = userId;
@@ -188,7 +189,7 @@ namespace RSSMS.DataService.Services
                 return model;
             }
             Order order = null;
-            if (model.Type == 2) // rut do ve
+            if (model.Type == (int)RequestType.Return_Order) // rut do ve
             {
                 order = _orderService.Get(x => x.Id == model.OrderId && x.IsActive == true && x.CustomerId == userId).Include(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).FirstOrDefault();
                 if (order == null)
@@ -207,6 +208,13 @@ namespace RSSMS.DataService.Services
                     RequestId = request.Id
                 });
 
+                return model;
+            }
+            if(model.Type == (int)RequestType.Create_Order)
+            {
+                request = _mapper.Map<Request>(model);
+                request.CreatedBy = userId;
+                await CreateAsync(request);
                 return model;
             }
 
