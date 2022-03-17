@@ -31,6 +31,7 @@ namespace RSSMS.DataService.Services
         Task<OrderByIdViewModel> Done(Guid id);
         Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model);
         Task<OrderViewModel> AssignStorage(OrderAssignStorageViewModel model, string accessToken);
+        Task<OrderViewModel> AssignFloor(OrderAssignFloorViewModel model, string accessToken);
     }
     class OrderService : BaseService<Order>, IOrderService
     {
@@ -154,7 +155,10 @@ namespace RSSMS.DataService.Services
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
             Guid? storageId = null;
+
+
             string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
             var order = _mapper.Map<Order>(model);
             var now = DateTime.Now;
             order.Id = new Guid();
@@ -180,20 +184,6 @@ namespace RSSMS.DataService.Services
                 order.ReturnDate = order.DeliveryDate.Value.AddMonths((int)model.Duration);
             }
 
-            //Create request for order
-            Request request = new Request
-            {
-                CreatedBy = userId,
-                CreatedDate = now,
-                DeliveryAddress = order.DeliveryAddress,
-                DeliveryDate = order.DeliveryDate,
-                DeliveryTime = order.DeliveryTime,
-                IsActive = true,
-                Note = "Request for delivery staff to get order",
-                Type = 1,
-                OrderId = order.Id,
-                Status = 1
-            };
 
             OrderTimeline deliveryTimeline = new OrderTimeline
             {
@@ -204,20 +194,49 @@ namespace RSSMS.DataService.Services
             };
             order.Status = 1;
             order.OrderTimelines.Add(deliveryTimeline);
-            order.Requests.Add(request);
 
             // random a name for order
             Random random = new Random();
             order.Name = now.Day + now.Month + now.Year + now.Minute + now.Hour + new string(Enumerable.Repeat(chars, 5).Select(s => s[random.Next(s.Length)]).ToArray());
+
+
+            var orderDetailImagesList = model.OrderDetails.Select(orderDetail => orderDetail.OrderDetailImages.ToList()).ToList();
+
             await CreateAsync(order);
-
-
-            //Create order detail
-            foreach (ServicesOrderViewModel service in model.ListService)
+            List<OrderDetail> orderDetailToUpdate = new List<OrderDetail>();
+            int index = 0;
+            foreach (var orderDetailImages in orderDetailImagesList)
             {
-                await _orderDetailService.Create(service, order.Id);
+                var orderDetailToAddImg = order.OrderDetails.ElementAt(index);
+                int num = 1;
+                List<Image> listImageToAdd = new List<Image>();
+                foreach (var orderDetailImage in orderDetailImages)
+                {
+                    
+                    if (orderDetailImage.File != null)
+                    {
+                        var url = await _firebaseService.UploadImageToFirebase(orderDetailImage.File, "OrderDetail in Order " + order.Id, orderDetailToAddImg.Id, "Order detail image - " + num);
+                        if (url != null)
+                        {
+                            Image tmp = new Image
+                            {
+                                IsActive = true,
+                                Name = "Order detail image - " + num,
+                                OrderDetailid = orderDetailToAddImg.Id
+                            };
+                            listImageToAdd.Add(tmp);
+                        }
+                    }
+                    num++;
+                }
+                orderDetailToAddImg.Images = listImageToAdd;
+                orderDetailToUpdate.Add(orderDetailToAddImg);
+                index++;
             }
 
+            order.OrderDetails = orderDetailToUpdate;
+            await UpdateAsync(order);
+            
             
 
             await _firebaseService.PushOrderNoti("New order arrive!", userId, order.Id, null);
@@ -363,6 +382,44 @@ namespace RSSMS.DataService.Services
 
             await _firebaseService.SendNoti(description, manager.Id, manager.DeviceTokenId, order.Id, null, null);
             return _mapper.Map<OrderViewModel>(order);
+        }
+
+        public async Task<OrderViewModel> AssignFloor(OrderAssignFloorViewModel model, string accessToken)
+        {
+            try
+            {
+                var orderDetailIds = model.OrderDetailAssignFloor.Select(x => x.OrderDetailId).ToList();
+                var orders = Get(x => x.IsActive)
+                    .Include(order => order.OrderDetails)
+                    .Where(order => order.OrderDetails.Any(orderDetail => orderDetailIds.Contains(orderDetail.Id)))
+                    .ToList().AsQueryable()
+                    .ToList();
+                if(orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
+                if(orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail not in the same order");
+                var order = orders.First();
+
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+                order.ModifiedBy = userId;
+                order.ModifiedDate = DateTime.Now;
+                var orderDetails = order.OrderDetails;
+                var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
+                ICollection<OrderDetail> orderDetailsListUpdate = new List<OrderDetail>();
+                foreach(var orderDetailToAssignFloor in orderDetailToAssignFloorList)
+                {
+                    foreach(var orderDetail in orderDetails)
+                        if (orderDetail.Id == orderDetailToAssignFloor.OrderDetailId) 
+                            orderDetail.FloorId = orderDetailToAssignFloor.FloorId;
+                }
+                order.OrderDetails = orderDetails;
+                await UpdateAsync(order);
+                return _mapper.Map<OrderViewModel>(order);
+            }
+            catch(Exception e)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
+            }
         }
     }
 }

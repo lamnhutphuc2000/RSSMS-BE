@@ -25,6 +25,7 @@ namespace RSSMS.DataService.Services
         Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken);
         Task<RequestUpdateViewModel> Update(Guid id, RequestUpdateViewModel model, string accessToken);
         Task<RequestViewModel> Delete(Guid id);
+        Task<RequestByIdViewModel> AssignStorage(RequestAssignStorageViewModel model, string accessToken);
     }
 
 
@@ -267,6 +268,27 @@ namespace RSSMS.DataService.Services
             await _orderService.UpdateAsync(order);
 
             return _mapper.Map<RequestUpdateViewModel>(model);
+        }
+
+        public async Task<RequestByIdViewModel> AssignStorage(RequestAssignStorageViewModel model, string accessToken)
+        {
+            try
+            {
+                var request = await Get(request => request.Id == model.RequestId && request.IsActive).FirstOrDefaultAsync();
+                if (request == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request not found");
+
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+                request.StorageId = model.StorageId;
+                request.ModifiedBy = userId;
+                await UpdateAsync(request);
+                return _mapper.Map<RequestByIdViewModel>(request);
+            }
+            catch(Exception e)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
+            }
         }
     }
 }

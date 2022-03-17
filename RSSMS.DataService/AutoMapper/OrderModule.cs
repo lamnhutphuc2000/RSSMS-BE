@@ -9,10 +9,12 @@ namespace RSSMS.DataService.AutoMapper
     {
         public static void ConfigOrderModule(this IMapperConfigurationExpression mc)
         {
-
-
-            mc.CreateMap<Order, OrderCreateViewModel>();
             mc.CreateMap<OrderCreateViewModel, Order>()
+                .ForMember(des => des.IsActive, opt => opt.MapFrom(src => 1))
+                .ForMember(des => des.CreatedDate, otp => otp.MapFrom(src => DateTime.Now));
+
+            mc.CreateMap<Order, OrderCreate2ViewModel>();
+            mc.CreateMap<OrderCreate2ViewModel, Order>()
                 .ForMember(des => des.Type, opt => opt.MapFrom(src => src.TypeOrder))
                 .ForMember(des => des.PaymentMethod, opt => opt.MapFrom(src => 0))
                 .ForMember(des => des.Status, opt => opt.MapFrom(src => 1))

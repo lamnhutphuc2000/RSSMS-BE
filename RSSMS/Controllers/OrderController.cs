@@ -155,19 +155,35 @@ namespace RSSMS.API.Controllers
         }
 
         /// <summary>
-        /// Assign order to stage
+        /// Assign order to storage
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        [HttpPost("assign order")]
+        [HttpPost("assign to storage")]
         [Authorize(Roles = "Manager")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Add(OrderAssignStorageViewModel model)
+        public async Task<IActionResult> AssignOrderToStorage(OrderAssignStorageViewModel model)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _orderService.AssignStorage(model, accessToken));
+        }
+
+        /// <summary>
+        /// Assign order to floor
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPost("assign to floor")]
+        [Authorize(Roles = "Manager, Office Staff")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> AssignOrderToFloor(OrderAssignFloorViewModel model)
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _orderService.AssignFloor(model, accessToken));
         }
     }
 }

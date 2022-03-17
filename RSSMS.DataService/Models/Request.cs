@@ -16,6 +16,7 @@ namespace RSSMS.DataService.Models
 
         public Guid Id { get; set; }
         public Guid? OrderId { get; set; }
+        public Guid? StorageId { get; set; }
         public int Type { get; set; }
         public int? Status { get; set; }
         public DateTime? DeliveryDate { get; set; }
@@ -23,8 +24,11 @@ namespace RSSMS.DataService.Models
         public string DeliveryAddress { get; set; }
         public string Note { get; set; }
         public bool IsActive { get; set; }
+        public bool? IsPaid { get; set; }
+        public bool? IsCustomerDelivery { get; set; }
         public DateTime CreatedDate { get; set; }
         public Guid? CreatedBy { get; set; }
+        public Guid? ModifiedBy { get; set; }
 
         public virtual Account CreatedByNavigation { get; set; }
         public virtual Order Order { get; set; }

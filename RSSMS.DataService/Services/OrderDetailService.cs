@@ -2,7 +2,6 @@
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.UnitOfWorks;
-using RSSMS.DataService.ViewModels.Products;
 using RSSMS.DataService.ViewModels.Services;
 using System;
 using System.Threading.Tasks;

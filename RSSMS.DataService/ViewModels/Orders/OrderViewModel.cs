@@ -78,7 +78,7 @@ namespace RSSMS.DataService.ViewModels.Orders
         public string StorageName { get; set; }
         [JsonProperty("orderDetails")]
         [BindNever]
-        public virtual ICollection<OrderDetailsViewModel> OrderDetails { get; set; }
+        public virtual ICollection<OrderDetails2ViewModel> OrderDetails { get; set; }
 
         //[JsonProperty("orderBoxDetails")]
         //[BindNever]

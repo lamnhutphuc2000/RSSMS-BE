@@ -86,5 +86,20 @@ namespace RSSMS.API.Controllers
             await _requestService.Delete(id);
             return Ok("Deleted");
         }
+        /// <summary>
+        /// Assign request to storage
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPost("assign order")]
+        [Authorize(Roles = "Manager, Office Staff")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(RequestByIdViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> Add(RequestAssignStorageViewModel model)
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _requestService.AssignStorage(model, accessToken));
+        }
     }
 }

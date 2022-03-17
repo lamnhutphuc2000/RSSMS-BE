@@ -18,6 +18,6 @@ namespace RSSMS.DataService.ViewModels.Orders
         public string DeliveryAddress { get; set; }
         public string ReturnAddress { get; set; }
         public int? Status { get; set; }
-        public virtual ICollection<OrderDetailsViewModel> OrderDetails { get; set; }
+        public virtual ICollection<OrderDetails2ViewModel> OrderDetails { get; set; }
     }
 }
