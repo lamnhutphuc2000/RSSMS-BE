@@ -33,7 +33,7 @@ namespace RSSMS.DataService.ViewModels.Requests
         public int? DurationMonths { get; set; }
         [BindNever]
         public virtual ICollection<RequestDetailViewModel> RequestDetails { get; set; }
-        [BindNever]
-        public virtual ICollection<ScheduleViewModel> Schedules { get; set; }
+        //[BindNever]
+        //public virtual ICollection<ScheduleViewModel> Schedules { get; set; }
     }
 }

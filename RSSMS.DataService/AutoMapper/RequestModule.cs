@@ -20,6 +20,7 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<RequestViewModel, Request>();
 
             mc.CreateMap<RequestCreateViewModel, Request>()
+                .ForMember(des => des.Status, opt => opt.MapFrom(src => 1))
                 .ForMember(des => des.IsActive, otp => otp.MapFrom(src => true))
                 .ForMember(des => des.CreatedDate, otp => otp.MapFrom(src => DateTime.Now));
 
@@ -29,6 +30,7 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<RequestByIdViewModel, Request>();
             mc.CreateMap<Request, RequestByIdViewModel>()
+                .ForMember(des => des.RequestDetails, otp => otp.MapFrom(src => src.RequestDetails))
                 .ForMember(des => des.CancelBy, otp => otp.MapFrom(src => src.CreatedByNavigation.Name))
             //.ForMember(des => des.OldReturnDate, otp => otp.MapFrom(src => src.Order.OrderHistoryExtensions.Count > 0 ? src.Order.OrderHistoryExtensions.Where.OldReturnDate : null))
             //.ForMember(des => des.OrderType, otp => otp.MapFrom(src => src.Order.OrderHistoryExtensions.Count > 0 ? src.Order.OrderHistoryExtensions.First().Order.TypeOrder : null))
