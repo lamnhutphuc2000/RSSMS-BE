@@ -26,6 +26,7 @@ namespace RSSMS.DataService.Services
         Task<RequestUpdateViewModel> Update(Guid id, RequestUpdateViewModel model, string accessToken);
         Task<RequestViewModel> Delete(Guid id);
         Task<RequestByIdViewModel> AssignStorage(RequestAssignStorageViewModel model, string accessToken);
+        Task<RequestByIdViewModel> Cancel(Guid id, RequestCancelViewModel model, string accessToken);
     }
 
 
@@ -289,6 +290,23 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
+        }
+
+        public async Task<RequestByIdViewModel> Cancel(Guid id, RequestCancelViewModel model, string accessToken)
+        {
+            if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request Id not matched");
+
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+            var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
+            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
+
+            entity.Status = 0;
+            entity.CancelReason = model.CancelReason;
+            await UpdateAsync(entity);
+
+            return await GetById(id);
         }
     }
 }

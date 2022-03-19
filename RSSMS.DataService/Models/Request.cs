@@ -22,6 +22,10 @@ namespace RSSMS.DataService.Models
         public DateTime? DeliveryDate { get; set; }
         public string DeliveryTime { get; set; }
         public string DeliveryAddress { get; set; }
+        public string ReturnAddress { get; set; }
+        public DateTime? ReturnDate { get; set; }
+        public string ReturnTime { get; set; }
+        public string CancelReason { get; set; }
         public string Note { get; set; }
         public bool IsActive { get; set; }
         public bool? IsPaid { get; set; }

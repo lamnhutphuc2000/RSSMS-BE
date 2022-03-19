@@ -15,6 +15,10 @@ namespace RSSMS.DataService.ViewModels.Requests
         public DateTime? DeliveryDate { get; set; }
         public string DeliveryTime { get; set; }
         public string DeliveryAddress { get; set; }
+        public string ReturnAddress { get; set; }
+        public DateTime? ReturnDate { get; set; }
+        public string ReturnTime { get; set; }
+        public string CancelReason { get; set; }
         public int? Durations { get; set; }
         public int? Type { get; set; }
         [BindNever]

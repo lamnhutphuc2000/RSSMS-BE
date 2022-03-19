@@ -22,7 +22,15 @@ namespace RSSMS.API.Controllers
         {
             _requestService = requestService;
         }
-
+        /// <summary>
+        /// Get list request
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="RequestTypes"></param>
+        /// <param name="fields"></param>
+        /// <param name="page"></param>
+        /// <param name="size"></param>
+        /// <returns></returns>
         [HttpGet]
         [Authorize(Roles = "Manager,Delivery Staff,Office staff, Customer")]
         [MapToApiVersion("1")]
@@ -34,6 +42,11 @@ namespace RSSMS.API.Controllers
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _requestService.GetAll(model, RequestTypes, fields, page, size, accessToken));
         }
+        /// <summary>
+        /// Get request by Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id}")]
         [Authorize]
         [MapToApiVersion("1")]
@@ -56,7 +69,7 @@ namespace RSSMS.API.Controllers
             return Ok(await _requestService.Create(model, accessToken));
         }
         /// <summary>
-        /// Update Product
+        /// Update request
         /// </summary>
         /// <param name="id"></param>
         /// <param name="model"></param>
@@ -100,6 +113,24 @@ namespace RSSMS.API.Controllers
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _requestService.AssignStorage(model, accessToken));
+        }
+
+        /// <summary>
+        /// Cancel request to create order
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPut("cancel request to order/{id}")]
+        [Authorize(Roles = "Manager, Office Staff, Customer")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(RequestByIdViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> Cancel(Guid id, RequestCancelViewModel model)
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _requestService.Cancel(id, model, accessToken));
         }
     }
 }

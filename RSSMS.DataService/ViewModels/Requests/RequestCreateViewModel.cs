@@ -13,6 +13,9 @@ namespace RSSMS.DataService.ViewModels.Requests
         public DateTime? DeliveryDate { get; set; }
         public DateTime? OldReturnDate { get; set; }
         public DateTime? ReturnDate { get; set; }
+        public string ReturnAddress { get; set; }
+        public string ReturnTime { get; set; }
+        public string CancelReason { get; set; }
         public DateTime? CancelDay { get; set; }
         public bool? IsPaid { get; set; }
         public bool? IsCustomerDelivery { get; set; }

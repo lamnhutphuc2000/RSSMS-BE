@@ -325,6 +325,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.CancelReason).HasMaxLength(255);
+
                 entity.Property(e => e.CreatedDate).HasColumnType("date");
 
                 entity.Property(e => e.DeliveryAddress).HasMaxLength(255);
@@ -336,6 +338,14 @@ namespace RSSMS.DataService.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.Note).HasMaxLength(255);
+
+                entity.Property(e => e.ReturnAddress).HasMaxLength(255);
+
+                entity.Property(e => e.ReturnDate).HasColumnType("date");
+
+                entity.Property(e => e.ReturnTime)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
 
                 entity.HasOne(d => d.CreatedByNavigation)
                     .WithMany(p => p.Requests)
