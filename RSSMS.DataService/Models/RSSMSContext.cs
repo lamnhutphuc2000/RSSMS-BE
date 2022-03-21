@@ -152,7 +152,6 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Url)
                     .IsRequired()
-                    .HasMaxLength(255)
                     .IsUnicode(false);
 
                 entity.HasOne(d => d.OrderDetail)
@@ -193,6 +192,8 @@ namespace RSSMS.DataService.Models
                 entity.ToTable("Order");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.AdditionalFeeDescription).HasMaxLength(255);
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 

@@ -11,6 +11,8 @@ namespace RSSMS.DataService.ViewModels.Orders
         public string DeliveryAddress { get; set; }
         public string ReturnAddress { get; set; }
         public decimal TotalPrice { get; set; }
+        public double? AdditionalFee { get; set; }
+        public string AdditionalFeeDescription { get; set; }
         public string RejectedReason { get; set; }
         public int? Duration { get; set; }
         public int? Type { get; set; }

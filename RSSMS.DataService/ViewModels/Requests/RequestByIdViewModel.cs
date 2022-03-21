@@ -24,13 +24,10 @@ namespace RSSMS.DataService.ViewModels.Requests
         public string CancelReason { get; set; }
         public int? Durations { get; set; }
         public int? Type { get; set; }
-        [BindNever]
+        public int? TypeOrder { get; set; }
         public int? Status { get; set; }
-        [BindNever]
         public string DeliveryStaffName { get; set; }
-        [BindNever]
         public string DeliveryStaffPhone { get; set; }
-        [BindNever]
         public string Note { get; set; }
         public string CancelBy { get; set; }
         public string CancelByPhone { get; set; }

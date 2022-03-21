@@ -40,7 +40,9 @@ namespace RSSMS.DataService.AutoMapper
             //.ForMember(des => des.TotalPrice, otp => otp.MapFrom(src => src.Order.OrderHistoryExtensions.Count > 0 ? src.Order.OrderHistoryExtensions.First().TotalPrice : null))
             //.ForMember(des => des.DurationMonths, otp => otp.MapFrom(src => src.Order.OrderHistoryExtensions.Count > 0 ? (int?)(src.Order.OrderHistoryExtensions.First().ReturnDate - src.OrderHistoryExtensions.First().OldReturnDate).Value.Days / 30 : null))
                 .ForMember(des => des.CancelBy, otp => otp.MapFrom(src => src.Type == 3 ? src.CreatedByNavigation.Name : null))
-                .ForMember(des => des.CancelByPhone, otp => otp.MapFrom(src => src.Type == 3 ? src.CreatedByNavigation.Phone : null));
+                .ForMember(des => des.CancelByPhone, otp => otp.MapFrom(src => src.Type == 3 ? src.CreatedByNavigation.Phone : null))
+                .ForMember(des => des.DurationDays, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)(src.ReturnDate - src.DeliveryDate).Value.Days : null))
+                .ForMember(des => des.DurationMonths, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)((src.ReturnDate - src.DeliveryDate).Value.Days) / 30 : null));
             //.ForMember(des => des.DurationDays, opt =>
             //{
             //    opt.PreCondition(src => src.OrderHistoryExtensions.Count > 0);

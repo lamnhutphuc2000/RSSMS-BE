@@ -20,6 +20,7 @@ namespace RSSMS.DataService.ViewModels.Requests
         public bool? IsPaid { get; set; }
         public bool? IsCustomerDelivery { get; set; }
         public int Type { get; set; }
+        public int? TypeOrder { get; set; }
         public string Note { get; set; }
         public List<RequestDetailCreateViewModel> RequestDetails { get; set; }
     }
