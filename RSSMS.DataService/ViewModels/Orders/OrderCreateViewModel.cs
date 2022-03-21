@@ -22,8 +22,6 @@ namespace RSSMS.DataService.ViewModels.Orders
         public DateTime? ReturnDate { get; set; }
         public string ReturnTime { get; set; }
         public int? Status { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public Guid? CreatedBy { get; set; }
         public virtual ICollection<OrderDetailViewModel> OrderDetails { get; set; }
     }
 }

@@ -198,7 +198,7 @@ namespace RSSMS.DataService.Services
 
 
             var orderDetailImagesList = model.OrderDetails.Select(orderDetail => orderDetail.OrderDetailImages.ToList()).ToList();
-
+            order.CreatedBy = userId;
             await CreateAsync(order);
             List<OrderDetail> orderDetailToUpdate = new List<OrderDetail>();
             int index = 0;
