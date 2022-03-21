@@ -8,14 +8,15 @@ namespace RSSMS.DataService.ViewModels.Orders
     public class OrderByIdViewModel
     {
         public Guid? Id { get; set; }
+        public Guid? CustomerId { get; set; }
         public string CustomerName { get; set; }
         public string CustomerPhone { get; set; }
         public string Name { get; set; }
         public string DeliveryAddress { get; set; }
-        public string AddressReturn { get; set; }
+        public string ReturnAddress { get; set; }
         public decimal? TotalPrice { get; set; }
         public string RejectedReason { get; set; }
-        public int? TypeOrder { get; set; }
+        public int? Type { get; set; }
         public bool? IsUserDelivery { get; set; }
         public DateTime? DeliveryDate { get; set; }
         public string DeliveryTime { get; set; }
@@ -28,6 +29,8 @@ namespace RSSMS.DataService.ViewModels.Orders
         public bool? IsPaid { get; set; }
         public Guid? StorageId { get; set; }
         public string StorageName { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public Guid? CreatedBy { get; set; }
         public virtual ICollection<OrderDetailByIdViewModel> OrderDetails { get; set; }
         public virtual ICollection<OrderHistoryExtensionViewModel> OrderHistoryExtensions { get; set; }
     }

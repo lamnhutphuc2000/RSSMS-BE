@@ -11,7 +11,7 @@ namespace RSSMS.DataService.ViewModels.Orders
     {
 
         public static string[] Fields = {
-            "Id","CustomerName","Name","CustomerPhone","DeliveryAddress","AddressReturn","TotalPrice","TypeOrder","RejectedReason"
+            "Id","CustomerName","Name","CustomerPhone","DeliveryAddress","ReturnAddress","TotalPrice","TypeOrder","RejectedReason"
                 ,"IsUserDelivery","PaymentMethod","DeliveryTime","DeliveryDate","ReturnDate","DurationDays","DurationMonths","Status","IsPaid","OrderBoxDetails","OrderHistoryExtensions"
         };
         [JsonProperty("id")]
@@ -28,9 +28,9 @@ namespace RSSMS.DataService.ViewModels.Orders
         [JsonProperty("deliveryAddress")]
         [BindNever]
         public string DeliveryAddress { get; set; }
-        [JsonProperty("addressReturn")]
+        [JsonProperty("returnAddress")]
         [BindNever]
-        public string AddressReturn { get; set; }
+        public string ReturnAddress { get; set; }
         [JsonProperty("totalPrice")]
         [BindNever]
         public decimal? TotalPrice { get; set; }
