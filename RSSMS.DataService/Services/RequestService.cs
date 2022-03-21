@@ -131,6 +131,7 @@ namespace RSSMS.DataService.Services
         {
             var result = await Get(x => x.Id == id && x.IsActive)
                 .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
+                .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role)
                .ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider)
                .FirstOrDefaultAsync();
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");

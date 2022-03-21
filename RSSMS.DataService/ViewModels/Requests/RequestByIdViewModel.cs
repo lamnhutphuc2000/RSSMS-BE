@@ -11,6 +11,9 @@ namespace RSSMS.DataService.ViewModels.Requests
         public Guid Id { get; set; }
         public Guid? OrderId { get; set; }
         public Guid? UserId { get; set; }
+        public Guid? CustomerId { get; set; }
+        public string CustomerName { get; set; }
+        public string CustomerPhone { get; set; }
         public decimal? TotalPrice { get; set; }
         public DateTime? DeliveryDate { get; set; }
         public string DeliveryTime { get; set; }

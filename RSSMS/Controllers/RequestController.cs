@@ -50,7 +50,7 @@ namespace RSSMS.API.Controllers
         [HttpGet("{id}")]
         [Authorize]
         [MapToApiVersion("1")]
-        [ProducesResponseType(typeof(RequestViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(RequestByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetById(Guid id)
