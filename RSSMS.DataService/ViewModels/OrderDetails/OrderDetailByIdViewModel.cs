@@ -14,7 +14,7 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public decimal? Length { get; set; }
         public int? ServiceType { get; set; }
         public string ServiceName { get; set; }
-        public decimal ServicePrice { get; set; }
+        public decimal? ServicePrice { get; set; }
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
         public virtual ICollection<OrderDetailServiceByIdViewModel> OrderDetailServices { get; set; }
     }
