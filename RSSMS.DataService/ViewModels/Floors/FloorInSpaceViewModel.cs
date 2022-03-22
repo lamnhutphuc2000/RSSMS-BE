@@ -19,12 +19,12 @@ namespace RSSMS.DataService.ViewModels.Floors
             int posMinus = Name.IndexOf(" - ");
             if (posMinus == -1) return -1;
             string characterPart = Name.Substring(0, posMinus);
-            string NumericPart = Name.Substring(posMinus + 1);
+            string NumericPart = Name.Substring(posMinus + 3);
 
             int posMinus2 = other.Name.IndexOf(" - ");
             if (posMinus2 == -1) return 1;
             string characterPart2 = other.Name.Substring(0, posMinus);
-            string NumericPart2 = other.Name.Substring(posMinus + 1);
+            string NumericPart2 = other.Name.Substring(posMinus + 3);
 
             if (characterPart.CompareTo(characterPart2) == 0)
             {
