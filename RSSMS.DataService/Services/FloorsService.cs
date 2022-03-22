@@ -20,6 +20,7 @@ namespace RSSMS.DataService.Services
         Task<bool> CreateNumberOfFloor(Guid spaceId, int numberOfFloor, decimal floorHeight, decimal floorWidth, decimal floorLength, DateTime now);
         Task<bool> RemoveFloors(Guid spaceId);
         List<FloorInSpaceViewModel> GetFloorInSpace(Guid spaceId);
+        Task<FloorGetByIdViewModel> GetById(Guid id);
     }
     public class FloorsService : BaseService<Floor>, IFloorsService
 
@@ -113,6 +114,47 @@ namespace RSSMS.DataService.Services
             }
             result.Sort();
             return result;
+        }
+
+        public async Task<FloorGetByIdViewModel> GetById(Guid id)
+        {
+            var floor = await Get(floor => floor.Id == id && floor.IsActive)
+                .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer)
+                .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                .FirstOrDefaultAsync();
+            if (floor == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Floor not found");
+            var result = _mapper.Map<FloorGetByIdViewModel>(floor);
+            var floorUsage = await GetFloorUsage(id);
+            if (floorUsage != null)
+            {
+                result.Usage = floorUsage.ElementAt(0);
+                result.Used = floorUsage.ElementAt(1);
+                result.Available = floorUsage.ElementAt(2);
+            }
+            return result;
+        }
+
+        public async Task<List<double>> GetFloorUsage(Guid floorId)
+        {
+            // first item is floorUsage
+            // second item is floorUsed
+            // last item is floorAvailable
+            List<double> floorUsage = new List<double>();
+            var floor = await Get(floor => floor.Id == floorId && floor.IsActive).Include(floor => floor.OrderDetails)
+                .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                .ThenInclude(orderDetailServiceMaps => orderDetailServiceMaps.Service).FirstOrDefaultAsync();
+            var orderDetails = floor.OrderDetails;
+            if (orderDetails.Count <= 0) return null;
+            var totalHeight = orderDetails.Select(orderDetail => orderDetail.Height).ToList().Sum();
+            var totalWidth = orderDetails.Select(orderDetail => orderDetail.Width).ToList().Sum();
+            var totalLength = orderDetails.Select(orderDetail => orderDetail.Length).ToList().Sum();
+            double totalVolume = (double)(totalHeight * totalWidth * totalLength);
+            double floorVolume = (double)(floor.Height * floor.Width * floor.Length);
+            double usage = totalVolume * 100 / floorVolume;
+            floorUsage.Add(usage);
+            floorUsage.Add(totalVolume);
+            floorUsage.Add(floorVolume - totalVolume);
+            return floorUsage;
         }
     }
 }

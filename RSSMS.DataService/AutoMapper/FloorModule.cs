@@ -14,6 +14,7 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<Floor, FloorInSpaceViewModel>()
                 .ForMember(des => des.Usage, opt => opt.MapFrom(src => (double)0));
 
+            mc.CreateMap<Floor, FloorGetByIdViewModel>();
         }
     }
 }
