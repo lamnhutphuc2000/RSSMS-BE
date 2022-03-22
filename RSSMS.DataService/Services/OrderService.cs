@@ -175,14 +175,14 @@ namespace RSSMS.DataService.Services
             }
 
             //Check Type of Order
-            if (order.Type == 1)
-            {
-                order.ReturnDate = order.DeliveryDate.Value.AddDays((double)model.Duration);
-            }
-            else if (order.Type == 0)
-            {
-                order.ReturnDate = order.DeliveryDate.Value.AddMonths((int)model.Duration);
-            }
+            //if (order.Type == 1)
+            //{
+            //    order.ReturnDate = order.DeliveryDate.Value.AddDays((double)model.Duration);
+            //}
+            //else if (order.Type == 0)
+            //{
+            //    order.ReturnDate = order.DeliveryDate.Value.AddMonths((int)model.Duration);
+            //}
 
 
             OrderTimeline deliveryTimeline = new OrderTimeline
