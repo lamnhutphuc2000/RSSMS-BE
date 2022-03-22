@@ -15,6 +15,7 @@ namespace RSSMS.DataService.ViewModels.Requests
         public string CustomerName { get; set; }
         public string CustomerPhone { get; set; }
         public decimal? TotalPrice { get; set; }
+        public bool? IsPaid { get; set; }
         public DateTime? DeliveryDate { get; set; }
         public string DeliveryTime { get; set; }
         public string DeliveryAddress { get; set; }
