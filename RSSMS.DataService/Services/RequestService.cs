@@ -182,7 +182,7 @@ namespace RSSMS.DataService.Services
                 await _orderHistoryExtensionService.CreateAsync(orderExtend);
                 var staffAssignInStorage = _orderHistoryExtensionService.Get(x => x.OrderId == model.OrderId).Include(x => x.Order).ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).Select(x => x.Order.Storage.StaffAssignStorages.FirstOrDefault()).FirstOrDefault();
                 
-                await _firebaseService.SendNoti("Customer " + userId + " expand the order: " + model.OrderId, userId, staffAssignInStorage.Staff.DeviceTokenId, (Guid)model.OrderId, request.Id, new
+                await _firebaseService.SendNoti("Customer " + userId + " expand the order: " + model.OrderId, userId, staffAssignInStorage.Staff.DeviceTokenId, request.Id, new
                 {
                     Content = "Customer " + userId + " expand the order: " + model.OrderId,
                     OrderId = model.OrderId,
@@ -203,7 +203,7 @@ namespace RSSMS.DataService.Services
                 await CreateAsync(request);
 
                 var staffAssignInStorage = order.Storage.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager" && x.IsActive == true).FirstOrDefault();
-                await _firebaseService.SendNoti("Customer " + userId + " take back the order: " + model.OrderId, userId, staffAssignInStorage.Staff.DeviceTokenId, (Guid)model.OrderId, request.Id, new
+                await _firebaseService.SendNoti("Customer " + userId + " take back the order: " + model.OrderId, userId, staffAssignInStorage.Staff.DeviceTokenId, request.Id, new
                 {
                     Content = "Customer " + userId + " take back the order: " + model.OrderId,
                     OrderId = model.OrderId,
@@ -235,7 +235,7 @@ namespace RSSMS.DataService.Services
             
 
             var manager = order.Storage.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager" && x.IsActive == true).FirstOrDefault();
-            await _firebaseService.SendNoti("Customer " + userId + " cancel the order: " + model.OrderId, userId, manager.Staff.DeviceTokenId, (Guid)model.OrderId, request.Id, new
+            await _firebaseService.SendNoti("Customer " + userId + " cancel the order: " + model.OrderId, userId, manager.Staff.DeviceTokenId, request.Id, new
             {
                 Content = "Customer " + userId + " cancel the order: " + model.OrderId,
                 OrderId = model.OrderId,

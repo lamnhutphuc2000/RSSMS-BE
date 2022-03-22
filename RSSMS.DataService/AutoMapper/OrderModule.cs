@@ -44,6 +44,9 @@ namespace RSSMS.DataService.AutoMapper
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             mc.CreateMap<OrderUpdateViewModel, Order>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            mc.CreateMap<OrderCreateViewModel, OrderByIdViewModel>();
+
         }
     }
 }

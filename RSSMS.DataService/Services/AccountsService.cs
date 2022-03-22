@@ -44,16 +44,12 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IStaffAssignStoragesService _staffAssignStoragesService;
-        private readonly IOrderService _orderService;
-        private readonly IScheduleService _scheduleService;
         private readonly IFirebaseService _firebaseService;
         private static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
-        public AccountsService(IUnitOfWork unitOfWork, IAccountsRepository repository, IMapper mapper, IStaffAssignStoragesService staffAssignStoragesService, IOrderService orderService, IScheduleService scheduleService, IFirebaseService firebaseService) : base(unitOfWork, repository)
+        public AccountsService(IUnitOfWork unitOfWork, IAccountsRepository repository, IMapper mapper, IStaffAssignStoragesService staffAssignStoragesService, IFirebaseService firebaseService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffAssignStoragesService = staffAssignStoragesService;
-            _orderService = orderService;
-            _scheduleService = scheduleService;
             _firebaseService = firebaseService;
         }
 

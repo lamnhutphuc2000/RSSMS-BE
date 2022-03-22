@@ -15,7 +15,7 @@ namespace RSSMS.DataService.Services
     public interface IFirebaseService
     {
         Task<string> UploadImageToFirebase(string image, string type, Guid id, string name);
-        Task<ResponseContent> SendNoti(string description, Guid receiverId, string registrationId, Guid orderId, Guid? requestId, object data);
+        Task<ResponseContent> SendNoti(string description, Guid receiverId, string registrationId, Guid? requestId, object data);
         Task<ResponseContent> PushOrderNoti(string description, Guid SenderId, Guid orderId, Guid? requestId); // noti to manager when receive another order
 
         Task<ResponseContent> PushCancelRequestNoti(string description, Guid senderId);
@@ -106,7 +106,7 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public async Task<ResponseContent> SendNoti(string description, Guid receiverId, string registrationId, Guid orderId, Guid? requestId, object data)
+        public async Task<ResponseContent> SendNoti(string description, Guid receiverId, string registrationId, Guid? requestId, object data)
         {
             var now = DateTime.Now;
             Models.Notification noti = new Models.Notification

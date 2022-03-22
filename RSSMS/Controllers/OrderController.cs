@@ -142,13 +142,13 @@ namespace RSSMS.API.Controllers
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        [HttpPost("{id}")]
+        [HttpPost("send_noti_to_customer")]
         [Authorize(Roles = "Delivery Staff, Office staff")]
         [MapToApiVersion("1")]
-        [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(OrderByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> SendOrderNoti(Guid id, OrderViewModel model)
+        public async Task<IActionResult> SendOrderNoti(OrderCreateViewModel model)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _orderService.SendOrderNoti(model, accessToken));

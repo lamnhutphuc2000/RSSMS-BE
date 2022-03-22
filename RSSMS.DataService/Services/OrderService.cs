@@ -8,6 +8,7 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Images;
+using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Orders;
 using RSSMS.DataService.ViewModels.Products;
 using RSSMS.DataService.ViewModels.Services;
@@ -27,7 +28,7 @@ namespace RSSMS.DataService.Services
         Task<OrderUpdateViewModel> Update(Guid id, OrderUpdateViewModel model);
         Task<OrderByIdViewModel> GetById(Guid id);
         Task<OrderViewModel> Cancel(Guid id, OrderCancelViewModel model, string accessToken);
-        Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken);
+        Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken);
         Task<OrderByIdViewModel> Done(Guid id);
         Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model);
         Task<OrderViewModel> AssignStorage(OrderAssignStorageViewModel model, string accessToken);
@@ -38,14 +39,16 @@ namespace RSSMS.DataService.Services
         private readonly IMapper _mapper;
         private readonly IFirebaseService _firebaseService;
         private readonly IStorageService _storageService;
+        private readonly IAccountsService _accountService;
 
         public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository
-            ,IFirebaseService firebaseService,
+            ,IFirebaseService firebaseService, IAccountsService accountService,
             IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _firebaseService = firebaseService;
             _storageService = storageService;
+            _accountService = accountService;
         }
         public async Task<OrderByIdViewModel> GetById(Guid id)
         {
@@ -277,44 +280,79 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<OrderViewModel>(entity);
         }
 
-        public async Task<OrderViewModel> SendOrderNoti(OrderViewModel model, string accessToken)
+        public async Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-            var order = await Get(x => x.IsActive == true && x.Id == model.Id).Include(x => x.Customer).FirstOrDefaultAsync();
+            var order = _mapper.Map<OrderByIdViewModel>(model);
 
             if (role == "Delivery Staff")
             {
-                Guid customerId = (Guid)order.CustomerId;
-                var registrationId = order.Customer.DeviceTokenId;
-                string description = "Please commit order changes";
+                var customer = _accountService.Get(x => x.Id == model.CustomerId).First();
+                var registrationId = customer.DeviceTokenId;
+                string description = "Đơn cần được cập nhật";
 
 
                 // Get list of images
-                Dictionary<int, List<AvatarImageViewModel>> imagesOfOrder = new Dictionary<int, List<AvatarImageViewModel>>();
-                var orderDetails = model.OrderDetails;
-                int num = 0;
-                foreach (var orderDetail in orderDetails)
+                var orderDetailImagesList = model.OrderDetails.Select(orderDetail => orderDetail.OrderDetailImages.ToList()).ToList();
+                List <OrderDetailByIdViewModel> orderDetailToUpdate = new List<OrderDetailByIdViewModel>();
+                int index = 0;
+                foreach (var orderDetailImages in orderDetailImagesList)
                 {
-                    var images = orderDetail.Images;
-                    foreach (var image in images)
+                    var orderDetailToAddImg = order.OrderDetails.ElementAt(index);
+                    int num = 1;
+                    List<AvatarImageViewModel> listImageToAdd = new List<AvatarImageViewModel>();
+                    foreach (var orderDetailImage in orderDetailImages)
                     {
-                        var url = await _firebaseService.UploadImageToFirebase(image.File, "temp", order.Id, orderDetail.Id + "-" + num);
-                        if (url != null)
+                        if (orderDetailImage.File != null)
                         {
-                            image.File = null;
-                            image.Url = url;
+                            var url = await _firebaseService.UploadImageToFirebase(orderDetailImage.File, "OrderDetail in Order " + order.Id, orderDetailToAddImg.Id, "Order detail image - " + num);
+                            if (url != null)
+                            {
+                                AvatarImageViewModel tmp = new AvatarImageViewModel
+                                {
+                                    Url = url,
+                                    Name = "Order detail image - " + num,
+                                    Note = orderDetailImage.Note,
+                                };
+                                listImageToAdd.Add(tmp);
+                            }
                         }
                         num++;
                     }
-                    orderDetail.Images = images;
+                    orderDetailToAddImg.Images = listImageToAdd;
+                    orderDetailToUpdate.Add(orderDetailToAddImg);
+                    index++;
                 }
-                model.OrderDetails = orderDetails;
+                order.OrderDetails = orderDetailToUpdate;
 
-                var result = await _firebaseService.SendNoti(description, customerId, registrationId, order.Id, null, model);
+                var result = await _firebaseService.SendNoti(description, customer.Id, customer.DeviceTokenId, null, order);
+
+
+                //Dictionary<int, List<AvatarImageViewModel>> imagesOfOrder = new Dictionary<int, List<AvatarImageViewModel>>();
+                //var orderDetails = model.OrderDetails;
+                //int num = 0;
+                //foreach (var orderDetail in orderDetails)
+                //{
+                //    var images = orderDetail.Images;
+                //    foreach (var image in images)
+                //    {
+                //        var url = await _firebaseService.UploadImageToFirebase(image.File, "temp", order.Id, orderDetail.Id + "-" + num);
+                //        if (url != null)
+                //        {
+                //            image.File = null;
+                //            image.Url = url;
+                //        }
+                //        num++;
+                //    }
+                //    orderDetail.Images = images;
+                //}
+                //model.OrderDetails = orderDetails;
+
+                //var result = await _firebaseService.SendNoti(description, customerId, registrationId, order.Id, null, model);
             }
-            return _mapper.Map<OrderViewModel>(order);
+            return order;
         }
 
         public async Task<OrderByIdViewModel> Done(Guid id)
@@ -378,7 +416,7 @@ namespace RSSMS.DataService.Services
             var customer = order.Customer;
             string description = "Don " + order.Id + " cua khach hang " + customer.Name + " da duoc xu ly ";
 
-            await _firebaseService.SendNoti(description, manager.Id, manager.DeviceTokenId, order.Id, null, null);
+            await _firebaseService.SendNoti(description, manager.Id, manager.DeviceTokenId, null, null);
             return _mapper.Map<OrderViewModel>(order);
         }
 
