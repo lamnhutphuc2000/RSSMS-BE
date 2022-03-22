@@ -9,6 +9,7 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public Guid ServiceId { get; set; }
         public string ServiceName { get; set; }
         public string ServiceUrl { get; set; }
+        public int? ServiceType { get; set; }
         public int Amount { get; set; }
         public decimal TotalPrice { get; set; }
     }

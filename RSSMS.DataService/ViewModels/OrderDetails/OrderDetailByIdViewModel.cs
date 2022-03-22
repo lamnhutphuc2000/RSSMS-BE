@@ -12,7 +12,7 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public decimal? Height { get; set; }
         public decimal? Width { get; set; }
         public decimal? Length { get; set; }
-        public int ServiceType { get; set; }
+        public int? ServiceType { get; set; }
         public string ServiceName { get; set; }
         public decimal ServicePrice { get; set; }
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
