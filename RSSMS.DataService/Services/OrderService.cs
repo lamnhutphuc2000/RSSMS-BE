@@ -340,7 +340,7 @@ namespace RSSMS.DataService.Services
                             orderDetailService.ServiceName = service.Name;
                             orderDetailService.ServiceType = service.Type;
                             orderDetailService.ServiceUrl = service.ImageUrl;
-                            if(service.Type == 3 || service.Type == 4)
+                            if(service.Type == 3 || service.Type == 2)
                             {
                                 mainServiceName = service.Name;
                                 mainServicePrice = service.Price;
