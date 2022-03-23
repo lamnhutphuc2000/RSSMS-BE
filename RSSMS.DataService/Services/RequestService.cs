@@ -283,7 +283,7 @@ namespace RSSMS.DataService.Services
 
                 request.StorageId = model.StorageId;
                 request.ModifiedBy = userId;
-                request.Status = 2;
+                request.Status = 1;
                 await UpdateAsync(request);
                 return _mapper.Map<RequestByIdViewModel>(request);
             }

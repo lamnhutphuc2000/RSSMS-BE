@@ -40,15 +40,18 @@ namespace RSSMS.DataService.Services
         private readonly IFirebaseService _firebaseService;
         private readonly IStorageService _storageService;
         private readonly IAccountsService _accountService;
+        private readonly IServicesService _serviceService;
 
         public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository
             ,IFirebaseService firebaseService, IAccountsService accountService,
+            IServicesService serviceService,
             IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _firebaseService = firebaseService;
             _storageService = storageService;
             _accountService = accountService;
+            _serviceService = serviceService;
         }
         public async Task<OrderByIdViewModel> GetById(Guid id)
         {
@@ -286,71 +289,90 @@ namespace RSSMS.DataService.Services
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
             var order = _mapper.Map<OrderByIdViewModel>(model);
-
-            if (role == "Delivery Staff")
+            try
             {
-                var customer = _accountService.Get(x => x.Id == model.CustomerId).First();
-                var registrationId = customer.DeviceTokenId;
-                string description = "Đơn cần được cập nhật";
-
-
-                // Get list of images
-                var orderDetailImagesList = model.OrderDetails.Select(orderDetail => orderDetail.OrderDetailImages.ToList()).ToList();
-                List <OrderDetailByIdViewModel> orderDetailToUpdate = new List<OrderDetailByIdViewModel>();
-                int index = 0;
-                foreach (var orderDetailImages in orderDetailImagesList)
+                if (role == "Delivery Staff")
                 {
-                    var orderDetailToAddImg = order.OrderDetails.ElementAt(index);
-                    int num = 1;
-                    List<AvatarImageViewModel> listImageToAdd = new List<AvatarImageViewModel>();
-                    foreach (var orderDetailImage in orderDetailImages)
+                    var customer = _accountService.Get(x => x.Id == model.CustomerId).First();
+                    var registrationId = customer.DeviceTokenId;
+                    order.CustomerName = customer.Name;
+                    order.CustomerPhone = customer.Phone;
+                    string description = "Đơn cần được cập nhật";
+
+
+                    // Get list of images
+                    var orderDetailImagesList = model.OrderDetails.Select(orderDetail => orderDetail.OrderDetailImages.ToList()).ToList();
+                    List<OrderDetailByIdViewModel> orderDetailToUpdate = new List<OrderDetailByIdViewModel>();
+                    int index = 0;
+                    foreach (var orderDetailImages in orderDetailImagesList)
                     {
-                        if (orderDetailImage.File != null)
+                        var orderDetailToAdd = order.OrderDetails.ElementAt(index);
+                        int num = 1;
+                        List<AvatarImageViewModel> listImageToAdd = new List<AvatarImageViewModel>();
+                        foreach (var orderDetailImage in orderDetailImages)
                         {
-                            var url = await _firebaseService.UploadImageToFirebase(orderDetailImage.File, "OrderDetail in Order " + order.Id, orderDetailToAddImg.Id, "Order detail image - " + num);
-                            if (url != null)
+                            if (orderDetailImage.File != null)
                             {
-                                AvatarImageViewModel tmp = new AvatarImageViewModel
+                                var url = await _firebaseService.UploadImageToFirebase(orderDetailImage.File, "OrderDetail in Order " + order.Id, orderDetailToAdd.Id, "Order detail image - " + num);
+                                if (url != null)
                                 {
-                                    Url = url,
-                                    Name = "Order detail image - " + num,
-                                    Note = orderDetailImage.Note,
-                                };
-                                listImageToAdd.Add(tmp);
+                                    AvatarImageViewModel tmp = new AvatarImageViewModel
+                                    {
+                                        Url = url,
+                                        Name = "Order detail image - " + num,
+                                        Note = orderDetailImage.Note,
+                                    };
+                                    listImageToAdd.Add(tmp);
+                                }
                             }
+                            num++;
                         }
-                        num++;
+                        orderDetailToAdd.Images = listImageToAdd;
+                        var orderDetailServices = orderDetailToAdd.OrderDetailServices.ToList();
+                        foreach(var orderDetailService in orderDetailServices)
+                        {
+                            var service = _serviceService.Get(x => x.IsActive && x.Id == orderDetailService.ServiceId).FirstOrDefault();
+                            if (service == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Service not found");
+                            orderDetailService.ServiceName = service.Name;
+                            orderDetailService.ServiceType = service.Type;
+                            orderDetailService.ServiceUrl = service.ImageUrl;
+
+                        }
+                        orderDetailToAdd.OrderDetailServices = orderDetailServices;
+                        orderDetailToUpdate.Add(orderDetailToAdd);
+                        index++;
                     }
-                    orderDetailToAddImg.Images = listImageToAdd;
-                    orderDetailToUpdate.Add(orderDetailToAddImg);
-                    index++;
+                    order.OrderDetails = orderDetailToUpdate;
+
+                    var result = await _firebaseService.SendNoti(description, customer.Id, customer.DeviceTokenId, null, order);
+
+
+                    //Dictionary<int, List<AvatarImageViewModel>> imagesOfOrder = new Dictionary<int, List<AvatarImageViewModel>>();
+                    //var orderDetails = model.OrderDetails;
+                    //int num = 0;
+                    //foreach (var orderDetail in orderDetails)
+                    //{
+                    //    var images = orderDetail.Images;
+                    //    foreach (var image in images)
+                    //    {
+                    //        var url = await _firebaseService.UploadImageToFirebase(image.File, "temp", order.Id, orderDetail.Id + "-" + num);
+                    //        if (url != null)
+                    //        {
+                    //            image.File = null;
+                    //            image.Url = url;
+                    //        }
+                    //        num++;
+                    //    }
+                    //    orderDetail.Images = images;
+                    //}
+                    //model.OrderDetails = orderDetails;
+
+                    //var result = await _firebaseService.SendNoti(description, customerId, registrationId, order.Id, null, model);
                 }
-                order.OrderDetails = orderDetailToUpdate;
-
-                var result = await _firebaseService.SendNoti(description, customer.Id, customer.DeviceTokenId, null, order);
-
-
-                //Dictionary<int, List<AvatarImageViewModel>> imagesOfOrder = new Dictionary<int, List<AvatarImageViewModel>>();
-                //var orderDetails = model.OrderDetails;
-                //int num = 0;
-                //foreach (var orderDetail in orderDetails)
-                //{
-                //    var images = orderDetail.Images;
-                //    foreach (var image in images)
-                //    {
-                //        var url = await _firebaseService.UploadImageToFirebase(image.File, "temp", order.Id, orderDetail.Id + "-" + num);
-                //        if (url != null)
-                //        {
-                //            image.File = null;
-                //            image.Url = url;
-                //        }
-                //        num++;
-                //    }
-                //    orderDetail.Images = images;
-                //}
-                //model.OrderDetails = orderDetails;
-
-                //var result = await _firebaseService.SendNoti(description, customerId, registrationId, order.Id, null, model);
+            }
+            catch(Exception e)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
             return order;
         }

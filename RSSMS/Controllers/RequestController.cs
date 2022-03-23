@@ -85,7 +85,7 @@ namespace RSSMS.API.Controllers
             return Ok(await _requestService.Update(id, model, accessToken));
         }
         /// <summary>
-        /// Delete Product
+        /// Delete request
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
