@@ -340,13 +340,18 @@ namespace RSSMS.DataService.Services
                             orderDetailService.ServiceName = service.Name;
                             orderDetailService.ServiceType = service.Type;
                             orderDetailService.ServiceUrl = service.ImageUrl;
-                            if(service.Type == 3 || service.Type == 2)
+                            if(service.Type == 3 || service.Type == 2 || service.Type == 1)
                             {
                                 mainServiceName = service.Name;
                                 mainServicePrice = service.Price;
                                 mainServiceType = service.Type;
                             }
-
+                            if(mainServiceType == null)
+                            {
+                                mainServiceName = service.Name;
+                                mainServicePrice = service.Price;
+                                mainServiceType = service.Type;
+                            }
                         }
 
                         orderDetailToAdd.ServiceName = mainServiceName;
