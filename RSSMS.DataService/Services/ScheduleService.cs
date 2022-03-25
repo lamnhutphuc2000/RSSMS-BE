@@ -85,7 +85,7 @@ namespace RSSMS.DataService.Services
         }
 
         public async Task<DynamicModelResponse<ScheduleViewModel>> Get(ScheduleSearchViewModel model, string[] fields, int page, int size, string accessToken)
-        {
+         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
@@ -101,21 +101,21 @@ namespace RSSMS.DataService.Services
                         .ThenInclude(request => request.Order)
                         .ThenInclude(order => order.OrderDetails)
                         .ThenInclude(orderDetail => orderDetail.Images);
-                var tmp = schedules.AsEnumerable().GroupBy(p => (Guid)p.Request.OrderId)
+                var tmp = schedules.AsEnumerable().GroupBy(p => (Guid)p.RequestId)
                                     .Select(g => new ScheduleViewModel
                                     {
                                         Id = g.First().Id,
-                                        OrderId = g.Key,
-                                        RequestId = g.First().RequestId,
+                                        OrderId = g.First().Request.OrderId,
+                                        RequestId = g.Key,
                                         RequestType = g.First().Request.Type,
                                         Order = _mapper.Map<OrderViewModel>(g.First().Request.Order),
-                                        Address = g.First().Request.Order.ReturnAddress,
+                                        Address = g.First().Address,
                                         Note = g.First().Note,
-                                        Status = g.First().Request.Order.Status,
+                                        Status = g.First().Request.Order != null ? g.First().Request.Order.Status : null,
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().ScheduleDay,
                                         ScheduleTime = g.First().ScheduleTime,
-                                        Users = Get(x => x.Request.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToList()
+                                        Users = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToList()
                                     });
                 result = tmp.AsEnumerable().GroupBy(p => (DateTime)p.ScheduleDay)
                     .Select(g => new ScheduleViewModel
@@ -134,18 +134,19 @@ namespace RSSMS.DataService.Services
                         .ThenInclude(request => request.Order)
                         .ThenInclude(order => order.OrderDetails)
                         .ThenInclude(orderDetail => orderDetail.Images);
-                result = schedules.AsEnumerable().GroupBy(p => (Guid)p.Request.OrderId)
+                result = schedules.AsEnumerable().GroupBy(p => (Guid)p.RequestId)
                                     .Select(g => new ScheduleViewModel
                                     {
                                         Id = g.First().Id,
-                                        OrderId = g.Key,
-                                        RequestId = g.First().RequestId,
-                                        Address = g.First().Request.Order.ReturnAddress,
+                                        OrderId = g.First().Request.OrderId,
+                                        RequestId = g.Key,
+                                        Address = g.First().Address,
                                         Note = g.First().Note,
-                                        Status = g.First().Request.Order.Status,
+                                        Status = g.First().Request.Order != null ? g.First().Request.Order.Status : null,
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().ScheduleDay,
-                                        Users = Get(x => x.Request.OrderId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToList()
+                                        ScheduleTime = g.First().ScheduleTime,
+                                        Users = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToList()
                                     }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             }
             if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");
