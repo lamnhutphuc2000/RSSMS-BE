@@ -11,7 +11,8 @@ namespace RSSMS.DataService.Models
         {
             Notifications = new HashSet<Notification>();
             Orders = new HashSet<Order>();
-            Requests = new HashSet<Request>();
+            RequestCreatedByNavigations = new HashSet<Request>();
+            RequestCustomers = new HashSet<Request>();
             Schedules = new HashSet<Schedule>();
             StaffAssignStorages = new HashSet<StaffAssignStorage>();
         }
@@ -19,7 +20,7 @@ namespace RSSMS.DataService.Models
         public Guid Id { get; set; }
         public Guid RoleId { get; set; }
         public string Name { get; set; }
-        public int? Gender { get; set; }
+        public int Gender { get; set; }
         public DateTime? Birthdate { get; set; }
         public string ImageUrl { get; set; }
         public string Address { get; set; }
@@ -34,7 +35,8 @@ namespace RSSMS.DataService.Models
         public virtual Role Role { get; set; }
         public virtual ICollection<Notification> Notifications { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
-        public virtual ICollection<Request> Requests { get; set; }
+        public virtual ICollection<Request> RequestCreatedByNavigations { get; set; }
+        public virtual ICollection<Request> RequestCustomers { get; set; }
         public virtual ICollection<Schedule> Schedules { get; set; }
         public virtual ICollection<StaffAssignStorage> StaffAssignStorages { get; set; }
     }

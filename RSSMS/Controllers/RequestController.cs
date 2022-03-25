@@ -57,8 +57,13 @@ namespace RSSMS.API.Controllers
         {
             return Ok(await _requestService.GetById(id));
         }
+        /// <summary>
+        /// Create request
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost]
-        [Authorize(Roles = "Delivery Staff, Customer")]
+        [Authorize(Roles = "Delivery Staff, Customer, Manager, Office Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(RequestCreateViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]

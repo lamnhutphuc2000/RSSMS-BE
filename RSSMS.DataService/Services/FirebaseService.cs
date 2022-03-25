@@ -16,7 +16,7 @@ namespace RSSMS.DataService.Services
     {
         Task<string> UploadImageToFirebase(string image, string type, Guid id, string name);
         Task<ResponseContent> SendNoti(string description, Guid receiverId, string registrationId, Guid? requestId, object data);
-        Task<ResponseContent> PushOrderNoti(string description, Guid SenderId, Guid orderId, Guid? requestId); // noti to manager when receive another order
+        Task<ResponseContent> PushOrderNoti(string description, Guid? orderId, Guid? requestId); // noti to manager when receive another order
 
         Task<ResponseContent> PushCancelRequestNoti(string description, Guid senderId);
     }
@@ -61,7 +61,7 @@ namespace RSSMS.DataService.Services
             return url;
         }
 
-        public async Task<ResponseContent> PushOrderNoti(string description, Guid SenderId, Guid orderId, Guid? requestId)
+        public async Task<ResponseContent> PushOrderNoti(string description, Guid? orderId, Guid? requestId)
         {
             var managers = _staffAssignStoragesService.Get(x => x.RoleName == "Manager").Include(x => x.Staff).Select(x => x.Staff).ToList();
             if (managers.Count == 0) return null;
@@ -76,7 +76,7 @@ namespace RSSMS.DataService.Services
                 Models.Notification noti = new Models.Notification
                 {
                     ReceiverId = managerId,
-                    Description = "Don hang moi da den!",
+                    Description = description,
                     CreatedDate = DateTime.Now,
                     IsRead = false
                 };

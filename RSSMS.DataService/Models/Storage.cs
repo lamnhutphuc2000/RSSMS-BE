@@ -11,6 +11,7 @@ namespace RSSMS.DataService.Models
         {
             Areas = new HashSet<Area>();
             Orders = new HashSet<Order>();
+            Requests = new HashSet<Request>();
             StaffAssignStorages = new HashSet<StaffAssignStorage>();
         }
 
@@ -26,6 +27,7 @@ namespace RSSMS.DataService.Models
 
         public virtual ICollection<Area> Areas { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
+        public virtual ICollection<Request> Requests { get; set; }
         public virtual ICollection<StaffAssignStorage> StaffAssignStorages { get; set; }
     }
 }

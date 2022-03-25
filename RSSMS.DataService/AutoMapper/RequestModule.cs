@@ -11,8 +11,8 @@ namespace RSSMS.DataService.AutoMapper
         {
             mc.CreateMap<Request, RequestViewModel>()
                 .ForMember(des => des.OrderName, opt => opt.MapFrom(src => src.Order.Name))
-                .ForMember(des => des.StorageId, opt => opt.MapFrom(src => src.Order.StorageId))
-                .ForMember(des => des.StorageName, opt => opt.MapFrom(src => src.Order.Storage != null ? src.Order.Storage.Name : null))
+                .ForMember(des => des.StorageId, opt => opt.MapFrom(src => src.Storage != null ? src.StorageId : src.Order != null ? src.Order.StorageId : null))
+                .ForMember(des => des.StorageName, opt => opt.MapFrom(src => src.Storage != null ? src.Storage.Name : src.Order != null ? src.Order.Storage.Name : null))
                 .ForMember(des => des.CustomerName, opt => opt.MapFrom(src => src.CreatedByNavigation.Role.Name == "Customer" ? src.CreatedByNavigation.Name : null))
                 .ForMember(des => des.CustomerPhone, opt => opt.MapFrom(src => src.CreatedByNavigation.Role.Name == "Customer" ? src.CreatedByNavigation.Phone : null))
                 .ForMember(des => des.DeliveryStaffName, opt => opt.MapFrom(src => src.CreatedByNavigation.Role.Name == "Delivery Staff" ? src.CreatedByNavigation.Name : null))

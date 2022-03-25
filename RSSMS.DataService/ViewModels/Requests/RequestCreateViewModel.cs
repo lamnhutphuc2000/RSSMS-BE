@@ -8,6 +8,7 @@ namespace RSSMS.DataService.ViewModels.Requests
     {
         public Guid? OrderId { get; set; }
         public decimal? TotalPrice { get; set; }
+        public Guid? CustomerId { get; set; }
         public string DeliveryAddress { get; set; }
         public string DeliveryTime { get; set; }
         public DateTime? DeliveryDate { get; set; }

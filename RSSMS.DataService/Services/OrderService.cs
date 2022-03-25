@@ -243,7 +243,7 @@ namespace RSSMS.DataService.Services
             
             
 
-            await _firebaseService.PushOrderNoti("New order arrive!", userId, order.Id, null);
+            await _firebaseService.PushOrderNoti("New order arrive!", order.Id, null);
 
             return model;
         }
@@ -490,6 +490,7 @@ namespace RSSMS.DataService.Services
                             orderDetail.FloorId = orderDetailToAssignFloor.FloorId;
                 }
                 order.OrderDetails = orderDetails;
+                order.Status = 2;
                 await UpdateAsync(order);
                 return _mapper.Map<OrderViewModel>(order);
             }

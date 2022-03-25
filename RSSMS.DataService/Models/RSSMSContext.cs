@@ -349,14 +349,24 @@ namespace RSSMS.DataService.Models
                     .IsUnicode(false);
 
                 entity.HasOne(d => d.CreatedByNavigation)
-                    .WithMany(p => p.Requests)
+                    .WithMany(p => p.RequestCreatedByNavigations)
                     .HasForeignKey(d => d.CreatedBy)
                     .HasConstraintName("FK_Request_Account");
+
+                entity.HasOne(d => d.Customer)
+                    .WithMany(p => p.RequestCustomers)
+                    .HasForeignKey(d => d.CustomerId)
+                    .HasConstraintName("FK_Request_Account1");
 
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.Requests)
                     .HasForeignKey(d => d.OrderId)
                     .HasConstraintName("FK_Request_Order");
+
+                entity.HasOne(d => d.Storage)
+                    .WithMany(p => p.Requests)
+                    .HasForeignKey(d => d.StorageId)
+                    .HasConstraintName("FK_Request_Storage");
             });
 
             modelBuilder.Entity<RequestDetail>(entity =>
