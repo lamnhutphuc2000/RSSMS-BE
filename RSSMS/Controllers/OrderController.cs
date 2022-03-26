@@ -94,7 +94,7 @@ namespace RSSMS.API.Controllers
         /// <summary>
         /// Update list orders status by id
         /// </summary>
-        /// <param name="orders"></param>
+        /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut]
         [Authorize(Roles = "Manager,Office staff, Customer, Delivery Staff")]
@@ -107,19 +107,20 @@ namespace RSSMS.API.Controllers
             return Ok(await _orderService.UpdateOrders(model));
         }
         /// <summary>
-        /// Done the order by order Id
+        /// Done the order by order Id and request id
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="orderId"></param>
+        /// <param name="requestId"></param>
         /// <returns></returns>
-        [HttpPut("done/{id}")]
+        [HttpPut("done/order/{orderId}/request/{requestId}")]
         [Authorize(Roles = "Manager,Office staff, Delivery Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Done(Guid id)
+        public async Task<IActionResult> Done(Guid orderId, Guid requestId)
         {
-            return Ok(await _orderService.Done(id));
+            return Ok(await _orderService.Done(orderId, requestId));
         }
         /// <summary>
         /// Cancel order by Id

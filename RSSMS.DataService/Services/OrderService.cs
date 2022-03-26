@@ -29,7 +29,7 @@ namespace RSSMS.DataService.Services
         Task<OrderByIdViewModel> GetById(Guid id);
         Task<OrderViewModel> Cancel(Guid id, OrderCancelViewModel model, string accessToken);
         Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken);
-        Task<OrderByIdViewModel> Done(Guid id);
+        Task<OrderByIdViewModel> Done(Guid orderId, Guid requestId);
         Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model);
         Task<OrderViewModel> AssignStorage(OrderAssignStorageViewModel model, string accessToken);
         Task<OrderViewModel> AssignFloor(OrderAssignFloorViewModel model, string accessToken);
@@ -239,9 +239,15 @@ namespace RSSMS.DataService.Services
             }
             order.OrderDetails = orderDetailToUpdate;
 
+            
+
+            var requests = order.Requests;
+            foreach(var request in requests)
+            {
+                if (request.Id == model.RequestId) request.Status = 3;
+            }
+            order.Requests = requests;
             await UpdateAsync(order);
-            
-            
 
             await _firebaseService.PushOrderNoti("New order arrive!", order.Id, null);
 
@@ -396,28 +402,32 @@ namespace RSSMS.DataService.Services
             return order;
         }
 
-        public async Task<OrderByIdViewModel> Done(Guid id)
+        public async Task<OrderByIdViewModel> Done(Guid orderId, Guid requestId)
         {
-            var order = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor).FirstOrDefaultAsync();
+            var order = await Get(x => x.Id == orderId && x.IsActive == true).Include(x => x.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
+                .Include(x => x.Requests).FirstOrDefaultAsync();
             if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-            //var orderDetails = order.OrderDetails;
-            //foreach (var orderDetail in orderDetails)
-            //{
-            //    if (orderDetail.Floor != null)
-            //    {
-            //        var boxOrderDetail = orderDetail.Floor;
-            //        orderDetail.
-            //        foreach (var box in boxOrderDetail)
-            //        {
-            //            box.IsActive = false;
-            //        }
-            //        orderDetail.Floor = boxOrderDetail;
-            //    }
-            //}
+
+            var requests = order.Requests;
+            foreach(var request in requests)
+            {
+                if (request.Id == requestId) request.Status = 3;
+            }
+            order.Requests = requests;
+
+
+            var orderDetails = order.OrderDetails;
+            foreach (var orderDetail in orderDetails)
+            {
+                if (orderDetail.FloorId != null)
+                {
+                    orderDetail.FloorId = null;
+                }
+            }
             order.Status = 6;
-            //order.OrderDetails = orderDetails;
+            order.OrderDetails = orderDetails;
             await UpdateAsync(order);
-            return await GetById(id);
+            return await GetById(orderId);
         }
 
         public async Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model)

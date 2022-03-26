@@ -328,7 +328,7 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.CancelReason).HasMaxLength(255);
 
-                entity.Property(e => e.CreatedDate).HasColumnType("date");
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.DeliveryAddress).HasMaxLength(255);
 

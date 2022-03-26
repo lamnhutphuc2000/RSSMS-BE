@@ -264,10 +264,15 @@ namespace RSSMS.DataService.Services
 
             if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request Id not matched");
 
-            var entity = await Get(x => x.Id == id && x.IsActive == true)/*.Include(x => x.OrderHistoryExtensions)*/.FirstOrDefaultAsync();
-            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
+            var request = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.Order).ThenInclude(order => order.OrderHistoryExtensions).FirstOrDefaultAsync();
+            if (request == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
 
-            var orderHistoryExtend = entity.Order.OrderHistoryExtensions.Where(x => x.RequestId == id).FirstOrDefault();
+            request.Status = 2;
+            request.IsPaid = model.IsPaid;
+            request.ModifiedBy = userId;
+            await UpdateAsync(request);
+
+            var orderHistoryExtend = request.Order.OrderHistoryExtensions.Where(x => x.RequestId == id).FirstOrDefault();
             if (orderHistoryExtend == null)
                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order extend not found");
             orderHistoryExtend.PaidDate = DateTime.Now;
@@ -276,6 +281,7 @@ namespace RSSMS.DataService.Services
 
             var order = _orderService.Get(x => x.Id == orderHistoryExtend.OrderId).FirstOrDefault();
             order.ReturnDate = orderHistoryExtend.ReturnDate;
+            order.IsPaid = model.IsPaid;
             order.ModifiedBy = userId;
             order.ModifiedDate = DateTime.Now;
             await _orderService.UpdateAsync(order);
