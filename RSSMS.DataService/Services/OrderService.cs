@@ -343,6 +343,7 @@ namespace RSSMS.DataService.Services
                         string mainServiceName = null;
                         decimal? mainServicePrice = null;
                         int? mainServiceType = null;
+                        string mainServiceUrl = null;
                         if (orderDetailToAdd.OrderDetailServices == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail service can not null");
                         var orderDetailServices = orderDetailToAdd.OrderDetailServices.ToList();
                         foreach(var orderDetailService in orderDetailServices)
@@ -357,6 +358,7 @@ namespace RSSMS.DataService.Services
                                 mainServiceName = service.Name;
                                 mainServicePrice = service.Price;
                                 mainServiceType = service.Type;
+                                mainServiceUrl = service.ImageUrl;
                             }
                             if(mainServiceType == null)
                             {
@@ -369,6 +371,7 @@ namespace RSSMS.DataService.Services
                         orderDetailToAdd.ServiceName = mainServiceName;
                         orderDetailToAdd.ServicePrice = mainServicePrice;
                         orderDetailToAdd.ServiceType = mainServiceType;
+                        orderDetailToAdd.ServiceImageUrl = mainServiceUrl;
                         orderDetailToAdd.OrderDetailServices = orderDetailServices;
                         orderDetailToUpdate.Add(orderDetailToAdd);
                         index++;
