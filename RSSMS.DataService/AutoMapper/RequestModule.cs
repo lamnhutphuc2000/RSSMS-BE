@@ -30,9 +30,8 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<RequestByIdViewModel, Request>();
             mc.CreateMap<Request, RequestByIdViewModel>()
-                .ForMember(des => des.CustomerId, opt => opt.MapFrom(src => src.CreatedByNavigation.Role.Name == "Customer" ? (Guid?)src.CreatedByNavigation.Id : null))
-                .ForMember(des => des.CustomerName, opt => opt.MapFrom(src => src.CreatedByNavigation.Role.Name == "Customer" ? src.CreatedByNavigation.Name : null))
-                .ForMember(des => des.CustomerPhone, opt => opt.MapFrom(src => src.CreatedByNavigation.Role.Name == "Customer" ? src.CreatedByNavigation.Phone : null))
+                .ForMember(des => des.CustomerName, opt => opt.MapFrom(src => src.Customer.Name))
+                .ForMember(des => des.CustomerPhone, opt => opt.MapFrom(src => src.Customer.Phone))
                 .ForMember(des => des.RequestDetails, otp => otp.MapFrom(src => src.RequestDetails))
             //.ForMember(des => des.OldReturnDate, otp => otp.MapFrom(src => src.Order.OrderHistoryExtensions.Count > 0 ? src.Order.OrderHistoryExtensions.Where.OldReturnDate : null))
             //.ForMember(des => des.OrderType, otp => otp.MapFrom(src => src.Order.OrderHistoryExtensions.Count > 0 ? src.Order.OrderHistoryExtensions.First().Order.TypeOrder : null))

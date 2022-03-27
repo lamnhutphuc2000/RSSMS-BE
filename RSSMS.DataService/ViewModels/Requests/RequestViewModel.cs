@@ -8,7 +8,7 @@ namespace RSSMS.DataService.ViewModels.Requests
     public class RequestViewModel
     {
         public static string[] Fields = {
-            "Id","OrderId","OrderName","UserId","Type","TypeOrder","Status","Note","DeliveryStaffName","DeliveryDate"
+            "Id","OrderId","OrderName","UserId","Type","TypeOrder","Status","Note","DeliveryStaffName","DeliveryDate","IsCustomerDelivery"
                 ,"StorageId","StorageName","DeliveryTime","DeliveryAddress","ReturnAddress","ReturnDate","ReturnTime","ReturnAddress"
                 ,"FromDate","ToDate","DeliveryStaffPhone"
                 ,"CustomerName","CustomerPhone","RequestDetails","Schedules","CreatedDate"
@@ -27,6 +27,8 @@ namespace RSSMS.DataService.ViewModels.Requests
         public int? TypeOrder { get; set; }
         [BindNever]
         public int? Status { get; set; }
+        [BindNever]
+        public bool? IsCustomerDelivery { get; set; }
         [BindNever]
         public string DeliveryStaffName { get; set; }
         [BindNever]
