@@ -37,12 +37,10 @@ namespace RSSMS.DataService.Services
         private readonly IFirebaseService _firebaseService;
         private readonly IStaffAssignStoragesService _staffAssignStoragesService;
         private readonly IOrderHistoryExtensionService _orderHistoryExtensionService;
-        private readonly IOrderService _orderService;
         public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper
             , IScheduleService scheduleService
             , IFirebaseService firebaseService, IStaffAssignStoragesService staffAssignStoragesService
             , IOrderHistoryExtensionService orderHistoryExtensionService
-            , IOrderService orderService
             ) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -50,7 +48,6 @@ namespace RSSMS.DataService.Services
             _firebaseService = firebaseService;
             _staffAssignStoragesService = staffAssignStoragesService;
             _orderHistoryExtensionService = orderHistoryExtensionService;
-            _orderService = orderService;
         }
 
         public async Task<RequestViewModel> Delete(Guid id)
@@ -197,20 +194,23 @@ namespace RSSMS.DataService.Services
                 return model;
             }
             Order order = null;
+            Request newRequest = null;
             if (model.Type == (int)RequestType.Return_Order) // rut do ve
             {
-                order = _orderService.Get(x => x.Id == model.OrderId && x.IsActive == true && x.CustomerId == userId)
-                    .Include(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).ThenInclude(taffAssignStorage => taffAssignStorage.Staff).FirstOrDefault();
-                if (order == null)
-                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-                if (order.Storage == null)
-                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not assigned yet");
                 request = _mapper.Map<Request>(model);
                 request.CreatedBy = userId;
-                request.Status = 0;
+                request.Status = 1;
                 await CreateAsync(request);
 
-                var staffAssignInStorage = order.Storage.StaffAssignStorages.Where(x => x.RoleName == "Manager" && x.IsActive == true).FirstOrDefault();
+
+                newRequest = Get(x => x.Id == request.Id && x.IsActive == true).Include(request => request.Order)
+                    .Include(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).ThenInclude(taffAssignStorage => taffAssignStorage.Staff).FirstOrDefault();
+                if (newRequest.Order == null)
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+                if (newRequest.Order.Storage == null)
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not assigned yet");
+
+                var staffAssignInStorage = newRequest.Order.Storage.StaffAssignStorages.Where(x => x.RoleName == "Manager" && x.IsActive == true).FirstOrDefault();
                 if (staffAssignInStorage == null) return model;
                 await _firebaseService.SendNoti("Customer " + userId + " take back the order: " + model.OrderId, userId, staffAssignInStorage.Staff.DeviceTokenId, request.Id, new
                 {
@@ -233,17 +233,19 @@ namespace RSSMS.DataService.Services
             }
 
             // customer huy don
-            order = _orderService.Get(x => x.Id == model.OrderId && x.IsActive == true && x.CustomerId == userId).Include(x => x.Storage).FirstOrDefault();
-            if (order == null)
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-            if (order.Storage == null)
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not assigned yet");
+            
             request = _mapper.Map<Request>(model);
             request.CreatedBy = userId;
             await CreateAsync(request);
-            order.RejectedReason = model.Note;
-            order.Status = 0;
-            await _orderService.UpdateAsync(order);
+            newRequest = Get(x => x.Id == request.Id && x.IsActive == true).Include(request => request.Order)
+                    .Include(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).ThenInclude(taffAssignStorage => taffAssignStorage.Staff).FirstOrDefault();
+            if (newRequest.Order == null)
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+            if (newRequest.Order.Storage == null)
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not assigned yet");
+            newRequest.Order.RejectedReason = model.Note;
+            newRequest.Order.Status = 0;
+            await UpdateAsync(newRequest);
             
 
             var manager = order.Storage.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager" && x.IsActive == true).FirstOrDefault();
@@ -279,12 +281,13 @@ namespace RSSMS.DataService.Services
             orderHistoryExtend.ModifiedBy = userId;
             await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
 
-            var order = _orderService.Get(x => x.Id == orderHistoryExtend.OrderId).FirstOrDefault();
+            var order = orderHistoryExtend.Order;
             order.ReturnDate = orderHistoryExtend.ReturnDate;
             order.IsPaid = model.IsPaid;
             order.ModifiedBy = userId;
             order.ModifiedDate = DateTime.Now;
-            await _orderService.UpdateAsync(order);
+            orderHistoryExtend.Order = order;
+            await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
 
             return _mapper.Map<RequestUpdateViewModel>(model);
         }

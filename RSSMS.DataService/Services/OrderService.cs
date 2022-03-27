@@ -26,7 +26,7 @@ namespace RSSMS.DataService.Services
         Task<OrderCreateViewModel> Create(OrderCreateViewModel model, string accessToken);
         Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, IList<int> OrderStatuses, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken);
         Task<OrderUpdateViewModel> Update(Guid id, OrderUpdateViewModel model);
-        Task<OrderByIdViewModel> GetById(Guid id);
+        Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes);
         Task<OrderViewModel> Cancel(Guid id, OrderCancelViewModel model, string accessToken);
         Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken);
         Task<OrderByIdViewModel> Done(Guid orderId, Guid requestId);
@@ -41,10 +41,12 @@ namespace RSSMS.DataService.Services
         private readonly IStorageService _storageService;
         private readonly IAccountsService _accountService;
         private readonly IServicesService _serviceService;
+        private readonly IRequestService _requestService;
 
         public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository
             ,IFirebaseService firebaseService, IAccountsService accountService,
             IServicesService serviceService,
+            IRequestService requestService,
             IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -52,13 +54,21 @@ namespace RSSMS.DataService.Services
             _storageService = storageService;
             _accountService = accountService;
             _serviceService = serviceService;
+            _requestService = requestService;
         }
-        public async Task<OrderByIdViewModel> GetById(Guid id)
+        public async Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
+                .Include(order => order.Requests)
                 .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
                 .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
+            var request = result.Requests;
+            if (requestTypes.Count > 0)
+            {
+                request = request.Where(request => requestTypes.Contains((int)request.Type)).ToList();
+                result.Requests = request;
+            }
 
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
             return result;
@@ -238,16 +248,12 @@ namespace RSSMS.DataService.Services
                 index++;
             }
             order.OrderDetails = orderDetailToUpdate;
-
-            
-
-            var requests = order.Requests;
-            foreach(var request in requests)
-            {
-                if (request.Id == model.RequestId) request.Status = 3;
-            }
-            order.Requests = requests;
             await UpdateAsync(order);
+            Request request = _requestService.Get(request => request.Id == model.RequestId).FirstOrDefault();
+            request.OrderId = order.Id;
+            request.Status = 3;
+
+            await _requestService.UpdateAsync(request);
 
             await _firebaseService.PushOrderNoti("New order arrive!", order.Id, null);
 
@@ -427,7 +433,7 @@ namespace RSSMS.DataService.Services
             order.Status = 6;
             order.OrderDetails = orderDetails;
             await UpdateAsync(order);
-            return await GetById(orderId);
+            return await GetById(orderId, new List<int>());
         }
 
         public async Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model)

@@ -55,9 +55,9 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(OrderByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetById(Guid id)
+        public async Task<IActionResult> GetById(Guid id, [FromQuery] IList<int> requestTypes)
         {
-            return Ok(await _orderService.GetById(id));
+            return Ok(await _orderService.GetById(id, requestTypes));
         }
         /// <summary>
         /// Create new order
