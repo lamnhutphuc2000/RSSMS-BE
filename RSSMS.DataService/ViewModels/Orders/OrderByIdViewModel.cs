@@ -13,6 +13,8 @@ namespace RSSMS.DataService.ViewModels.Orders
         public Guid? Id { get; set; }
         [JsonProperty("customerId")]
         public Guid? CustomerId { get; set; }
+        [JsonProperty("requestId")]
+        public Guid? RequestId { get; set; }
         [JsonProperty("customerName")]
         public string CustomerName { get; set; }
         [JsonProperty("customerPhone")]

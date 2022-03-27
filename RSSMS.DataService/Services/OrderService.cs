@@ -374,7 +374,7 @@ namespace RSSMS.DataService.Services
                         index++;
                     }
                     order.OrderDetails = orderDetailToUpdate;
-
+                    order.RequestId = model.RequestId;
                     var result = await _firebaseService.SendNoti(description, customer.Id, customer.DeviceTokenId, null, order);
 
 

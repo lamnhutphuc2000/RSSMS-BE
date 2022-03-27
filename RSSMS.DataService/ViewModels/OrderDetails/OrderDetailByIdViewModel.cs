@@ -23,6 +23,8 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public string ServiceName { get; set; }
         [JsonProperty("servicePrice")]
         public decimal? ServicePrice { get; set; }
+        [JsonProperty("serviceImageUrl")]
+        public string ServiceImageUrl { get; set; }
         [JsonProperty("images")]
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
         [JsonProperty("orderDetailServices")]

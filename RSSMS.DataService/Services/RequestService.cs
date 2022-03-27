@@ -65,13 +65,16 @@ namespace RSSMS.DataService.Services
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-            var requests = Get(x => x.IsActive == true).Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
+            var requests = Get(x => x.IsActive == true)
+                .Include(request => request.Customer)
+                .Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
                 .Include(x => x.Storage)
                 .Include(x => x.Order)
                 .ThenInclude(order => order.Storage);
             if (model.FromDate != null && model.ToDate != null)
             {
                 requests = Get(x => x.IsActive == true && x.DeliveryDate.Value.Date >= model.FromDate.Value.Date && x.DeliveryDate <= model.ToDate.Value.Date)
+                    .Include(request => request.Customer)
                     .Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
                     .Include(x => x.Storage)
                     .Include(x => x.Order)
@@ -82,17 +85,20 @@ namespace RSSMS.DataService.Services
             {
                 if (RequestTypes.Count > 0)
                 {
-                    requests = Get(x => x.IsActive == true).Where(x => RequestTypes.Contains((int)x.Type)).Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
-                    .Include(x => x.Storage)
-                     .Include(x => x.Order)
-                    .ThenInclude(order => order.Storage);
+                    requests = requests.Where(x => RequestTypes.Contains((int)x.Type))
+                        .Include(request => request.Customer)
+                        .Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
+                        .Include(x => x.Storage)
+                        .Include(x => x.Order).ThenInclude(order => order.Storage);
                 }
             }
             if (role == "Manager")
             {
                 var storageIds = _staffAssignStoragesService.Get(x => x.StaffId == userId).Select(a => a.StorageId).ToList();
                 var staff = _staffAssignStoragesService.Get(x => storageIds.Contains(x.StorageId)).Select(a => a.StaffId).ToList();
-                requests = requests.Where(x => staff.Contains((Guid)x.CreatedBy) || x.CreatedBy == userId || x.CreatedByNavigation.Role.Name == "Customer").Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
+                requests = requests.Where(x => staff.Contains((Guid)x.CreatedBy) || x.CreatedBy == userId || x.CreatedByNavigation.Role.Name == "Customer")
+                    .Include(request => request.Customer)
+                    .Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
                     .Include(x => x.Storage)
                     .Include(x => x.Order)
                     .ThenInclude(order => order.Storage);
@@ -100,13 +106,19 @@ namespace RSSMS.DataService.Services
 
             if (role == "Delivery Staff")
             {
-                requests = requests.Where(x => x.CreatedBy == userId).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages).Include(x => x.Storage).Include(x => x.Order)
-                .ThenInclude(x => x.Storage);
+                requests = requests.Where(x => x.CreatedBy == userId)
+                    .Include(request => request.Customer)
+                    .Include(a => a.Schedules)
+                    .Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages).Include(x => x.Storage).Include(x => x.Order)
+                    .ThenInclude(x => x.Storage);
             }
 
             if (role == "Customer")
             {
-                requests = requests.Where(x => x.CreatedBy == userId).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
+                requests = requests.Where(x => x.CreatedBy == userId || x.Customer.Id == userId)
+                    .Include(request => request.Customer)
+                    .Include(a => a.Schedules)
+                    .Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
                     .Include(x => x.Storage)
                     .Include(x => x.Order)
                     .ThenInclude(x => x.Storage);
@@ -137,6 +149,9 @@ namespace RSSMS.DataService.Services
                .ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider)
                .FirstOrDefaultAsync();
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
+            if (result.Type != 2) return result;
+            var orderHistoryExtension = _orderHistoryExtensionService.Get(x => x.RequestId == result.Id).First();
+            result.TotalPrice = orderHistoryExtension.TotalPrice;
             return result;
         }
 
