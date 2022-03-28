@@ -6,7 +6,9 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -106,6 +108,18 @@ namespace RSSMS.DataService.Services
             }
         }
 
+        public static void CopyTo(Stream src, Stream dest)
+        {
+            byte[] bytes = new byte[4096];
+
+            int cnt;
+
+            while ((cnt = src.Read(bytes, 0, bytes.Length)) != 0)
+            {
+                dest.Write(bytes, 0, cnt);
+            }
+        }
+
         public async Task<ResponseContent> SendNoti(string description, Guid receiverId, string registrationId, Guid? requestId, object data)
         {
             var now = DateTime.Now;
@@ -119,6 +133,19 @@ namespace RSSMS.DataService.Services
             await _notificationService.CreateAsync(noti);
 
             string jsonConvert = JsonConvert.SerializeObject(data);
+
+            string compressString;
+            var bytes = Encoding.Unicode.GetBytes(jsonConvert);
+            using (var msi = new MemoryStream(bytes))
+            using (var mso = new MemoryStream())
+            {
+                using (var gs = new GZipStream(mso, CompressionMode.Compress))
+                {
+                    msi.CopyTo(gs);
+                }
+                compressString = Convert.ToBase64String(mso.ToArray());
+            }
+
             using (var sender = new Sender("AAAAry7VzWE:APA91bEFLYrdoliXt0cRdQtnnRNOdxhYXP0mMTOSrgOvcqhULEGKWwUJQIP7phbTXq54zGYD0pzRpDNXfkaSDwd36q088cKkT-CiQz-IBIdLC2ki9zuyK865yiHMG1G6q403iW9fsaKR"))
             {
                 var message = new Message
@@ -129,9 +156,9 @@ namespace RSSMS.DataService.Services
                         Title = "From RSSMS",
                         Body = description
                     },
-                    Data = new Dictionary<string, string>
+                    Data = new Dictionary<string, object>
                     {
-                        {"data",jsonConvert },
+                        {"data",compressString },
                         {"NotiId",noti.Id.ToString() }
                     }
                 };

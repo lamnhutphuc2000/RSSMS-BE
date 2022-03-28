@@ -15,8 +15,11 @@ using RSSMS.DataService.ViewModels.Services;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
@@ -295,8 +298,32 @@ namespace RSSMS.DataService.Services
             return _mapper.Map<OrderViewModel>(entity);
         }
 
+        //public static void CopyTo(Stream src, Stream dest)
+        //{
+        //    byte[] bytes = new byte[4096];
+
+        //    int cnt;
+
+        //    while ((cnt = src.Read(bytes, 0, bytes.Length)) != 0)
+        //    {
+        //        dest.Write(bytes, 0, cnt);
+        //    }
+        //}
+
         public async Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken)
         {
+            //string chuot;
+            //var bytes = Convert.FromBase64String("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");
+            //using (var msi = new MemoryStream(bytes))
+            //using (var mso = new MemoryStream())
+            //{
+            //    using (var gs = new GZipStream(msi, CompressionMode.Decompress))
+            //    {
+            //        gs.CopyTo(mso);
+            //    }
+            //    chuot = Encoding.Unicode.GetString(mso.ToArray());
+            //}
+
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
