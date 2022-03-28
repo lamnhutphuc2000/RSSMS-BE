@@ -92,6 +92,8 @@ namespace RSSMS.DataService.Services
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
             (int, IQueryable<ScheduleViewModel>) result = (0, null);
 
+            if(model.DateFrom == null || model.DateTo == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Date from and date to null");
+
             if (role == "Delivery Staff")
             {
                 var schedules = Get(x => x.IsActive == true && x.UserId == userId)
