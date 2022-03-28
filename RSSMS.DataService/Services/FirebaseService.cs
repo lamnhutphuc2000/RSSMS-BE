@@ -108,15 +108,33 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public static void CopyTo(Stream src, Stream dest)
+        //public static void CopyTo(Stream src, Stream dest)
+        //{
+        //    byte[] bytes = new byte[4096];
+
+        //    int cnt;
+
+        //    while ((cnt = src.Read(bytes, 0, bytes.Length)) != 0)
+        //    {
+        //        dest.Write(bytes, 0, cnt);
+        //    }
+        //}
+
+        public static byte[] Compress(byte[] input)
         {
-            byte[] bytes = new byte[4096];
-
-            int cnt;
-
-            while ((cnt = src.Read(bytes, 0, bytes.Length)) != 0)
+            using (var result = new MemoryStream())
             {
-                dest.Write(bytes, 0, cnt);
+                var lengthBytes = BitConverter.GetBytes(input.Length);
+                result.Write(lengthBytes, 0, 4);
+
+                using (var compressionStream = new GZipStream(result,
+                    CompressionMode.Compress))
+                {
+                    compressionStream.Write(input, 0, input.Length);
+                    compressionStream.Flush();
+
+                }
+                return result.ToArray();
             }
         }
 
@@ -134,17 +152,20 @@ namespace RSSMS.DataService.Services
 
             string jsonConvert = JsonConvert.SerializeObject(data);
 
-            string compressString;
-            var bytes = Encoding.Unicode.GetBytes(jsonConvert);
-            using (var msi = new MemoryStream(bytes))
-            using (var mso = new MemoryStream())
-            {
-                using (var gs = new GZipStream(mso, CompressionMode.Compress))
-                {
-                    msi.CopyTo(gs);
-                }
-                compressString = Convert.ToBase64String(mso.ToArray());
-            }
+            byte[] encoded = Encoding.UTF8.GetBytes(jsonConvert);
+            byte[] compressed = Compress(encoded);
+            string compressString =  Convert.ToBase64String(compressed);
+            //string compressString;
+            //var bytes = Encoding.Unicode.GetBytes(jsonConvert);
+            //using (var msi = new MemoryStream(bytes))
+            //using (var mso = new MemoryStream())
+            //{
+            //    using (var gs = new GZipStream(mso, CompressionMode.Compress))
+            //    {
+            //        msi.CopyTo(gs);
+            //    }
+            //    compressString = Convert.ToBase64String(mso.ToArray());
+            //}
 
             using (var sender = new Sender("AAAAry7VzWE:APA91bEFLYrdoliXt0cRdQtnnRNOdxhYXP0mMTOSrgOvcqhULEGKWwUJQIP7phbTXq54zGYD0pzRpDNXfkaSDwd36q088cKkT-CiQz-IBIdLC2ki9zuyK865yiHMG1G6q403iW9fsaKR"))
             {

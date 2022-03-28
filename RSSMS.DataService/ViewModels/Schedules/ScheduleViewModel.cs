@@ -15,8 +15,8 @@ namespace RSSMS.DataService.ViewModels.Schedules
         public DateTime ScheduleDay { get; set; }
         public string ScheduleTime { get; set; }
         public int? RequestType { get; set; }
-        public virtual List<RequestViewModel> Requests { get; set; }
-        public virtual RequestViewModel Request { get; set; }
+        public virtual List<RequestScheduleViewModel> Requests { get; set; }
+        public virtual RequestScheduleViewModel Request { get; set; }
         public string Address { get; set; }
         public string Note { get; set; }
 

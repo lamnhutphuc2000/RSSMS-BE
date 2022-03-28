@@ -109,7 +109,7 @@ namespace RSSMS.DataService.Services
                                         OrderId = g.First().Request.OrderId,
                                         RequestId = g.Key,
                                         RequestType = g.First().Request.Type,
-                                        Request = _mapper.Map<RequestViewModel>(g.First().Request),
+                                        Request = _mapper.Map<RequestScheduleViewModel>(g.First().Request),
                                         Address = g.First().Address,
                                         Note = g.First().Note,
                                         Status = g.First().Request.Order != null ? g.First().Request.Order.Status : null,
@@ -143,7 +143,7 @@ namespace RSSMS.DataService.Services
                                         RequestId = g.Key,
                                         Address = g.First().Address,
                                         Note = g.First().Note,
-                                        Request = _mapper.Map<RequestViewModel>(g.First().Request),
+                                        Request = _mapper.Map<RequestScheduleViewModel>(g.First().Request),
                                         Status = g.First().Request.Order != null ? g.First().Request.Order.Status : null,
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().ScheduleDay,
@@ -153,7 +153,7 @@ namespace RSSMS.DataService.Services
             }
             if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");
-
+            var meo = result.Item2.ToList();
             var rs = new DynamicModelResponse<ScheduleViewModel>
             {
 

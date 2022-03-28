@@ -47,6 +47,16 @@ namespace RSSMS.DataService.AutoMapper
             //    opt.PreCondition(src => src.OrderHistoryExtensions.Count > 0);
             //    opt.MapFrom(src => (src.OrderHistoryExtensions.First().ReturnDate - src.OrderHistoryExtensions.First().OldReturnDate).Value.Days);
             //});
+
+            mc.CreateMap<Request, RequestScheduleViewModel>()
+               .ForMember(des => des.OrderName, opt => opt.MapFrom(src => src.Order.Name))
+               .ForMember(des => des.StorageId, opt => opt.MapFrom(src => src.Storage != null ? src.StorageId : src.Order != null ? src.Order.StorageId : null))
+               .ForMember(des => des.StorageName, opt => opt.MapFrom(src => src.Storage != null ? src.Storage.Name : src.Order != null ? src.Order.Storage.Name : null))
+               .ForMember(des => des.CustomerName, opt => opt.MapFrom(src => src.Customer.Name))
+               .ForMember(des => des.CustomerPhone, opt => opt.MapFrom(src => src.Customer.Phone))
+               .ForMember(des => des.DeliveryStaffName, opt => opt.MapFrom(src => src.CreatedByNavigation.Role.Name == "Delivery Staff" ? src.CreatedByNavigation.Name : null))
+               .ForMember(des => des.DeliveryStaffPhone, otp => otp.MapFrom(src => src.CreatedByNavigation.Role.Name == "Delivery Staff" ? src.CreatedByNavigation.Phone : null));
+
         }
     }
 }
