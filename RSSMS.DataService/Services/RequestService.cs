@@ -219,7 +219,7 @@ namespace RSSMS.DataService.Services
 
 
                 newRequest = Get(x => x.Id == request.Id && x.IsActive == true).Include(request => request.Order)
-                    .Include(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).ThenInclude(taffAssignStorage => taffAssignStorage.Staff).FirstOrDefault();
+                    .ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).ThenInclude(taffAssignStorage => taffAssignStorage.Staff).FirstOrDefault();
                 if (newRequest.Order == null)
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
                 if (newRequest.Order.Storage == null)
@@ -284,7 +284,7 @@ namespace RSSMS.DataService.Services
             var request = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.Order).ThenInclude(order => order.OrderHistoryExtensions).FirstOrDefaultAsync();
             if (request == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
 
-            request.Status = 2;
+            request.Status = 3;
             request.IsPaid = model.IsPaid;
             request.ModifiedBy = userId;
             await UpdateAsync(request);

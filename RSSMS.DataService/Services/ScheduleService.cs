@@ -9,6 +9,7 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Accounts;
 using RSSMS.DataService.ViewModels.Orders;
+using RSSMS.DataService.ViewModels.Requests;
 using RSSMS.DataService.ViewModels.Schedules;
 using System;
 using System.Collections.Generic;
@@ -108,20 +109,20 @@ namespace RSSMS.DataService.Services
                                         OrderId = g.First().Request.OrderId,
                                         RequestId = g.Key,
                                         RequestType = g.First().Request.Type,
-                                        Order = _mapper.Map<OrderViewModel>(g.First().Request.Order),
+                                        Request = _mapper.Map<RequestViewModel>(g.First().Request),
                                         Address = g.First().Address,
                                         Note = g.First().Note,
                                         Status = g.First().Request.Order != null ? g.First().Request.Order.Status : null,
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().ScheduleDay,
                                         ScheduleTime = g.First().ScheduleTime,
-                                        Users = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToList()
+                                        Accounts = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToList()
                                     });
                 result = tmp.AsEnumerable().GroupBy(p => (DateTime)p.ScheduleDay)
                     .Select(g => new ScheduleViewModel
                     {
                         ScheduleDay = g.Key,
-                        Orders = g.Where(x => x.ScheduleDay == g.Key).Select(x => x.Order).ToList()
+                        Requests = g.Where(x => x.ScheduleDay == g.Key).Select(x => x.Request).ToList()
                     }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             }
             else
@@ -142,11 +143,12 @@ namespace RSSMS.DataService.Services
                                         RequestId = g.Key,
                                         Address = g.First().Address,
                                         Note = g.First().Note,
+                                        Request = _mapper.Map<RequestViewModel>(g.First().Request),
                                         Status = g.First().Request.Order != null ? g.First().Request.Order.Status : null,
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().ScheduleDay,
                                         ScheduleTime = g.First().ScheduleTime,
-                                        Users = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToList()
+                                        Accounts = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToList()
                                     }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             }
             if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");

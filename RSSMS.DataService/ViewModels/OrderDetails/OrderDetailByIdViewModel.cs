@@ -17,6 +17,8 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public decimal? Width { get; set; }
         [JsonProperty("length")]
         public decimal? Length { get; set; }
+        [JsonProperty("serviceId")]
+        public Guid? ServiceId { get; set; }
         [JsonProperty("serviceType")]
         public int? ServiceType { get; set; }
         [JsonProperty("serviceName")]
