@@ -6,5 +6,6 @@ namespace RSSMS.DataService.ViewModels.Requests
     {
         public Guid Id { get; set; }
         public bool IsPaid { get; set; }
+        public int? Status { get; set; }
     }
 }
