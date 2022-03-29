@@ -57,6 +57,8 @@ namespace RSSMS.DataService.ViewModels.Requests
         public string CancelByPhone { get; set; }
         [JsonProperty("createDate")]
         public DateTime? CreateDate { get; set; }
+        [JsonProperty("cancelDate")]
+        public DateTime? CancelDate { get; set; }
         [JsonProperty("orderType")]
         public int? OrderType { get; set; }
         [JsonProperty("durationDays")]

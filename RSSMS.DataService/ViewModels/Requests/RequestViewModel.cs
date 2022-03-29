@@ -11,7 +11,7 @@ namespace RSSMS.DataService.ViewModels.Requests
             "Id","OrderId","OrderName","UserId","Type","TypeOrder","Status","Note","DeliveryStaffName","DeliveryDate","IsCustomerDelivery"
                 ,"StorageId","StorageName","DeliveryTime","DeliveryAddress","ReturnAddress","ReturnDate","ReturnTime","ReturnAddress"
                 ,"FromDate","ToDate","DeliveryStaffPhone"
-                ,"CustomerName","CustomerPhone","RequestDetails","Schedules","CreatedDate"
+                ,"CustomerName","CustomerPhone","RequestDetails","Schedules","CreatedDate","CancelDate"
         };
         [BindNever]
         public Guid Id { get; set; }
@@ -59,6 +59,8 @@ namespace RSSMS.DataService.ViewModels.Requests
         public DateTime? ToDate { get; set; }
         [BindNever]
         public string Note { get; set; }
+        [BindNever]
+        public DateTime? CancelDate { get; set; }
         [BindNever]
         public DateTime? CreatedDate { get; set; }
         [BindNever]
