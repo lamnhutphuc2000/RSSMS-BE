@@ -33,6 +33,11 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<OrderDetailByIdViewModel, OrderDetail>();
 
             mc.CreateMap<OrderDetail, OrderDetailInFloorViewModel>()
+                .ForMember(des => des.ServiceId, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.Id : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2).First().Service.Id))
+                .ForMember(des => des.ServiceType, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.Type : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2).First().Service.Type))
+                .ForMember(des => des.ServiceName, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.Name : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2).First().Service.Name))
+                .ForMember(des => des.ServicePrice, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.Price : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2).First().Service.Price))
+                .ForMember(des => des.ServiceImageUrl, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.ImageUrl : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2).First().Service.ImageUrl))
                 .ForMember(des => des.CustomerName, opt => opt.MapFrom(src => src.Order.Customer.Name))
                 .ForMember(des => des.OrderName, opt => opt.MapFrom(src => src.Order.Name))
                 .ForMember(des => des.OrderStatus, opt => opt.MapFrom(src => src.Order.Status))
