@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
@@ -324,6 +326,8 @@ namespace RSSMS.DataService.Models
                 entity.ToTable("Request");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.CancelDate).HasColumnType("datetime");
 
                 entity.Property(e => e.CancelReason).HasMaxLength(255);
 

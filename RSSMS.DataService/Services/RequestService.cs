@@ -165,21 +165,25 @@ namespace RSSMS.DataService.Services
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
             Request request = null;
-            if (role == "Delivery Staff" && model.Type == (int)RequestType.Cancel_Order) // huy lich giao hang
+            if (role == "Delivery Staff" && model.Type == (int)RequestType.Delivery_Cancel_Schedule) // huy lich giao hang
             {
-                var schedules = _scheduleService.Get(x => x.ScheduleDay.Date == model.CancelDay.Value.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).ToList();
+                var schedules = _scheduleService.Get(x => x.ScheduleDay.Date == model.CancelDay.Value.Date && x.IsActive == true && x.UserId == userId).Include(a => a.User).Include(x => x.Request).ToList();
                 if (schedules.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Schedule not found");
                 foreach (var schedule in schedules)
                 {
                     request = _mapper.Map<Request>(model);
                     request.OrderId = schedule.Request.OrderId;
                     request.CreatedBy = userId;
-                    request.Status = 0;
+                    request.Status = 1;
+                    request.Type = (int)RequestType.Delivery_Cancel_Schedule;
+                    request.CancelDate = model.CancelDay;
                     await CreateAsync(request);
 
+                    var oldRequest = schedule.Request;
+                    oldRequest.Status = 6;
+
                     schedule.IsActive = false;
-                    //schedule.Status = 1;
-                    schedule.RequestId = request.Id;
+                    schedule.Request = oldRequest;
                     await _scheduleService.UpdateAsync(schedule);
                 }
                 var user = schedules.Select(x => x.User).Where(x => x.Id == userId).FirstOrDefault();

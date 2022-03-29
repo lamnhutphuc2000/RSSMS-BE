@@ -38,19 +38,21 @@ namespace RSSMS.DataService.Services
         Task<AccountsViewModel> Update(Guid id, AccountsUpdateViewModel model);
         Task<AccountsViewModel> Delete(Guid id);
         Task<TokenViewModel> CheckLogin(string firebaseID, string deviceToken);
-        Task<List<AccountsViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName);
+        Task<List<AccountsViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes);
     }
     public class AccountsService : BaseService<Account>, IAccountsService
     {
         private readonly IMapper _mapper;
         private readonly IStaffAssignStoragesService _staffAssignStoragesService;
         private readonly IFirebaseService _firebaseService;
+        private readonly IScheduleService _scheduleService;
         private readonly static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
-        public AccountsService(IUnitOfWork unitOfWork, IAccountsRepository repository, IMapper mapper, IStaffAssignStoragesService staffAssignStoragesService, IFirebaseService firebaseService) : base(unitOfWork, repository)
+        public AccountsService(IUnitOfWork unitOfWork, IAccountsRepository repository, IMapper mapper, IStaffAssignStoragesService staffAssignStoragesService, IFirebaseService firebaseService, IScheduleService scheduleService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffAssignStoragesService = staffAssignStoragesService;
             _firebaseService = firebaseService;
+            _scheduleService = scheduleService;
         }
 
 
@@ -126,15 +128,7 @@ namespace RSSMS.DataService.Services
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
             var user = await Get(x => x.Id == Guid.Parse(uid)).Include(x => x.Role).FirstOrDefaultAsync();
-            DateTime? scheduleDay = null;
-            ICollection<string> deliveryTimes = null;
-            if (model.SheduleDay != null && model.DeliveryTimes != null)
-            {
-                scheduleDay = model.SheduleDay;
-                deliveryTimes = model.DeliveryTimes;
-            }
-            model.SheduleDay = null;
-            model.DeliveryTimes = null;
+
             var users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin")).Include(x => x.Role);
             if (user.Role.Name == "Manager")
             {
@@ -146,41 +140,6 @@ namespace RSSMS.DataService.Services
             if (role == "Office Staff")
                 users = users.Where(x => x.Role.Name == "Customer").Include(x => x.Role);
 
-            //if (storageId == null)
-            //{
-            //    var staff = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer") && !x.Role.Name.Equals("Manager") && x.StaffAssignStorages.Count == 0);
-            //    users = staff.ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
-            //        .DynamicFilter(model);
-            //    if (user.Role.Name == "Admin")
-            //    {
-            //        var manager = Get(x => x.IsActive == true && x.Role.Name.Equals("Manager"));
-            //        users = staff.Union(manager).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
-            //        .DynamicFilter(model);
-            //    }
-
-            //}
-            //if (storageId != null)
-            //{
-            //    users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
-            //        .Where(x => x.StaffAssignStorages.Any(a => a.StorageId == storageId && a.IsActive == true)).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
-            //        .DynamicFilter(model);
-            //}
-            //if (orderId != null)
-            //{
-            //    var order = _orderService.Get(a => a.Id == orderId).FirstOrDefault();
-            //    var deliveryTime = order.DeliveryTime;
-            //    var deliveryDate = order.DeliveryDate;
-            //    var returnDate = order.ReturnDate;
-            //    var returnTime = order.ReturnTime;
-            //    users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin") && !x.Role.Name.Equals("Customer"))
-            //        .Where(x => x.Schedules.Count == 0 || (!x.Schedules.Any(a => a.Request.OrderId == orderId && a.IsActive == true && a.Request.IsActive == true) && (!x.Schedules.Any(a => a.Request.OrderId != orderId && a.IsActive == true && a.Request.IsActive == true && a.ScheduleTime == deliveryTime && a.ScheduleDay == deliveryDate) && (!x.Schedules.Any(a => a.Request.OrderId != orderId && a.IsActive == true && a.ScheduleTime == returnTime && a.ScheduleDay == returnDate))))).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
-            //        .DynamicFilter(model);
-            //}
-            //if (scheduleDay != null && deliveryTimes != null)
-            //{
-            //    var usersInDelivery = _scheduleService.Get(x => scheduleDay.Value.Date == x.ScheduleDay.Value.Date && deliveryTimes.Contains(x.ScheduleTime) && x.IsActive == true).Select(schedule => schedule.UserId).Distinct().ToList();
-            //    users = users.Where(x => !usersInDelivery.Contains(x.Id));
-            //}
 
             var result = users.ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model).PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
@@ -437,23 +396,29 @@ namespace RSSMS.DataService.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<List<AccountsViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName)
+        public async Task<List<AccountsViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-            var staffs = Get(x => x.IsActive == true && x.Role.Name != "Admin" && x.Role.Name != "Customer").Include(x => x.StaffAssignStorages);
-            if (roleName.Count > 0) staffs = Get(x => x.IsActive == true && roleName.Contains(x.Role.Name)).Include(x => x.StaffAssignStorages);
+
+            var staffs = Get(x => x.IsActive == true && x.Role.Name != "Admin" && x.Role.Name != "Customer").Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
+            if (roleName.Count > 0) staffs = Get(x => x.IsActive == true && roleName.Contains(x.Role.Name)).Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
             if (role == "Manager")
-                staffs = staffs.Where(x => x.Role.Name != "Manager").Include(x => x.StaffAssignStorages);
+                staffs = staffs.Where(x => x.Role.Name != "Manager").Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
 
             if (storageId == null)
-                staffs = staffs.Where(x => x.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).Count() == 0).Include(x => x.StaffAssignStorages);
+                staffs = staffs.Where(x => x.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).Count() == 0).Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
 
-            else
-                staffs = staffs.Where(x => x.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId && staffAssignStorage.IsActive == true)).Include(x => x.StaffAssignStorages);
+            if (storageId != null)
+                staffs = staffs.Where(x => x.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId && staffAssignStorage.IsActive == true)).Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
 
+            if (scheduleDay != null)
+            {
+                var usersInDelivery = _scheduleService.Get(x => scheduleDay.Value.Date == x.ScheduleDay.Date && deliveryTimes.Contains(x.ScheduleTime) && x.IsActive == true).Select(x => x.UserId).Distinct().ToList();
+                staffs = staffs.Where(x => !usersInDelivery.Contains(x.Id)).Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
+            }
             var result = await staffs.ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToListAsync();
             return result;
         }

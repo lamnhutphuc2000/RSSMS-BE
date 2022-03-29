@@ -98,17 +98,19 @@ namespace RSSMS.API.Controllers
         /// </summary>
         /// <param name="storageId"></param>
         /// <param name="roleName"></param>
+        /// <param name="scheduleDay"></param>
+        /// <param name="deliveryTimes"></param>
         /// <returns></returns>
         [HttpGet("staffs")]
         [MapToApiVersion("1")]
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin,Manager, Office Staff")]
         [ProducesResponseType(typeof(List<AccountsViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetStaffs([FromQuery] Guid? storageId, [FromQuery] List<string> roleName)
+        public async Task<IActionResult> GetStaffs([FromQuery] Guid? storageId, [FromQuery] List<string> roleName, [FromQuery] DateTime? scheduleDay, [FromQuery] ICollection<string> deliveryTimes)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            return Ok(await _accountsService.GetStaff(storageId, accessToken, roleName));
+            return Ok(await _accountsService.GetStaff(storageId, accessToken, roleName,scheduleDay,deliveryTimes));
         }
 
         /// <summary>

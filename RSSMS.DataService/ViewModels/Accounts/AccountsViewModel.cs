@@ -9,7 +9,7 @@ namespace RSSMS.DataService.ViewModels.Accounts
     public class AccountsViewModel
     {
         public static string[] Fields = {
-            "Id","RoleName","StorageName","Gender","Birthdate","Name","Address","Phone","Email","IsActive","ImageUrl","StaffManageStorages","SheduleDay","DeliveryTimes"
+            "Id","RoleName","StorageName","Gender","Birthdate","Name","Address","Phone","Email","IsActive","ImageUrl","StaffManageStorages"
         };
         [BindNever]
         public Guid? Id { get; set; }
@@ -31,7 +31,5 @@ namespace RSSMS.DataService.ViewModels.Accounts
         public string ImageUrl { get; set; }
         [BindNever]
         public virtual ICollection<StaffAssignStorageViewModel> StaffAssignStorages { get; set; }
-        public DateTime? SheduleDay { get; set; }
-        public ICollection<string> DeliveryTimes { get; set; }
     }
 }

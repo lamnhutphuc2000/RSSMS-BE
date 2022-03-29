@@ -95,7 +95,7 @@ namespace RSSMS.DataService.Services
 
             if (role == "Delivery Staff")
             {
-                var schedules = Get(x => x.IsActive == true && x.UserId == userId)
+                var schedules = await Get(x => x.IsActive == true && x.UserId == userId)
                         .Where(x => x.ScheduleDay.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Date <= model.DateTo.Value.Date).Include(x => x.Request)
                         .ThenInclude(request => request.Order)
                         .ThenInclude(order => order.Customer)
@@ -103,7 +103,7 @@ namespace RSSMS.DataService.Services
                         .Include(x => x.Request)
                         .ThenInclude(request => request.Order)
                         .ThenInclude(order => order.OrderDetails)
-                        .ThenInclude(orderDetail => orderDetail.Images);
+                        .ThenInclude(orderDetail => orderDetail.Images).ToListAsync();
                 var tmp = schedules.AsEnumerable().GroupBy(p => (Guid)p.RequestId)
                                     .Select(g => new ScheduleViewModel
                                     {
@@ -114,7 +114,7 @@ namespace RSSMS.DataService.Services
                                         Request = _mapper.Map<RequestScheduleViewModel>(g.First().Request),
                                         Address = g.First().Address,
                                         Note = g.First().Note,
-                                        Status = g.First().Request.Order.Status,
+                                        Status = g.First().Request.Order != null ? g.First().Request.Order.Status : null,
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().ScheduleDay,
                                         ScheduleTime = g.First().ScheduleTime,
@@ -147,7 +147,7 @@ namespace RSSMS.DataService.Services
                                         Address = g.First().Address,
                                         Note = g.First().Note,
                                         Request = _mapper.Map<RequestScheduleViewModel>(g.First().Request),
-                                        Status = g.First().Request.Order.Status,
+                                        Status = g.First().Request.Order != null ? g.First().Request.Order.Status : null,
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().ScheduleDay,
                                         ScheduleTime = g.First().ScheduleTime,
@@ -156,10 +156,8 @@ namespace RSSMS.DataService.Services
             }
             if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");
-            var meo = result.Item2.ToList();
             var rs = new DynamicModelResponse<ScheduleViewModel>
             {
-
                 Metadata = new PagingMetaData
                 {
                     Page = page,
@@ -167,7 +165,7 @@ namespace RSSMS.DataService.Services
                     Total = result.Item1,
                     TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
                 },
-                Data = await result.Item2.ToListAsync()
+                Data = result.Item2.ToList()
             };
 
             return rs;
