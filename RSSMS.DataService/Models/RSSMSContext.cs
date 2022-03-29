@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
+﻿using Microsoft.EntityFrameworkCore;
 
 #nullable disable
 
@@ -309,14 +307,15 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
-                entity.Property(e => e.Date).HasColumnType("date");
+                entity.Property(e => e.Datetime).HasColumnType("datetime");
 
                 entity.Property(e => e.Description).HasMaxLength(25);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderTimelines)
                     .HasForeignKey(d => d.OrderId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OrderTimeline_Order");
             });
 

@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
-using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.OrderHistoryExtension;
 using System;
 using System.Collections.Generic;
@@ -44,9 +43,9 @@ namespace RSSMS.DataService.ViewModels.Orders
         [JsonProperty("rejectedReason")]
         [BindNever]
         public string RejectedReason { get; set; }
-        [JsonProperty("typeOrder")]
+        [JsonProperty("type")]
         [BindNever]
-        public int? TypeOrder { get; set; }
+        public int? Type { get; set; }
         [JsonProperty("isUserDelivery")]
         [BindNever]
         public bool? IsUserDelivery { get; set; }
@@ -83,9 +82,6 @@ namespace RSSMS.DataService.ViewModels.Orders
         [JsonProperty("storageName")]
         [BindNever]
         public string StorageName { get; set; }
-        [JsonProperty("orderDetails")]
-        [BindNever]
-        public virtual ICollection<OrderDetails2ViewModel> OrderDetails { get; set; }
 
         //[JsonProperty("orderBoxDetails")]
         //[BindNever]

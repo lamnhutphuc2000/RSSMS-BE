@@ -6,13 +6,11 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
-using RSSMS.DataService.ViewModels;
 using RSSMS.DataService.ViewModels.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
@@ -45,7 +43,7 @@ namespace RSSMS.DataService.Services
                 if (url != null) service.ImageUrl = url;
             }
             await CreateAsync(service);
-            
+
 
             return _mapper.Map<ServicesViewModel>(service);
         }
@@ -61,20 +59,20 @@ namespace RSSMS.DataService.Services
 
         public async Task<Dictionary<string, List<ServicesViewModel>>> GetAll(ServicesViewModel model)
         {
-            var products = Get(x => x.IsActive == true).OrderBy(x => x.Type)
+            var services = Get(x => x.IsActive == true).OrderBy(x => x.Type)
                     .ProjectTo<ServicesViewModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model);
-            if (products.ToList().Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Service not found");
+            if (services.ToList().Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Service not found");
 
 
             Dictionary<string, List<ServicesViewModel>> result = new Dictionary<string, List<ServicesViewModel>>();
-            var distinctProductList = products.ToList()
-                .GroupBy(m => new { m.Type })
-                .Select(group => group.First())
-                .ToList();
-            foreach (var distinctProduct in distinctProductList)
+            var serviceLists = await services.ToListAsync();
+            var distinctServiceList = serviceLists.GroupBy(m => new { m.Type })
+                .Select(group => group.First()).ToList();
+
+            foreach (var distinctService in distinctServiceList)
             {
-                result.Add(distinctProduct.Type.ToString(), products.Where(x => x.Type == distinctProduct.Type).ToList());
+                result.Add(distinctService.Type.ToString(), services.Where(x => x.Type == distinctService.Type).ToList());
             }
             return result;
         }
@@ -98,12 +96,12 @@ namespace RSSMS.DataService.Services
             await UpdateAsync(entity);
 
             var updateEntity = _mapper.Map(model, entity);
-            
+
             var image = model.Image;
-            if(image != null)
+            if (image != null)
             {
                 if (image.Url != null) updateEntity.ImageUrl = image.Url;
-                else if(image.File != null)
+                else if (image.File != null)
                 {
                     var url = await _firebaseService.UploadImageToFirebase(image.File, "services", id, "avatar");
                     if (url != null) updateEntity.ImageUrl = url;

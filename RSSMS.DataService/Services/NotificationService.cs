@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
@@ -45,7 +46,7 @@ namespace RSSMS.DataService.Services
                     Total = notifications.Item1,
                     TotalPage = (int)Math.Ceiling((double)notifications.Item1 / size)
                 },
-                Data = notifications.Item2.ToList()
+                Data = await notifications.Item2.ToListAsync()
             };
             return rs;
         }

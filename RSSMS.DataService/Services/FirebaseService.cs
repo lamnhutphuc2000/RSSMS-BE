@@ -154,7 +154,7 @@ namespace RSSMS.DataService.Services
 
             byte[] encoded = Encoding.UTF8.GetBytes(jsonConvert);
             byte[] compressed = Compress(encoded);
-            string compressString =  Convert.ToBase64String(compressed);
+            string compressString = Convert.ToBase64String(compressed);
             //string compressString;
             //var bytes = Encoding.Unicode.GetBytes(jsonConvert);
             //using (var msi = new MemoryStream(bytes))

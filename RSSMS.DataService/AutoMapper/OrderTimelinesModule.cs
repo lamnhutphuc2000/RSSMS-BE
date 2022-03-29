@@ -8,7 +8,10 @@ namespace RSSMS.DataService.AutoMapper
     {
         public static void ConfigOrderTimelinesModule(this IMapperConfigurationExpression mc)
         {
-            mc.CreateMap<OrderTimeline, OrderTimelinesViewModel>();
+            mc.CreateMap<OrderTimeline, OrderTimelinesViewModel>()
+                .ForMember(des => des.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(des => des.OrderId, opt => opt.MapFrom(src => src.OrderId))
+                .ForMember(des => des.Datetime, opt => opt.MapFrom(src => src.Datetime));
         }
     }
 }

@@ -1,9 +1,6 @@
 ﻿using AutoMapper;
 using RSSMS.DataService.Models;
-using RSSMS.DataService.ViewModels.Accounts;
 using RSSMS.DataService.ViewModels.Floors;
-using RSSMS.DataService.ViewModels.JWT;
-using System;
 
 namespace RSSMS.DataService.AutoMapper
 {

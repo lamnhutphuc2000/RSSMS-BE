@@ -3,7 +3,6 @@ using RSSMS.DataService.Attributes;
 using RSSMS.DataService.ViewModels.Floors;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace RSSMS.DataService.ViewModels.Spaces
 {

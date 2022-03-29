@@ -1,6 +1,4 @@
-﻿using RSSMS.DataService.ViewModels.Images;
-using RSSMS.DataService.ViewModels.StaffAssignStorage;
-using RSSMS.DataService.ViewModels.StaffManageUser;
+﻿using RSSMS.DataService.ViewModels.StaffAssignStorage;
 using System;
 using System.Collections.Generic;
 

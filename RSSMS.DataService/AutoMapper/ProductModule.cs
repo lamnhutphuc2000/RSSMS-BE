@@ -1,14 +1,11 @@
-﻿using AutoMapper;
-using RSSMS.DataService.Models;
-using RSSMS.DataService.ViewModels.Products;
-using System;
+﻿//using AutoMapper;
 
-namespace RSSMS.DataService.AutoMapper
-{
-    public static class ProductModule
-    {
-        public static void ConfigProductModule(this IMapperConfigurationExpression mc)
-        {
-        }
-    }
-}
+//namespace RSSMS.DataService.AutoMapper
+//{
+//    public static class ProductModule
+//    {
+//        public static void ConfigProductModule(this IMapperConfigurationExpression mc)
+//        {
+//        }
+//    }
+//}

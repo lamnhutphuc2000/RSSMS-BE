@@ -1,5 +1,4 @@
-﻿using RSSMS.DataService.ViewModels.Boxes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Areas
@@ -15,7 +14,6 @@ namespace RSSMS.DataService.ViewModels.Areas
         public int? Type { get; set; }
         public string Description { get; set; }
         public int? Status { get; set; }
-        public List<BoxUsageViewModel> BoxUsage { get; set; }
     }
 
 }

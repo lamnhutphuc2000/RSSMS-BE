@@ -14,9 +14,6 @@ namespace RSSMS.DataService.DI
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<DbContext, RSSMSContext>();
 
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IUserService, UserService>();
-
             services.AddScoped<IAccountsRepository, AccountsRepository>();
             services.AddScoped<IAccountsService, AccountsService>();
 
@@ -28,9 +25,6 @@ namespace RSSMS.DataService.DI
 
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IOrderService, OrderService>();
-
-            services.AddScoped<IStaffManageStorageRepository, StaffManageStorageRepository>();
-            services.AddScoped<IStaffManageStorageService, StaffManageStorageService>();
 
             services.AddScoped<IStaffAssignStoragesRepository, StaffAssignStoragesRepository>();
             services.AddScoped<IStaffAssignStoragesService, StaffAssignStoragesService>();
@@ -44,23 +38,11 @@ namespace RSSMS.DataService.DI
             services.AddScoped<IFloorsRepository, FloorsRepository>();
             services.AddScoped<IFloorsService, FloorsService>();
 
-            services.AddScoped<IBoxRepository, BoxRepository>();
-            services.AddScoped<IBoxService, BoxService>();
-
             services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
             services.AddScoped<IOrderDetailService, OrderDetailService>();
 
             services.AddScoped<IOrderTimelinesRepository, OrderTimelinesRepository>();
             services.AddScoped<IOrderTimelinesService, OrderTimelinesService>();
-
-            services.AddScoped<IOrderBoxDetailRepository, OrderBoxDetailRepository>();
-            services.AddScoped<IOrderBoxDetailService, OrderBoxDetailService>();
-
-            services.AddScoped<IOrderStorageDetailRepository, OrderStorageDetailRepository>();
-            services.AddScoped<IOrderStorageDetailService, OrderStorageDetailService>();
-
-            services.AddScoped<IProductRepository, ProductRepository>();
-            services.AddScoped<IProductService, ProductService>();
 
             services.AddScoped<IServicesRepository, ServicesRepository>();
             services.AddScoped<IServicesService, ServicesService>();
@@ -73,12 +55,6 @@ namespace RSSMS.DataService.DI
 
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<INotificationService, NotificationService>();
-
-            services.AddScoped<INotificationDetailRepository, NotificationDetailRepository>();
-            services.AddScoped<INotificationDetailService, NotificationDetailService>();
-
-            //services.AddScoped<IBoxOrderDetailRepository, BoxOrderDetailRepository>();
-            //services.AddScoped<IBoxOrderDetailService, BoxOrderDetailService>();
 
             services.AddScoped<IOrderHistoryExtensionRepository, OrderHistoryExtensionRepository>();
             services.AddScoped<IOrderHistoryExtensionService, OrderHistoryExtensionService>();

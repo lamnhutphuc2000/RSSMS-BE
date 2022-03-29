@@ -37,10 +37,12 @@ namespace RSSMS.DataService.Services
         private readonly IFirebaseService _firebaseService;
         private readonly IStaffAssignStoragesService _staffAssignStoragesService;
         private readonly IOrderHistoryExtensionService _orderHistoryExtensionService;
+        private readonly IOrderTimelinesService _orderTimelineService;
         public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper
             , IScheduleService scheduleService
             , IFirebaseService firebaseService, IStaffAssignStoragesService staffAssignStoragesService
             , IOrderHistoryExtensionService orderHistoryExtensionService
+            , IOrderTimelinesService orderTimelineService
             ) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -48,6 +50,7 @@ namespace RSSMS.DataService.Services
             _firebaseService = firebaseService;
             _staffAssignStoragesService = staffAssignStoragesService;
             _orderHistoryExtensionService = orderHistoryExtensionService;
+            _orderTimelineService = orderTimelineService;
         }
 
         public async Task<RequestViewModel> Delete(Guid id)
@@ -136,7 +139,7 @@ namespace RSSMS.DataService.Services
                     Total = result.Item1,
                     TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
                 },
-                Data = result.Item2.ToList()
+                Data = await result.Item2.ToListAsync()
             };
             return rs;
         }
@@ -198,12 +201,22 @@ namespace RSSMS.DataService.Services
                 orderExtend.RequestId = request.Id;
                 orderExtend.OrderId = (Guid)model.OrderId;
                 await _orderHistoryExtensionService.CreateAsync(orderExtend);
+
+                await _orderTimelineService.CreateAsync(new OrderTimeline
+                {
+                    RequestId = request.Id,
+                    CreatedDate = DateTime.Now,
+                    CreatedBy = userId,
+                    Datetime = DateTime.Now,
+                    Name = "Yêu cầu gia hạn đơn chờ xác nhận"
+                });
+
                 var staffAssignInStorage = _orderHistoryExtensionService.Get(x => x.OrderId == model.OrderId).Include(x => x.Order).ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).ThenInclude(staffAssignInStorage => staffAssignInStorage.Staff).Select(x => x.Order.Storage.StaffAssignStorages.FirstOrDefault()).FirstOrDefault();
-                
+
                 await _firebaseService.SendNoti("Customer " + userId + " expand the order: " + model.OrderId, userId, staffAssignInStorage.Staff.DeviceTokenId, request.Id, new
                 {
                     Content = "Customer " + userId + " expand the order: " + model.OrderId,
-                    OrderId = model.OrderId,
+                    model.OrderId,
                     RequestId = request.Id
                 });
                 return model;
@@ -217,6 +230,14 @@ namespace RSSMS.DataService.Services
                 request.Status = 1;
                 await CreateAsync(request);
 
+                await _orderTimelineService.CreateAsync(new OrderTimeline
+                {
+                    RequestId = request.Id,
+                    CreatedDate = DateTime.Now,
+                    CreatedBy = userId,
+                    Datetime = DateTime.Now,
+                    Name = "Yêu cầu rút đồ về chờ xác nhận"
+                });
 
                 newRequest = Get(x => x.Id == request.Id && x.IsActive == true).Include(request => request.Order)
                     .ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).ThenInclude(taffAssignStorage => taffAssignStorage.Staff).FirstOrDefault();
@@ -230,25 +251,33 @@ namespace RSSMS.DataService.Services
                 await _firebaseService.SendNoti("Customer " + userId + " take back the order: " + model.OrderId, userId, staffAssignInStorage.Staff.DeviceTokenId, request.Id, new
                 {
                     Content = "Customer " + userId + " take back the order: " + model.OrderId,
-                    OrderId = model.OrderId,
+                    model.OrderId,
                     RequestId = request.Id
                 });
                 return model;
             }
-            if(model.Type == (int)RequestType.Create_Order)
+            if (model.Type == (int)RequestType.Create_Order) // customer tao yeu cau tao don
             {
                 request = _mapper.Map<Request>(model);
                 request.CreatedBy = userId;
                 if (role == "Customer") request.CustomerId = userId;
                 await CreateAsync(request);
-                
+
+                await _orderTimelineService.CreateAsync(new OrderTimeline
+                {
+                    CreatedDate = DateTime.Now,
+                    RequestId = request.Id,
+                    CreatedBy = userId,
+                    Datetime = DateTime.Now,
+                    Name = "Yêu cầu tạo đơn chờ xác nhận"
+                });
 
                 await _firebaseService.PushOrderNoti("New request arrive!", null, request.Id);
                 return model;
             }
 
             // customer huy don
-            
+
             request = _mapper.Map<Request>(model);
             request.CreatedBy = userId;
             await CreateAsync(request);
@@ -261,13 +290,13 @@ namespace RSSMS.DataService.Services
             newRequest.Order.RejectedReason = model.Note;
             newRequest.Order.Status = 0;
             await UpdateAsync(newRequest);
-            
+
 
             var manager = order.Storage.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager" && x.IsActive == true).FirstOrDefault();
             await _firebaseService.SendNoti("Customer " + userId + " cancel the order: " + model.OrderId, userId, manager.Staff.DeviceTokenId, request.Id, new
             {
                 Content = "Customer " + userId + " cancel the order: " + model.OrderId,
-                OrderId = model.OrderId,
+                model.OrderId,
                 RequestId = request.Id
             });
 
@@ -285,26 +314,47 @@ namespace RSSMS.DataService.Services
             if (request == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
 
             request.Status = model.Status;
-            request.IsPaid = model.IsPaid;
-            request.ModifiedBy = userId;
-            await UpdateAsync(request);
+            if (model.IsPaid == null)
+            {
+                await UpdateAsync(request);
 
-            var orderHistoryExtend = request.Order.OrderHistoryExtensions.Where(x => x.RequestId == id).FirstOrDefault();
-            if (orderHistoryExtend == null)
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order extend not found");
-            orderHistoryExtend.PaidDate = DateTime.Now;
-            orderHistoryExtend.ModifiedBy = userId;
-            await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
+                string name = null;
+                if (request.Type == (int)RequestType.Create_Order) name = "Nhân viên đang tới lấy hàng";
+                if (request.Type == (int)RequestType.Return_Order) name = "Nhân viên đang tới trả hàng";
+                await _orderTimelineService.CreateAsync(new OrderTimeline
+                {
+                    RequestId = request.Id,
+                    CreatedDate = DateTime.Now,
+                    CreatedBy = userId,
+                    Datetime = DateTime.Now,
+                    Name = name
+                });
 
-            var order = orderHistoryExtend.Order;
-            order.ReturnDate = orderHistoryExtend.ReturnDate;
-            order.IsPaid = model.IsPaid;
-            order.ModifiedBy = userId;
-            order.ModifiedDate = DateTime.Now;
-            orderHistoryExtend.Order = order;
-            await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
 
-            return _mapper.Map<RequestUpdateViewModel>(model);
+
+            }
+            else
+            {
+                request.IsPaid = model.IsPaid;
+                request.ModifiedBy = userId;
+                await UpdateAsync(request);
+                var orderHistoryExtend = request.Order.OrderHistoryExtensions.Where(x => x.RequestId == id).FirstOrDefault();
+                if (orderHistoryExtend == null)
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order extend not found");
+                orderHistoryExtend.PaidDate = DateTime.Now;
+                orderHistoryExtend.ModifiedBy = userId;
+                await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
+
+                var order = orderHistoryExtend.Order;
+                order.ReturnDate = orderHistoryExtend.ReturnDate;
+                order.IsPaid = (bool)model.IsPaid;
+                order.ModifiedBy = userId;
+                order.ModifiedDate = DateTime.Now;
+                orderHistoryExtend.Order = order;
+                await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
+
+            }
+            return model;
         }
 
         public async Task<RequestByIdViewModel> AssignStorage(RequestAssignStorageViewModel model, string accessToken)
@@ -321,9 +371,23 @@ namespace RSSMS.DataService.Services
                 request.ModifiedBy = userId;
                 request.Status = 2;
                 await UpdateAsync(request);
+
+                string name = null;
+                if (request.Type == (int)RequestType.Create_Order) name = "Yêu cầu tạo đơn đã xử lý";
+                if (request.Type == (int)RequestType.Extend_Order) name = "Yêu cầu gia hạn đơn đã được xử lý";
+                if (request.Type == (int)RequestType.Return_Order) name = "Yêu cầu rút đồ về đă được xử lý";
+                await _orderTimelineService.CreateAsync(new OrderTimeline
+                {
+                    RequestId = request.Id,
+                    CreatedDate = DateTime.Now,
+                    CreatedBy = userId,
+                    Datetime = DateTime.Now,
+                    Name = name
+                });
+
                 return _mapper.Map<RequestByIdViewModel>(request);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }

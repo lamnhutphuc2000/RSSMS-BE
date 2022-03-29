@@ -1,5 +1,4 @@
-﻿using RSSMS.DataService.ViewModels.OrderDetails;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Orders
@@ -18,6 +17,5 @@ namespace RSSMS.DataService.ViewModels.Orders
         public string DeliveryAddress { get; set; }
         public string ReturnAddress { get; set; }
         public int? Status { get; set; }
-        public virtual ICollection<OrderDetails2ViewModel> OrderDetails { get; set; }
     }
 }

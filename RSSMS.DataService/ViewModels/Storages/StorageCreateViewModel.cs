@@ -1,5 +1,4 @@
 ﻿using RSSMS.DataService.ViewModels.Images;
-using RSSMS.DataService.ViewModels.Users;
 using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Storages
@@ -17,6 +16,5 @@ namespace RSSMS.DataService.ViewModels.Storages
         public int? Status { get; set; }
         public ImageCreateViewModel Image { get; set; }
 
-        public virtual ICollection<UserListStaffViewModel> ListStaff { get; set; }
     }
 }

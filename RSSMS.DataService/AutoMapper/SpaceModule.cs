@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
 using RSSMS.DataService.Models;
-using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Spaces;
-using System.Linq;
 
 namespace RSSMS.DataService.AutoMapper
 {
@@ -11,9 +9,9 @@ namespace RSSMS.DataService.AutoMapper
         public static void ConfigShelfModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Space, SpaceViewModel>();
-                //.ForMember(des => des.Boxes, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).OrderByDescending(x => x.CreatedDate)))
-                //.ForMember(des => des.SizeType, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).FirstOrDefault().Service.Size))
-                //.ForMember(des => des.ServiceId, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).FirstOrDefault().ServiceId));
+            //.ForMember(des => des.Boxes, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).OrderByDescending(x => x.CreatedDate)))
+            //.ForMember(des => des.SizeType, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).FirstOrDefault().Service.Size))
+            //.ForMember(des => des.ServiceId, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).FirstOrDefault().ServiceId));
 
             mc.CreateMap<SpaceViewModel, Space>();
 

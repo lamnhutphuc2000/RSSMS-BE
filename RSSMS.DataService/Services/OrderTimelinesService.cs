@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
@@ -8,10 +9,8 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.OrderTimelines;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
@@ -31,14 +30,11 @@ namespace RSSMS.DataService.Services
 
         public async Task<DynamicModelResponse<OrderTimelinesViewModel>> Get(OrderTimelinesViewModel model, string[] fields, int page, int size)
         {
-            var timelines = Get().OrderByDescending(x => x.Date).ThenByDescending(x => x.Time)
-                .ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider);
-
-
-            var result = timelines
-                 .DynamicFilter(model)
-                .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Timelines not found");
+            var timelines = Get().OrderByDescending(x => x.Datetime)
+                                .ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider)
+                                .DynamicFilter(model)
+                                .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+            if (timelines.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Timelines not found");
 
 
 
@@ -49,10 +45,10 @@ namespace RSSMS.DataService.Services
                 {
                     Page = page,
                     Size = size,
-                    Total = result.Item1,
-                    TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
+                    Total = timelines.Item1,
+                    TotalPage = (int)Math.Ceiling((double)timelines.Item1 / size)
                 },
-                Data = result.Item2.ToList()
+                Data = await timelines.Item2.ToListAsync()
             };
 
             return rs;

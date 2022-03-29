@@ -7,7 +7,6 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
-using RSSMS.DataService.ViewModels.Boxes;
 using RSSMS.DataService.ViewModels.Spaces;
 using System;
 using System.Collections.Generic;
@@ -25,7 +24,6 @@ namespace RSSMS.DataService.Services
         Task<SpaceViewModel> Create(SpaceCreateViewModel model, string accessToken);
         Task<SpaceViewModel> Delete(Guid id);
         Task<SpaceViewModel> Update(Guid id, SpaceUpdateViewModel model, string accessToken);
-        List<BoxUsageViewModel> GetBoxUsageByAreaId(Guid areaId);
         bool CheckIsUsed(Guid id);
 
     }
@@ -88,7 +86,7 @@ namespace RSSMS.DataService.Services
 
             var space = Get(x => x.Name == model.Name && x.AreaId == entity.AreaId && x.Id != id && x.IsActive == true).Include(x => x.Floors.Where(x => x.IsActive == true)).FirstOrDefault();
             if (space != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Space name is existed");
-            
+
 
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
@@ -103,8 +101,8 @@ namespace RSSMS.DataService.Services
             }
 
             var oldNumberOfFloor = entity.Floors.Where(floor => floor.IsActive == true).Count();
-            
-            if(oldNumberOfFloor != model.NumberOfFloor || floor.Height != model.FloorHeight || floor.Width != model.FloorWidth || floor.Length != model.FloorLength)
+
+            if (oldNumberOfFloor != model.NumberOfFloor || floor.Height != model.FloorHeight || floor.Width != model.FloorWidth || floor.Length != model.FloorLength)
             {
                 await _floorsService.RemoveFloors(id);
                 await _floorsService.CreateNumberOfFloor(id, model.NumberOfFloor, model.FloorHeight, model.FloorWidth, model.FloorLength, DateTime.Now);
@@ -125,7 +123,7 @@ namespace RSSMS.DataService.Services
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
 
-            var result = spaces.Item2.ToList();
+            var result = await spaces.Item2.ToListAsync();
             if (result.Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space not found");
             foreach (var space in result)
             {
@@ -133,81 +131,20 @@ namespace RSSMS.DataService.Services
             }
 
             var rs = new DynamicModelResponse<SpaceViewModel>
+            {
+                Metadata = new PagingMetaData
                 {
-                    Metadata = new PagingMetaData
-                    {
-                        Page = page,
-                        Size = size,
-                        Total = spaces.Item1,
-                        TotalPage = (int)Math.Ceiling((double)spaces.Item1 / size)
-                    },
-                    Data = result
+                    Page = page,
+                    Size = size,
+                    Total = spaces.Item1,
+                    TotalPage = (int)Math.Ceiling((double)spaces.Item1 / size)
+                },
+                Data = result
             };
             return rs;
         }
 
-        public List<BoxUsageViewModel> GetBoxUsageByAreaId(Guid areaId)
-        {
-            //var shelves = Get(x => x.AreaId == areaId && x.IsActive == true).Include(x => x.Floors).ToList();
-            //var result = new List<BoxUsageViewModel>();
-            //var shelfSelfStorage = shelves.Where(x => x.Type == 2).FirstOrDefault();
-            //var services = _servicesService.Get(x => (x.Type == 2 || x.Type == 4) && x.IsActive == true).ToList();
-            //if (shelfSelfStorage != null)
-            //{
-            //    services = _servicesService.Get(x => x.Type == 0 && x.IsActive == true).ToList();
-            //}
-            //if(services == null)
-            //{
-            //    return null;
-            //}
-            //foreach (var service in services)
-            //{
-            //    result.Add(GetBoxUsageBySizeType(service.Name, (int)service.Type, shelves));
-            //}
 
-            //return result;
-            return null;
-        }
-
-        private BoxUsageViewModel GetBoxUsageBySizeType(string sizeName, int productType, List<Shelf> shelves)
-        {
-            int totalBox = 0;
-            int boxRemaining = 0;
-            double usage = 0;
-            BoxUsageViewModel result = new BoxUsageViewModel();
-            result.ProductType = productType;
-            result.SizeType = sizeName;
-            result.TotalBox = 0;
-            result.Usage = 0;
-            result.BoxRemaining = 0;
-
-            if (shelves == null)
-            {
-                return result;
-            }
-            foreach (var shelf in shelves)
-            {
-                if (shelf.Floors != null)
-                {
-                    var boxes = shelf.Floors.Where(x => x.IsActive == true);
-                    totalBox += boxes.ToList().Count;
-
-                    var boxesNotUsed = boxes.ToList().Count;
-                    boxRemaining += boxesNotUsed;
-                }
-            }
-
-            if (totalBox - boxRemaining != 0)
-            {
-                usage = Math.Ceiling((double)(totalBox - boxRemaining) / totalBox * 100);
-            }
-
-
-            result.TotalBox = totalBox;
-            result.BoxRemaining = boxRemaining;
-            result.Usage = usage;
-            return result;
-        }
 
         public bool CheckIsUsed(Guid id)
         {

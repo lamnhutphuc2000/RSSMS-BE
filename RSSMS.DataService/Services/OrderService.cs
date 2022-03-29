@@ -10,8 +10,6 @@ using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Images;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Orders;
-using RSSMS.DataService.ViewModels.Products;
-using RSSMS.DataService.ViewModels.Services;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -45,11 +43,12 @@ namespace RSSMS.DataService.Services
         private readonly IAccountsService _accountService;
         private readonly IServicesService _serviceService;
         private readonly IRequestService _requestService;
-
+        private readonly IOrderTimelinesService _orderTimelineService;
         public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository
-            ,IFirebaseService firebaseService, IAccountsService accountService,
+            , IFirebaseService firebaseService, IAccountsService accountService,
             IServicesService serviceService,
             IRequestService requestService,
+            IOrderTimelinesService orderTimelineService,
             IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -58,6 +57,7 @@ namespace RSSMS.DataService.Services
             _accountService = accountService;
             _serviceService = serviceService;
             _requestService = requestService;
+            _orderTimelineService = orderTimelineService;
         }
         public async Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes)
         {
@@ -142,7 +142,7 @@ namespace RSSMS.DataService.Services
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             var meo = result.Item2.ToList();
-            if(result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+            if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
 
 
             var rs = new DynamicModelResponse<OrderViewModel>
@@ -154,7 +154,7 @@ namespace RSSMS.DataService.Services
                     Total = result.Item1,
                     TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
                 },
-                Data = result.Item2.ToList()
+                Data = await result.Item2.ToListAsync()
             };
             return rs;
         }
@@ -201,15 +201,15 @@ namespace RSSMS.DataService.Services
             //}
 
 
-            OrderTimeline deliveryTimeline = new OrderTimeline
-            {
-                CreatedDate = now,
-                OrderId = order.Id,
-                Date = order.DeliveryDate.Value,
-                Description = "Delivery date of order",
-            };
+            //OrderTimeline deliveryTimeline = new OrderTimeline
+            //{
+            //    CreatedDate = now,
+            //    OrderId = order.Id,
+            //    Date = order.DeliveryDate.Value,
+            //    Description = "Delivery date of order",
+            //};
             order.Status = 1;
-            order.OrderTimelines.Add(deliveryTimeline);
+            //order.OrderTimelines.Add(deliveryTimeline);
 
             // random a name for order
             Random random = new Random();
@@ -257,6 +257,15 @@ namespace RSSMS.DataService.Services
             request.Status = 3;
 
             await _requestService.UpdateAsync(request);
+
+            await _orderTimelineService.CreateAsync(new OrderTimeline
+            {
+                OrderId = order.Id,
+                CreatedDate = DateTime.Now,
+                CreatedBy = userId,
+                Datetime = DateTime.Now,
+                Name = "Đon đang vận chuyển về kho"
+            });
 
             await _firebaseService.PushOrderNoti("New order arrive!", order.Id, null);
 
@@ -311,20 +320,16 @@ namespace RSSMS.DataService.Services
         //}
         public static byte[] Decompress(byte[] input)
         {
-            using (var source = new MemoryStream(input))
-            {
-                byte[] lengthBytes = new byte[4];
-                source.Read(lengthBytes, 0, 4);
+            using var source = new MemoryStream(input);
+            byte[] lengthBytes = new byte[4];
+            source.Read(lengthBytes, 0, 4);
 
-                var length = BitConverter.ToInt32(lengthBytes, 0);
-                using (var decompressionStream = new GZipStream(source,
-                    CompressionMode.Decompress))
-                {
-                    var result = new byte[length];
-                    decompressionStream.Read(result, 0, length);
-                    return result;
-                }
-            }
+            var length = BitConverter.ToInt32(lengthBytes, 0);
+            using var decompressionStream = new GZipStream(source,
+                CompressionMode.Decompress);
+            var result = new byte[length];
+            decompressionStream.Read(result, 0, length);
+            return result;
         }
 
 
@@ -397,14 +402,14 @@ namespace RSSMS.DataService.Services
                         Guid? mainServiceId = null;
                         if (orderDetailToAdd.OrderDetailServices == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail service can not null");
                         var orderDetailServices = orderDetailToAdd.OrderDetailServices.ToList();
-                        foreach(var orderDetailService in orderDetailServices)
+                        foreach (var orderDetailService in orderDetailServices)
                         {
                             var service = _serviceService.Get(x => x.IsActive && x.Id == orderDetailService.ServiceId).FirstOrDefault();
                             if (service == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Service not found");
                             orderDetailService.ServiceName = service.Name;
                             orderDetailService.ServiceType = service.Type;
                             orderDetailService.ServiceUrl = service.ImageUrl;
-                            if(service.Type == 3 || service.Type == 2)
+                            if (service.Type == 3 || service.Type == 2)
                             {
                                 mainServiceName = service.Name;
                                 mainServicePrice = service.Price;
@@ -412,7 +417,7 @@ namespace RSSMS.DataService.Services
                                 mainServiceUrl = service.ImageUrl;
                                 mainServiceId = service.Id;
                             }
-                            if(mainServiceType == null)
+                            if (mainServiceType == null)
                             {
                                 mainServiceName = service.Name;
                                 mainServicePrice = service.Price;
@@ -458,7 +463,7 @@ namespace RSSMS.DataService.Services
                     //var result = await _firebaseService.SendNoti(description, customerId, registrationId, order.Id, null, model);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
@@ -472,7 +477,7 @@ namespace RSSMS.DataService.Services
             if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
 
             var requests = order.Requests;
-            foreach(var request in requests)
+            foreach (var request in requests)
             {
                 if (request.Id == requestId) request.Status = 3;
             }
@@ -542,10 +547,11 @@ namespace RSSMS.DataService.Services
                 var orders = Get(x => x.IsActive)
                     .Include(order => order.OrderDetails)
                     .Where(order => order.OrderDetails.Any(orderDetail => orderDetailIds.Contains(orderDetail.Id)))
+                    .Include(order => order.Requests)
                     .ToList().AsQueryable()
                     .ToList();
-                if(orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
-                if(orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail not in the same order");
+                if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
+                if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail not in the same order");
                 var order = orders.First();
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
@@ -556,18 +562,29 @@ namespace RSSMS.DataService.Services
                 var orderDetails = order.OrderDetails;
                 var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
                 ICollection<OrderDetail> orderDetailsListUpdate = new List<OrderDetail>();
-                foreach(var orderDetailToAssignFloor in orderDetailToAssignFloorList)
+                foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
-                    foreach(var orderDetail in orderDetails)
-                        if (orderDetail.Id == orderDetailToAssignFloor.OrderDetailId) 
+                    foreach (var orderDetail in orderDetails)
+                        if (orderDetail.Id == orderDetailToAssignFloor.OrderDetailId)
                             orderDetail.FloorId = orderDetailToAssignFloor.FloorId;
                 }
                 order.OrderDetails = orderDetails;
                 order.Status = 2;
                 await UpdateAsync(order);
+
+                await _orderTimelineService.CreateAsync(new OrderTimeline
+                {
+                    OrderId = order.Id,
+                    CreatedDate = DateTime.Now,
+                    CreatedBy = userId,
+                    Datetime = DateTime.Now,
+                    Name = "Đon đã lưu kho"
+                });
+
+
                 return _mapper.Map<OrderViewModel>(order);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }

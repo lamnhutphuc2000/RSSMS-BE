@@ -45,7 +45,7 @@ namespace RSSMS.DataService.Services
         private readonly IMapper _mapper;
         private readonly IStaffAssignStoragesService _staffAssignStoragesService;
         private readonly IFirebaseService _firebaseService;
-        private static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
+        private readonly static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
         public AccountsService(IUnitOfWork unitOfWork, IAccountsRepository repository, IMapper mapper, IStaffAssignStoragesService staffAssignStoragesService, IFirebaseService firebaseService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -53,7 +53,7 @@ namespace RSSMS.DataService.Services
             _firebaseService = firebaseService;
         }
 
-        
+
         public async Task<TokenViewModel> Login(AccountsLoginViewModel model)
         {
             Firebase.Auth.User us = null;
@@ -125,7 +125,7 @@ namespace RSSMS.DataService.Services
             var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-            var user = Get(x => x.Id == Guid.Parse(uid)).Include(x => x.Role).FirstOrDefault();
+            var user = await Get(x => x.Id == Guid.Parse(uid)).Include(x => x.Role).FirstOrDefaultAsync();
             DateTime? scheduleDay = null;
             ICollection<string> deliveryTimes = null;
             if (model.SheduleDay != null && model.DeliveryTimes != null)
@@ -140,7 +140,7 @@ namespace RSSMS.DataService.Services
             {
                 var storageIds = _staffAssignStoragesService.Get(x => x.StaffId == user.Id && x.IsActive == true).Select(x => x.StorageId).ToList();
                 users = users.Where(x => x.Role.Name != "Manager").Include(x => x.Role);
-                users = users.Where(x => x.StaffAssignStorages.Any(x => storageIds.Contains((Guid)x.StorageId)) || x.StaffAssignStorages.Count == 0 )
+                users = users.Where(x => x.StaffAssignStorages.Any(x => storageIds.Contains((Guid)x.StorageId)) || x.StaffAssignStorages.Count == 0)
                     .Include(x => x.Role);
             }
             if (role == "Office Staff")
@@ -241,7 +241,7 @@ namespace RSSMS.DataService.Services
             if (image != null)
             {
                 var url = await _firebaseService.UploadImageToFirebase(image.File, "users", userCreate.Id, "avatar");
-                if (url != null) 
+                if (url != null)
                 {
                     userCreate.ImageUrl = url;
                 }
@@ -291,7 +291,7 @@ namespace RSSMS.DataService.Services
             string url = entity.ImageUrl;
             var updateEntity = _mapper.Map(model, entity);
             updateEntity.ImageUrl = url;
-            if(image != null)
+            if (image != null)
             {
                 url = await _firebaseService.UploadImageToFirebase(image.File, "users", id, "avatar");
                 if (url != null)
@@ -450,7 +450,7 @@ namespace RSSMS.DataService.Services
 
             if (storageId == null)
                 staffs = staffs.Where(x => x.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).Count() == 0).Include(x => x.StaffAssignStorages);
-            
+
             else
                 staffs = staffs.Where(x => x.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId && staffAssignStorage.IsActive == true)).Include(x => x.StaffAssignStorages);
 

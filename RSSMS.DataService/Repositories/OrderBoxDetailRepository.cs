@@ -1,16 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore;
-using RSSMS.DataService.Models;
+﻿//using Microsoft.EntityFrameworkCore;
+//using RSSMS.DataService.Models;
 
-namespace RSSMS.DataService.Repositories
-{
-    public interface IOrderBoxDetailRepository : IBaseRepository<OrderBoxDetail>
-    {
+//namespace RSSMS.DataService.Repositories
+//{
+//    public interface IOrderBoxDetailRepository : IBaseRepository<OrderBoxDetail>
+//    {
 
-    }
-    public class OrderBoxDetailRepository : BaseRepository<OrderBoxDetail>, IOrderBoxDetailRepository
-    {
-        public OrderBoxDetailRepository(DbContext dbContext) : base(dbContext)
-        {
-        }
-    }
-}
+//    }
+//    public class OrderBoxDetailRepository : BaseRepository<OrderBoxDetail>, IOrderBoxDetailRepository
+//    {
+//        public OrderBoxDetailRepository(DbContext dbContext) : base(dbContext)
+//        {
+//        }
+//    }
+//}

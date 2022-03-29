@@ -1,6 +1,5 @@
 ﻿using RSSMS.DataService.ViewModels.Images;
 using RSSMS.DataService.ViewModels.Orders;
-using RSSMS.DataService.ViewModels.Users;
 using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Storages
@@ -17,8 +16,6 @@ namespace RSSMS.DataService.ViewModels.Storages
         public OrderAreaViewModel OrderInfo { get; set; }
 
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
-        public virtual ICollection<UserListStaffViewModel> ListUser { get; set; }
         public int? Status { get; set; }
-        public virtual ICollection<ManagerManageStorageViewModel> StaffManageStorages { get; set; }
     }
 }

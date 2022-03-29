@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
@@ -8,11 +9,9 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Roles;
 using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
@@ -50,7 +49,7 @@ namespace RSSMS.DataService.Services
                 if (role == "Office Staff") roles = roles.Where(x => x.Name == "Office Staff");
                 if (role == "Customer") roles = roles.Where(x => x.Name == "Customer");
             }
-            
+
             result = roles.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Roles not found");
             rs = new DynamicModelResponse<RolesViewModel>
@@ -63,7 +62,7 @@ namespace RSSMS.DataService.Services
                     Total = result.Item1,
                     TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
                 },
-                Data = result.Item2.ToList()
+                Data = await result.Item2.ToListAsync()
             };
 
             return rs;

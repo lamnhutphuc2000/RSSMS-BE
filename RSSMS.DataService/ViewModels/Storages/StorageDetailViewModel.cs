@@ -1,8 +1,6 @@
 ﻿using RSSMS.DataService.ViewModels.Orders;
-using RSSMS.DataService.ViewModels.Users;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace RSSMS.DataService.ViewModels.Storages
 {
@@ -21,7 +19,5 @@ namespace RSSMS.DataService.ViewModels.Storages
         public decimal? Length { get; set; }
         public int? Usage { get; set; }
         public OrderAreaViewModel OrderInfo { get; set; }
-        public virtual ICollection<UserListStaffViewModel> ListUser { get; set; }
-        public virtual ICollection<ManagerManageStorageViewModel> StaffManageStorages { get; set; }
     }
 }

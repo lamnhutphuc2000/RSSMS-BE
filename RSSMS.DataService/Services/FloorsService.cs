@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
@@ -10,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
@@ -26,7 +24,7 @@ namespace RSSMS.DataService.Services
 
     {
         private readonly IMapper _mapper;
-        public FloorsService(IUnitOfWork unitOfWork, IFloorsRepository repository, IServicesService servicesService, IMapper mapper) : base(unitOfWork, repository)
+        public FloorsService(IUnitOfWork unitOfWork, IFloorsRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
         }
@@ -53,7 +51,7 @@ namespace RSSMS.DataService.Services
                     await CreateAsync(floorToCreate);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, "" + ex.Message);
             }
@@ -65,7 +63,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 var floors = Get(floor => floor.SpaceId == spaceId && floor.IsActive == true).ToList();
-                foreach(var floor in floors)
+                foreach (var floor in floors)
                 {
                     floor.IsActive = false;
                     await UpdateAsync(floor);
@@ -108,7 +106,7 @@ namespace RSSMS.DataService.Services
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, "" + ex.Message);
             }

@@ -27,6 +27,7 @@ namespace RSSMS.API.Controllers
         /// </summary>
         /// <param name="storageid"></param>
         /// <param name="model"></param>
+        /// <param name="types"></param>
         /// <param name="fields"></param>
         /// <param name="page"></param>
         /// <param name="size"></param>

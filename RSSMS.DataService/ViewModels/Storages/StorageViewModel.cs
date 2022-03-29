@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using RSSMS.DataService.Attributes;
-using RSSMS.DataService.ViewModels.Images;
 using System;
-using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Storages
 {

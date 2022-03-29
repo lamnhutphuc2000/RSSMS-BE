@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RSSMS.DataService.ViewModels.Accounts
+﻿namespace RSSMS.DataService.ViewModels.Accounts
 {
     public class AccountsLoginViewModel
     {

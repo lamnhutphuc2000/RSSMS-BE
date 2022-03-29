@@ -48,6 +48,7 @@ namespace RSSMS.API.Controllers
         /// Get order by Id
         /// </summary>
         /// <param name="id"></param>
+        /// <param name="requestTypes"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin,Manager,Office Staff, Delivery Staff, Customer")]

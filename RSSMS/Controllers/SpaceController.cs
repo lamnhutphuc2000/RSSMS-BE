@@ -68,7 +68,7 @@ namespace RSSMS.API.Controllers
         public async Task<IActionResult> Add(SpaceCreateViewModel model)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            var result = await _spaceService.Create(model,accessToken);
+            var result = await _spaceService.Create(model, accessToken);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
 

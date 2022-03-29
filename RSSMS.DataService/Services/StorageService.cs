@@ -8,9 +8,7 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.StaffAssignStorage;
-using RSSMS.DataService.ViewModels.StaffManageUser;
 using RSSMS.DataService.ViewModels.Storages;
-using RSSMS.DataService.ViewModels.Users;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -45,31 +43,31 @@ namespace RSSMS.DataService.Services
         {
             var storage = _mapper.Map<Storage>(model);
             var image = model.Image;
-            if(image != null)
+            if (image != null)
             {
-                if(image.File != null)
+                if (image.File != null)
                 {
                     var url = await _firebaseService.UploadImageToFirebase(image.File, "storages", storage.Id, "avatar");
                     if (url != null)
                     {
                         storage.ImageUrl = url;
                     }
-                    
+
                 }
             }
             await CreateAsync(storage);
-            if(model.ListStaff != null)
-            {
-                foreach (UserListStaffViewModel staffAssigned in model.ListStaff)
-                {
-                    StaffAssignStorageCreateViewModel staffAssignModel = new StaffAssignStorageCreateViewModel
-                    {
-                        StorageId = storage.Id,
-                        UserId = staffAssigned.Id
-                    };
-                    await _staffAssignStoragesService.Create(staffAssignModel);
-                }
-            }
+            //if (model.ListStaff != null)
+            //{
+            //    foreach (UserListStaffViewModel staffAssigned in model.ListStaff)
+            //    {
+            //        StaffAssignStorageCreateViewModel staffAssignModel = new StaffAssignStorageCreateViewModel
+            //        {
+            //            StorageId = storage.Id,
+            //            UserId = staffAssigned.Id
+            //        };
+            //        await _staffAssignStoragesService.Create(staffAssignModel);
+            //    }
+            //}
             return _mapper.Map<StorageViewModel>(storage);
 
         }
@@ -121,7 +119,7 @@ namespace RSSMS.DataService.Services
                     Total = result.Item1,
                     TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
                 },
-                Data = result.Item2.ToList()
+                Data = await result.Item2.ToListAsync()
             };
             return rs;
         }
@@ -143,11 +141,11 @@ namespace RSSMS.DataService.Services
                 .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Office Staff" && s.IsActive == true && s.StaffId == userId))
                 .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
-                if(result.StaffManageStorages == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
+                //if (result.StaffManageStorages == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
 
             }
 
-            if (result != null && result.StaffManageStorages != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
+            //if (result != null && result.StaffManageStorages != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
 
             return result;
         }
@@ -168,9 +166,9 @@ namespace RSSMS.DataService.Services
             var updateEntity = _mapper.Map(model, entity);
 
             var image = model.Image;
-            if(image != null)
+            if (image != null)
             {
-                if(image.File != null)
+                if (image.File != null)
                 {
                     var url = await _firebaseService.UploadImageToFirebase(image.File, "storages", id, "avatar");
                     if (url != null) updateEntity.ImageUrl = url;

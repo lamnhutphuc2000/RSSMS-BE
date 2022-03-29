@@ -3,8 +3,6 @@ using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.Accounts;
 using RSSMS.DataService.ViewModels.JWT;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace RSSMS.DataService.AutoMapper
 {

@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using RSSMS.DataService.Models;
-using RSSMS.DataService.ViewModels.StaffManageUser;
 using RSSMS.DataService.ViewModels.Storages;
 using System.Linq;
 
@@ -25,14 +24,12 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<Storage, StorageUpdateViewModel>();
 
             mc.CreateMap<Storage, StorageDetailViewModel>()
-                .ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffAssignStorages.Where(x => x.RoleName == "Manager" && x.IsActive == true).FirstOrDefault() != null? des.StaffAssignStorages.Where(x => x.RoleName == "Manager").FirstOrDefault().Staff.Name : null));
+                .ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffAssignStorages.Where(x => x.RoleName == "Manager" && x.IsActive == true).FirstOrDefault() != null ? des.StaffAssignStorages.Where(x => x.RoleName == "Manager").FirstOrDefault().Staff.Name : null));
 
             mc.CreateMap<Storage, StorageGetIdViewModel>();
             //.ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffManageStorages.FirstOrDefault().User.Name));
             mc.CreateMap<StorageGetIdViewModel, Storage>();
 
-            mc.CreateMap<Storage, StaffManageStorageCreateViewModel>()
-                .ForMember(des => des.StorageId, opt => opt.MapFrom(src => src.Id));
 
         }
     }
