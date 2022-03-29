@@ -30,7 +30,9 @@ namespace RSSMS.DataService.Services
 
         public async Task<DynamicModelResponse<OrderTimelinesViewModel>> Get(OrderTimelinesViewModel model, string[] fields, int page, int size)
         {
-            var timelines = Get().OrderByDescending(x => x.Datetime)
+            var orderId = model.OrderId;
+            model.OrderId = null;
+            var timelines = Get(x => x.Request.OrderId == orderId).OrderByDescending(x => x.Datetime)
                                 .ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider)
                                 .DynamicFilter(model)
                                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);

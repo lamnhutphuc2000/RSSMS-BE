@@ -137,7 +137,7 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.Floors)
                     .HasForeignKey(d => d.SpaceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Floor_Shelf");
+                    .HasConstraintName("FK_Floor_Space");
             });
 
             modelBuilder.Entity<Image>(entity =>
@@ -315,10 +315,10 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 
-                entity.HasOne(d => d.Order)
+                entity.HasOne(d => d.Request)
                     .WithMany(p => p.OrderTimelines)
-                    .HasForeignKey(d => d.OrderId)
-                    .HasConstraintName("FK_OrderTimeline_Order");
+                    .HasForeignKey(d => d.RequestId)
+                    .HasConstraintName("FK_OrderTimeline_Request");
             });
 
             modelBuilder.Entity<Request>(entity =>

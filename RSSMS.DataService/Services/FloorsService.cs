@@ -84,7 +84,9 @@ namespace RSSMS.DataService.Services
             {
                 var floors = Get(floor => floor.SpaceId == spaceId && floor.IsActive).Include(floor => floor.OrderDetails)
                 .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
-                .ThenInclude(orderDetailServiceMaps => orderDetailServiceMaps.Service);
+                .ThenInclude(orderDetailServiceMaps => orderDetailServiceMaps.Service)
+                .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
+                .ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage);
                 if (floors.ToList().Count() == 0) return null;
 
                 foreach (var floor in floors)
@@ -117,6 +119,7 @@ namespace RSSMS.DataService.Services
         public async Task<FloorGetByIdViewModel> GetById(Guid id)
         {
             var floor = await Get(floor => floor.Id == id && floor.IsActive)
+                .Include(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
                 .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
                 .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer)
                 .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)

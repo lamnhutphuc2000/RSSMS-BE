@@ -2,6 +2,7 @@
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
+using RSSMS.DataService.Enums;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
@@ -62,6 +63,8 @@ namespace RSSMS.DataService.Services
         public async Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes)
         {
             var result = await Get(x => x.Id == id && x.IsActive == true)
+                .Include(order => order.OrderDetails).Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
+                .ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
                 .Include(order => order.Requests)
                 .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
                 .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
@@ -260,11 +263,11 @@ namespace RSSMS.DataService.Services
 
             await _orderTimelineService.CreateAsync(new OrderTimeline
             {
-                OrderId = order.Id,
+                RequestId = model.RequestId,
                 CreatedDate = DateTime.Now,
                 CreatedBy = userId,
                 Datetime = DateTime.Now,
-                Name = "Đon đang vận chuyển về kho"
+                Name = "Đơn đang vận chuyển về kho"
             });
 
             await _firebaseService.PushOrderNoti("New order arrive!", order.Id, null);
@@ -571,14 +574,14 @@ namespace RSSMS.DataService.Services
                 order.OrderDetails = orderDetails;
                 order.Status = 2;
                 await UpdateAsync(order);
-
+                var request = order.Requests.Where(x => x.Type == (int)RequestType.Create_Order).First();
                 await _orderTimelineService.CreateAsync(new OrderTimeline
                 {
-                    OrderId = order.Id,
+                    RequestId = request.Id,
                     CreatedDate = DateTime.Now,
                     CreatedBy = userId,
                     Datetime = DateTime.Now,
-                    Name = "Đon đã lưu kho"
+                    Name = "Đơn đã lưu kho"
                 });
 
 

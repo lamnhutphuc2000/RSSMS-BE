@@ -23,6 +23,14 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public int? ServiceType { get; set; }
         [JsonProperty("serviceName")]
         public string ServiceName { get; set; }
+        [JsonProperty("storageName")]
+        public string StorageName { get; set; }
+        [JsonProperty("areaName")]
+        public string AreaName { get; set; }
+        [JsonProperty("spaceName")]
+        public string SpaceName { get; set; }
+        [JsonProperty("floorName")]
+        public string FloorName { get; set; }
         [JsonProperty("servicePrice")]
         public decimal? ServicePrice { get; set; }
         [JsonProperty("serviceImageUrl")]
