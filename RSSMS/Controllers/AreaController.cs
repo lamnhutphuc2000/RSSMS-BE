@@ -32,7 +32,7 @@ namespace RSSMS.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
-        [Authorize(Roles = "Admin,Manager,Delivery Staff,Office staff")]
+        [Authorize(Roles = "Admin,Manager,Delivery Staff,Office Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(DynamicModelResponse<AreaViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -47,7 +47,7 @@ namespace RSSMS.API.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Manager,Delivery Staff,Office staff")]
+        [Authorize(Roles = "Admin,Manager,Delivery Staff,Office Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(AreaDetailViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -62,7 +62,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
-        [Authorize(Roles = "Manager,Office staff")]
+        [Authorize(Roles = "Manager,Office Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(AreaViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -77,7 +77,7 @@ namespace RSSMS.API.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Manager,Office staff")]
+        [Authorize(Roles = "Manager,Office Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -94,7 +94,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Manager,Office staff")]
+        [Authorize(Roles = "Manager,Office Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]

@@ -113,7 +113,7 @@
 //        /// <param name="phone"></param>
 //        /// <returns></returns>
 //        [HttpGet("user/{phone}")]
-//        [Authorize(Roles = "Admin,Manager,Office staff")]
+//        [Authorize(Roles = "Admin,Manager,Office Staff")]
 //        [MapToApiVersion("1")]
 //        [ProducesResponseType(typeof(UserViewModel), (int)HttpStatusCode.OK)]
 //        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]

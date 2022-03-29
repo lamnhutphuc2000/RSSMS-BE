@@ -47,7 +47,7 @@ namespace RSSMS.DataService.Services
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
                 if (role == "Manager") roles = roles.Where(x => x.Name != "Manager");
-                if (role == "Office staff") roles = roles.Where(x => x.Name == "Office staff");
+                if (role == "Office Staff") roles = roles.Where(x => x.Name == "Office Staff");
                 if (role == "Customer") roles = roles.Where(x => x.Name == "Customer");
             }
             

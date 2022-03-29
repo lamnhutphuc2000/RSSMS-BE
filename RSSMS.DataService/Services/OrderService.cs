@@ -120,7 +120,7 @@ namespace RSSMS.DataService.Services
                     .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
             }
 
-            if (role == "Office staff")
+            if (role == "Office Staff")
             {
                 var storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
                 order = order.Where(x => x.StorageId == storageId || x.StorageId == null)
@@ -173,7 +173,7 @@ namespace RSSMS.DataService.Services
             var now = DateTime.Now;
             order.Id = new Guid();
 
-            if (role == "Office staff")
+            if (role == "Office Staff")
             {
                 storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
                 order.StorageId = storageId;

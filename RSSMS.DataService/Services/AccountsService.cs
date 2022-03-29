@@ -80,7 +80,7 @@ namespace RSSMS.DataService.Services
             result = _mapper.Map(token, result);
             result.StorageId = null;
             var storageId = acc.StaffAssignStorages.Where(x => x.IsActive == true).FirstOrDefault()?.StorageId;
-            if (storageId != null && acc.Role.Name == "Office staff")
+            if (storageId != null && acc.Role.Name == "Office Staff")
             {
                 result.StorageId = storageId;
             }
@@ -143,7 +143,7 @@ namespace RSSMS.DataService.Services
                 users = users.Where(x => x.StaffAssignStorages.Any(x => storageIds.Contains((Guid)x.StorageId)) || x.StaffAssignStorages.Count == 0 )
                     .Include(x => x.Role);
             }
-            if (role == "Office staff")
+            if (role == "Office Staff")
                 users = users.Where(x => x.Role.Name == "Customer").Include(x => x.Role);
 
             //if (storageId == null)
@@ -270,7 +270,7 @@ namespace RSSMS.DataService.Services
             result = _mapper.Map(token, result);
             result.StorageId = null;
             var storageId = userCreate.StaffAssignStorages.Where(x => x.IsActive == true).FirstOrDefault()?.StorageId;
-            if (storageId != null && userCreate.Role.Name == "Office staff")
+            if (storageId != null && userCreate.Role.Name == "Office Staff")
             {
                 result.StorageId = storageId;
             }
@@ -361,7 +361,7 @@ namespace RSSMS.DataService.Services
             result = _mapper.Map(token, result);
             result.StorageId = null;
             var storageId = acc.StaffAssignStorages.Where(x => x.IsActive == true).FirstOrDefault()?.StorageId;
-            if (storageId != null && acc.Role.Name == "Office staff")
+            if (storageId != null && acc.Role.Name == "Office Staff")
             {
                 result.StorageId = storageId;
             }

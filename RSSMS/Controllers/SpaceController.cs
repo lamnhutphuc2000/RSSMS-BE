@@ -30,7 +30,7 @@ namespace RSSMS.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
-        [Authorize(Roles = "Manager,Delivery Staff,Office staff,Admin")]
+        [Authorize(Roles = "Manager,Delivery Staff,Office Staff,Admin")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(DynamicModelResponse<SpaceViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -45,7 +45,7 @@ namespace RSSMS.API.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
-        [Authorize(Roles = "Manager,Delivery Staff,Office staff,Admin")]
+        [Authorize(Roles = "Manager,Delivery Staff,Office Staff,Admin")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(SpaceViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -60,7 +60,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
-        [Authorize(Roles = "Manager,Office staff")]
+        [Authorize(Roles = "Manager,Office Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(SpaceViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -79,7 +79,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Manager,Office staff")]
+        [Authorize(Roles = "Manager,Office Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(SpaceViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -96,7 +96,7 @@ namespace RSSMS.API.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Manager,Office staff")]
+        [Authorize(Roles = "Manager,Office Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]

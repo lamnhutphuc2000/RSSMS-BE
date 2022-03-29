@@ -28,7 +28,7 @@ namespace RSSMS.API.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
-        [Authorize(Roles = "Manager,Delivery Staff,Office staff,Admin")]
+        [Authorize(Roles = "Manager,Delivery Staff,Office Staff,Admin")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(FloorGetByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]

@@ -26,7 +26,7 @@
 //        /// <param name="model"></param>
 //        /// <returns></returns>
 //        [HttpPost]
-//        [Authorize(Roles = "Manager,Office staff,Delivery Staff")]
+//        [Authorize(Roles = "Manager,Office Staff,Delivery Staff")]
 //        [MapToApiVersion("1")]
 //        [ProducesResponseType(typeof(BoxOrderDetailCreateViewModel), (int)HttpStatusCode.OK)]
 //        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
@@ -42,7 +42,7 @@
 //        /// <param name="model"></param>
 //        /// <returns></returns>
 //        [HttpPut]
-//        [Authorize(Roles = "Manager,Office staff,Delivery Staff")]
+//        [Authorize(Roles = "Manager,Office Staff,Delivery Staff")]
 //        [MapToApiVersion("1")]
 //        [ProducesResponseType(typeof(BoxOrderDetailUpdateViewModel), (int)HttpStatusCode.OK)]
 //        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]

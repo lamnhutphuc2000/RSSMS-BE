@@ -35,7 +35,7 @@ namespace RSSMS.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
-        [Authorize(Roles = "Admin,Manager,Office staff,Customer")]
+        [Authorize(Roles = "Admin,Manager,Office Staff,Customer")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
@@ -50,7 +50,7 @@ namespace RSSMS.API.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Manager,Office staff, Delivery Staff, Customer")]
+        [Authorize(Roles = "Admin,Manager,Office Staff, Delivery Staff, Customer")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -65,7 +65,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost]
-        [Authorize(Roles = "Manager,Office staff, Delivery Staff, Customer")]
+        [Authorize(Roles = "Manager,Office Staff, Delivery Staff, Customer")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderCreateViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
@@ -82,7 +82,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Manager,Office staff, Customer, Delivery Staff")]
+        [Authorize(Roles = "Manager,Office Staff, Customer, Delivery Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -97,7 +97,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPut]
-        [Authorize(Roles = "Manager,Office staff, Customer, Delivery Staff")]
+        [Authorize(Roles = "Manager,Office Staff, Customer, Delivery Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -113,7 +113,7 @@ namespace RSSMS.API.Controllers
         /// <param name="requestId"></param>
         /// <returns></returns>
         [HttpPut("done/order/{orderId}/request/{requestId}")]
-        [Authorize(Roles = "Manager,Office staff, Delivery Staff")]
+        [Authorize(Roles = "Manager,Office Staff, Delivery Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(string), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -144,7 +144,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost("send_noti_to_customer")]
-        [Authorize(Roles = "Delivery Staff, Office staff")]
+        [Authorize(Roles = "Delivery Staff, Office Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]

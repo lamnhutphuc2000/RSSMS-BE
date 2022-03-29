@@ -119,7 +119,7 @@ namespace RSSMS.DataService.Services
             result = _mapper.Map(token, result);
             result.StorageId = null;
             var storageId = userCreate.StaffManageStorages.FirstOrDefault()?.StorageId;
-            if (storageId != null && userCreate.Role.Name == "Office staff")
+            if (storageId != null && userCreate.Role.Name == "Office Staff")
             {
                 result.StorageId = storageId;
             }
@@ -255,7 +255,7 @@ namespace RSSMS.DataService.Services
             result = _mapper.Map(token, result);
             result.StorageId = null;
             var storageId = acc.StaffManageStorages.FirstOrDefault()?.StorageId;
-            if (storageId != null && acc.Role.Name == "Office staff")
+            if (storageId != null && acc.Role.Name == "Office Staff")
             {
                 result.StorageId = storageId;
             }
@@ -274,7 +274,7 @@ namespace RSSMS.DataService.Services
             result = _mapper.Map(token, result);
             result.StorageId = null;
             var storageId = acc.StaffManageStorages.FirstOrDefault()?.StorageId;
-            if (storageId != null && acc.Role.Name == "Office staff")
+            if (storageId != null && acc.Role.Name == "Office Staff")
             {
                 result.StorageId = storageId;
             }

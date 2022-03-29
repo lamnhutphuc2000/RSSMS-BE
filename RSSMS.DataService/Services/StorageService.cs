@@ -137,17 +137,17 @@ namespace RSSMS.DataService.Services
                                 .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
 
-            if (role == "Office staff")
+            if (role == "Office Staff")
             {
                 result = await Get(x => x.Id == id && x.IsActive == true)
-                .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Office staff" && s.IsActive == true && s.StaffId == userId))
+                .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Office Staff" && s.IsActive == true && s.StaffId == userId))
                 .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
-                if(result.StaffManageStorages == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office staff not manage this storage");
+                if(result.StaffManageStorages == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
 
             }
 
-            if (result != null && result.StaffManageStorages != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office staff not manage this storage");
+            if (result != null && result.StaffManageStorages != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
 
             return result;
         }

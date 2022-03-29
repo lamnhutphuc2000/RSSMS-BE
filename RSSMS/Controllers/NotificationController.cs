@@ -30,7 +30,7 @@ namespace RSSMS.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet]
-        [Authorize(Roles = "Manager,Office staff,Delivery Staff,Customer")]
+        [Authorize(Roles = "Manager,Office Staff,Delivery Staff,Customer")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(DynamicModelResponse<NotificationViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
