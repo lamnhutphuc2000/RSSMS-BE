@@ -284,7 +284,7 @@ namespace RSSMS.DataService.Services
             var request = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.Order).ThenInclude(order => order.OrderHistoryExtensions).FirstOrDefaultAsync();
             if (request == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
 
-            request.Status = 3;
+            request.Status = model.Status;
             request.IsPaid = model.IsPaid;
             request.ModifiedBy = userId;
             await UpdateAsync(request);
