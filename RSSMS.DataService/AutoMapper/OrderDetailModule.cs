@@ -41,7 +41,8 @@ namespace RSSMS.DataService.AutoMapper
                 .ForMember(des => des.CustomerName, opt => opt.MapFrom(src => src.Order.Customer.Name))
                 .ForMember(des => des.OrderName, opt => opt.MapFrom(src => src.Order.Name))
                 .ForMember(des => des.OrderStatus, opt => opt.MapFrom(src => src.Order.Status))
-                .ForMember(des => des.ReturnDate, opt => opt.MapFrom(src => src.Order.ReturnDate));
+                .ForMember(des => des.ReturnDate, opt => opt.MapFrom(src => src.Order.ReturnDate))
+                .ForMember(des => des.OrderDetailServices, opt => opt.MapFrom(src => src.OrderDetailServiceMaps));
         }
     }
 }
