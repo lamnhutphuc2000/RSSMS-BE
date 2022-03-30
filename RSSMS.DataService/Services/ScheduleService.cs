@@ -99,6 +99,7 @@ namespace RSSMS.DataService.Services
                         .Where(x => x.ScheduleDay.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Date <= model.DateTo.Value.Date).Include(x => x.Request)
                         .ThenInclude(request => request.Order)
                         .ThenInclude(order => order.Customer)
+                        .Include(x => x.Request).ThenInclude(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role)
                         .Include(x => x.Request).ThenInclude(request => request.Customer)
                         .Include(x => x.Request)
                         .ThenInclude(request => request.Order)
