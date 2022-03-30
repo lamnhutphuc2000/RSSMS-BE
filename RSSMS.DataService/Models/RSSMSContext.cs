@@ -195,6 +195,10 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.AdditionalFeeDescription).HasMaxLength(255);
 
+                entity.Property(e => e.CompensationDescription).HasMaxLength(255);
+
+                entity.Property(e => e.CompensationFee).HasColumnType("decimal(18, 3)");
+
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.DeliveryAddress).HasMaxLength(255);

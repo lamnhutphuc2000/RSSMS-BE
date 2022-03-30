@@ -27,6 +27,7 @@ namespace RSSMS.DataService.Services
         Task<RequestViewModel> Delete(Guid id);
         Task<RequestByIdViewModel> AssignStorage(RequestAssignStorageViewModel model, string accessToken);
         Task<RequestByIdViewModel> Cancel(Guid id, RequestCancelViewModel model, string accessToken);
+        Task<RequestByIdViewModel> DeliverRequest(Guid id, string accessToken);
     }
 
 
@@ -410,6 +411,46 @@ namespace RSSMS.DataService.Services
             entity.Status = 0;
             entity.CancelReason = model.CancelReason;
             await UpdateAsync(entity);
+
+            return await GetById(id);
+        }
+
+        public async Task<RequestByIdViewModel> DeliverRequest(Guid id, string accessToken)
+        {
+            var request = await Get(x => x.Id == id && x.IsActive).Include(x => x.Customer).Include(x => x.CreatedByNavigation).FirstOrDefaultAsync();
+            if(request == null ) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
+            request.Status = 5;
+
+            await UpdateAsync(request);
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+            string name = "đến kho";
+            string notiName = "lấy hàng về kho";
+            if (request.Type == 4)
+            {
+                name = "đến khách hàng";
+                notiName = "trả hàng";
+            }
+
+            await _orderTimelineService.CreateAsync(new OrderTimeline
+            {
+                RequestId = request.Id,
+                CreatedDate = DateTime.Now,
+                CreatedBy = userId,
+                Datetime = DateTime.Now,
+                Name = "Đơn đang vận chuyển "+name
+            });
+
+            var customer = request.Customer;
+            if (customer == null) customer = request.CreatedByNavigation;
+
+            await _firebaseService.SendNoti("Nhân viên đang di chuyển đến để "+notiName, userId, customer.DeviceTokenId, request.Id, new
+            {
+                Content = "Nhân viên đang di chuyển đến để "+notiName,
+                request.OrderId,
+                RequestId = request.Id
+            });
 
             return await GetById(id);
         }

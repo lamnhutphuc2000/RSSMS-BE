@@ -68,6 +68,9 @@ namespace RSSMS.DataService.Services
                     scheduleToCreate.RequestId = schedules[j].RequestId;
                     scheduleToCreate.ScheduleTime = schedules[j].ScheduleTime;
                     await CreateAsync(scheduleToCreate);
+                    var schedule = Get(x => x.Id == scheduleToCreate.Id).Include(x => x.Request).FirstOrDefault();
+                    schedule.Request.Status = 2;
+                    await UpdateAsync(schedule);
                 }
             }
 

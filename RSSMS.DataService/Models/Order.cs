@@ -32,6 +32,8 @@ namespace RSSMS.DataService.Models
         public string DeliveryTime { get; set; }
         public DateTime? ReturnDate { get; set; }
         public string ReturnTime { get; set; }
+        public decimal? CompensationFee { get; set; }
+        public string CompensationDescription { get; set; }
         public int? Status { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedDate { get; set; }

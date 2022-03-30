@@ -31,7 +31,7 @@ namespace RSSMS.DataService.Services
         Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes);
         Task<OrderViewModel> Cancel(Guid id, OrderCancelViewModel model, string accessToken);
         Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken);
-        Task<OrderByIdViewModel> Done(Guid orderId, Guid requestId);
+        Task<OrderByIdViewModel> Done(OrderDoneViewModel model, string accessToken);
         Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model);
         Task<OrderViewModel> AssignStorage(OrderAssignStorageViewModel model, string accessToken);
         Task<OrderViewModel> AssignFloor(OrderAssignFloorViewModel model, string accessToken);
@@ -339,22 +339,6 @@ namespace RSSMS.DataService.Services
         public async Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken)
         {
 
-            byte[] compressed = Convert.FromBase64String("yhIAAB+LCAAAAAAAAArsWNtu3DYQ/ZWFgPTJtEmKF9FAUDRwgxRtWqNxnto8DG+7snXZSlwnbuCnPvQD+jn5mvxJR7J2vb4lTpE2RRBhVxKHnBnOzJkhqddZ6bP9ZlVVO5lb9amtQ/cdUjKXW8scjYRSzohQXBBwkhEbIvVgjAgQs52sC7+tQp9GlgJ8FFAoIqUAIkALYoxihEbnHefW5pRll2p+hDog15O3b/5q5rPvy7dv/mxmRx0+/2i2hh0u2mYYR7XWQmpJBXY2I+/FtH2oytPQnX3jfRf6HocyjuLqmS3DIKgLadU1d/WmNkF12JUO5emC4rVLdzLwvkxl20D1OGAH47fRD0LvunI5tFFsfVL+eqHuOLgU/M8B+rFjUHK2HKTsZGX/vA/dwTTjbD9C1YdLEw4gDaZyyjmhOcnZEaX74y+7HHRUjn4roJ6RGaNQb2y8wi4JVdvsF0MmZmwv4awOTXoa0qLF6KFxftXBYMwBnPUb5060p22TFhtqnyCt+smiQxgglLoVGoIh62AeBjisR46Ei1hPMOsCztNPk0XHIkKG3/ZkpzGPztZME842M2g7P/gxQVkh7ZfXI4wHYeOFoL1xW18oPVZtO6L8QtYilPNFQhcMEX5Z+rSY3qvQzDcNjNspomREejBOaqYVMUxJTA5jSFE4S1gUSgueK+bybMNytI7+1J6AfwRI3hAnCHI5Io1uKazRf8+7CjkWKS37/b29WHbBQh8m5+7O23ZeBViW/a5r671Tumf3ur6veyKjc8UuLJf9sk1jZ7sHfR9S/4A/nhQMr5wBi1FTwql2RDBmiRXCEe+jUkWwRREdDoNTSNDtHi/nX0OVHtbBl/BVak9C8zDX3jinDAEGnIjINDFSCSKMdCI6q4XzaG05WDNE7MWVGD6bpjKG8p97+lbPfja+uw4nqNtVk8bX7So2Qej8xfnOR0qLfCst8u20wMZ2sKQrOHNgCM8tzj5aTQqNN+0jLaR1Kgdx3Q5+PXjPyt/D7OmNxBhL8CfIDO1cbpQ0RBUR18E4QNHjOhhzFTgHagNl745uDMqx6DkxVFiUUBQEgqJE25BL8FpJcSUzPjBoZbWprKt/wxc/XWbpA07LBm8jCZ/Ye59ZroUgh9/IGazFJ8E/u9VtWnpvXeGIkyoS4YucgLQGVzUIeS4oum/YgDTtuIzUJ8ebbUE2aptd6JqNmoaVMju/Z835MBjfAdvPBpfXs/WOqrPOz6HofCng/7MCru4q4PJqAdc6+JwriztPFnAp4wgJbwCRFRyzGvOu4O8t4I/aqr1ZvuWnKd9WBgBjKREyV0RwwwgUXhAWogHFAtWevjtNOI25Y1IRHhhGFHOGgLKSOOUiBSuVoeZL+b7hNum4sF4CHhgVOt5aRSw3nHilNTeIJCbkZfl2zasTf+w/Wgn/MCDfCtzPBpn3LeBThn4p4B9tB35tKfRGB+pQNKM5nmU0o6gELEEQBI9fNkApeQOUP7Tu5L8DJQOQXFFBqBj2BOgIUkRBSWDSRZ3LWPj37CoUuo3KwhIwviCikHHYVUiSAx5womfM4QeVe3sSD33rtXCd+U/Kwdyzb1+l0PT4ZWL6JHD+NwAAAP//AwA3qiriyhIAAA==");
-            byte[] decompressed = Decompress(compressed);
-            string chuot = Encoding.UTF8.GetString(decompressed);
-
-            //string chuot;
-            //var bytes = Convert.FromBase64String("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");
-            //using (var msi = new MemoryStream(bytes))
-            //using (var mso = new MemoryStream())
-            //{
-            //    using (var gs = new GZipStream(msi, CompressionMode.Decompress))
-            //    {
-            //        gs.CopyTo(mso);
-            //    }
-            //    chuot = Encoding.Unicode.GetString(mso.ToArray());
-            //}
-
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
@@ -473,16 +457,20 @@ namespace RSSMS.DataService.Services
             return order;
         }
 
-        public async Task<OrderByIdViewModel> Done(Guid orderId, Guid requestId)
+        public async Task<OrderByIdViewModel> Done(OrderDoneViewModel model, string accessToken)
         {
-            var order = await Get(x => x.Id == orderId && x.IsActive == true).Include(x => x.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
+            var order = await Get(x => x.Id == model.OrderId && x.IsActive == true).Include(x => x.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
                 .Include(x => x.Requests).FirstOrDefaultAsync();
             if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
 
             var requests = order.Requests;
             foreach (var request in requests)
             {
-                if (request.Id == requestId) request.Status = 3;
+                if (request.Id == model.RequestId) request.Status = 3;
             }
             order.Requests = requests;
 
@@ -497,8 +485,10 @@ namespace RSSMS.DataService.Services
             }
             order.Status = 6;
             order.OrderDetails = orderDetails;
+            order.ModifiedDate = DateTime.Now;
+            order.ModifiedBy = userId;
             await UpdateAsync(order);
-            return await GetById(orderId, new List<int>());
+            return await GetById(model.OrderId, new List<int>());
         }
 
         public async Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model)
