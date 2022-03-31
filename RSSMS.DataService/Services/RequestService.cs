@@ -28,6 +28,7 @@ namespace RSSMS.DataService.Services
         Task<RequestByIdViewModel> AssignStorage(RequestAssignStorageViewModel model, string accessToken);
         Task<RequestByIdViewModel> Cancel(Guid id, RequestCancelViewModel model, string accessToken);
         Task<RequestByIdViewModel> DeliverRequest(Guid id, string accessToken);
+        Task<RequestByIdViewModel> DeliverySendRequestNotification(Guid id, string message, string accessToken);
     }
 
 
@@ -326,6 +327,7 @@ namespace RSSMS.DataService.Services
                 string name = null;
                 if (request.Type == (int)RequestType.Create_Order) name = "Nhân viên đang tới lấy hàng";
                 if (request.Type == (int)RequestType.Return_Order) name = "Nhân viên đang tới trả hàng";
+                if (model.Description.Length > 0) name = model.Description;
                 await _orderTimelineService.CreateAsync(new OrderTimeline
                 {
                     RequestId = request.Id,
@@ -452,6 +454,40 @@ namespace RSSMS.DataService.Services
                 RequestId = request.Id
             });
 
+            return await GetById(id);
+        }
+
+        public async Task<RequestByIdViewModel> DeliverySendRequestNotification(Guid id, string message, string accessToken)
+        {
+            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+            var request = await Get(x => x.Id == id && x.IsActive).Include(x => x.Order).ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages).ThenInclude(staffAssign => staffAssign.Staff)
+                .Include(x => x.Storage).ThenInclude(storage => storage.StaffAssignStorages).ThenInclude(staffAssign => staffAssign.Staff).FirstOrDefaultAsync();
+            if (request == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
+
+            var storage = request.Storage;
+            if(storage == null)
+            {
+                if (request.Order == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
+                if(request.Order.Storage == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage not found");
+                storage = request.Order.Storage;
+            }
+
+            var staffList = storage.StaffAssignStorages.Where(x => x.RoleName != "Delivery Staff" && x.IsActive).Select(x => x.Staff).ToList();
+
+            foreach(var staff in staffList)
+            {
+                if(staff.DeviceTokenId != null)
+                {
+                    await _firebaseService.SendNoti(message, userId, staff.DeviceTokenId, request.Id, new
+                    {
+                        Content = message,
+                        request.OrderId,
+                        RequestId = request.Id
+                    });
+                }
+            }
             return await GetById(id);
         }
     }

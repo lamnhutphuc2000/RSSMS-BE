@@ -187,5 +187,21 @@ namespace RSSMS.API.Controllers
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _orderService.AssignFloor(model, accessToken));
         }
+
+        /// <summary>
+        /// Assign order to another floor
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPut("assign to another floor")]
+        [Authorize(Roles = "Manager, Office Staff")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> AssignOrderToAnotherFloor(OrderAssignAnotherFloorViewModel model)
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _orderService.AssignAnotherFloor(model, accessToken));
+        }
     }
 }

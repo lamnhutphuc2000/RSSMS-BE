@@ -153,5 +153,21 @@ namespace RSSMS.API.Controllers
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _requestService.DeliverRequest(id, accessToken));
         }
+
+        /// <summary>
+        /// Delivery staff send noti to staff
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost("send request notification/{id}")]
+        [MapToApiVersion("1")]
+        [ProducesResponseType(typeof(RequestByIdViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> DeliverySendRequestNotification(Guid id, [FromQuery] string message)
+        {
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _requestService.DeliverySendRequestNotification(id, message, accessToken));
+        }
     }
 }

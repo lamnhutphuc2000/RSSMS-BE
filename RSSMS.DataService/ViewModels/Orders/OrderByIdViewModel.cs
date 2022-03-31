@@ -31,6 +31,10 @@ namespace RSSMS.DataService.ViewModels.Orders
         public double? AdditionalFee { get; set; }
         [JsonProperty("additionalFeeDescription")]
         public string AdditionalFeeDescription { get; set; }
+        [JsonProperty("compensationFee")]
+        public decimal? CompensationFee { get; set; }
+        [JsonProperty("compensationDescription")]
+        public string CompensationDescription { get; set; }
         [JsonProperty("rejectedReason")]
         public string RejectedReason { get; set; }
         [JsonProperty("type")]

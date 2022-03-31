@@ -35,6 +35,7 @@ namespace RSSMS.DataService.Services
         Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model);
         Task<OrderViewModel> AssignStorage(OrderAssignStorageViewModel model, string accessToken);
         Task<OrderViewModel> AssignFloor(OrderAssignFloorViewModel model, string accessToken);
+        Task<OrderViewModel> AssignAnotherFloor(OrderAssignAnotherFloorViewModel model, string accessToken);
     }
     class OrderService : BaseService<Order>, IOrderService
     {
@@ -45,11 +46,13 @@ namespace RSSMS.DataService.Services
         private readonly IServicesService _serviceService;
         private readonly IRequestService _requestService;
         private readonly IOrderTimelinesService _orderTimelineService;
+        private readonly IOrderDetailService _orderDetailService;
         public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository
             , IFirebaseService firebaseService, IAccountsService accountService,
             IServicesService serviceService,
             IRequestService requestService,
             IOrderTimelinesService orderTimelineService,
+            IOrderDetailService orderDetailService,
             IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -59,6 +62,7 @@ namespace RSSMS.DataService.Services
             _serviceService = serviceService;
             _requestService = requestService;
             _orderTimelineService = orderTimelineService;
+            _orderDetailService = orderDetailService;
         }
         public async Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes)
         {
@@ -554,7 +558,6 @@ namespace RSSMS.DataService.Services
                 order.ModifiedDate = DateTime.Now;
                 var orderDetails = order.OrderDetails;
                 var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
-                ICollection<OrderDetail> orderDetailsListUpdate = new List<OrderDetail>();
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
                     foreach (var orderDetail in orderDetails)
@@ -577,9 +580,57 @@ namespace RSSMS.DataService.Services
 
                 return _mapper.Map<OrderViewModel>(order);
             }
-            catch (Exception e)
+            catch (ErrorResponse e)
             {
-                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+        }
+
+        public async Task<OrderViewModel> AssignAnotherFloor(OrderAssignAnotherFloorViewModel model, string accessToken)
+        {
+            try
+            {
+                var orderDetailIds = model.OrderDetailAssignFloor.Select(x => x.OrderDetailId).ToList();
+                var orders = Get(x => x.IsActive)
+                    .Include(order => order.OrderDetails)
+                    .Where(order => order.OrderDetails.Any(orderDetail => orderDetailIds.Contains(orderDetail.Id)))
+                    .Include(order => order.Requests)
+                    .ToList().AsQueryable()
+                    .ToList();
+                if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
+                if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail not in the same order");
+                var order = orders.First();
+
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+                order.ModifiedBy = userId;
+                order.ModifiedDate = DateTime.Now;
+                var orderDetails = order.OrderDetails;
+                var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
+                foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
+                {
+                    foreach (var orderDetail in orderDetails)
+                    {
+                        if (orderDetail.Id == orderDetailToAssignFloor.OrderDetailId)
+                            orderDetail.FloorId = orderDetailToAssignFloor.FloorId;
+                    }
+                    if(orderDetailToAssignFloor.OldFloorId != null)
+                    {
+                        var oldOrderDetail = _orderDetailService.Get(x => x.FloorId == orderDetailToAssignFloor.OldFloorId && x.Id == orderDetailToAssignFloor.OrderDetailId).FirstOrDefault();
+                        oldOrderDetail.FloorId = null;
+                        await _orderDetailService.UpdateAsync(oldOrderDetail);
+                    }
+                }
+                order.OrderDetails = orderDetails;
+                order.Status = 2;
+                await UpdateAsync(order);
+
+                return _mapper.Map<OrderViewModel>(order);
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
             }
         }
     }
