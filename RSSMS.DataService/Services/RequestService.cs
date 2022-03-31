@@ -419,7 +419,7 @@ namespace RSSMS.DataService.Services
         {
             var request = await Get(x => x.Id == id && x.IsActive).Include(x => x.Customer).Include(x => x.CreatedByNavigation).FirstOrDefaultAsync();
             if(request == null ) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
-            request.Status = 5;
+            request.Status = 4;
 
             await UpdateAsync(request);
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
