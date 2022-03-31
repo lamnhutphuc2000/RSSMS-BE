@@ -31,6 +31,7 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly ISpaceService _spaceService;
+        private readonly IFloorsService _floorService;
         public AreaService(IUnitOfWork unitOfWork, ISpaceService spaceService, IAreaRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -59,9 +60,29 @@ namespace RSSMS.DataService.Services
 
         public async Task<AreaDetailViewModel> GetById(Guid id)
         {
-            var area = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
+            var area = await Get(x => x.Id == id && x.IsActive == true).Include(area => area.Spaces).ThenInclude(space => space.Floors).FirstOrDefaultAsync();
             if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
             var result = _mapper.Map<AreaDetailViewModel>(area);
+            var spaces = area.Spaces;
+            if (spaces.Count == 0) return result;
+
+            double usage = 0;
+            double used = 0;
+            double available = 0;
+            foreach(var space in spaces)
+            {
+                var spaceById = await _spaceService.GetById(space.Id);
+                usage += spaceById.Floors.Select(x => x.Usage).Sum();
+            }
+            
+            double total = (double) (area.Height * area.Width * area.Length);
+            used = usage * total / 100;
+            available = total - used;
+
+            result.Usage = usage;
+            result.Used = used;
+            result.Available = available;
+
             return result;
         }
 
