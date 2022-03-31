@@ -164,7 +164,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(RequestByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> DeliverySendRequestNotification(Guid id, [FromQuery] string message)
+        public async Task<IActionResult> DeliverySendRequestNotification(Guid id, [FromBody] string message)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _requestService.DeliverySendRequestNotification(id, message, accessToken));
