@@ -101,7 +101,7 @@ namespace RSSMS.DataService.Services
             {
                 var storageIds = _staffAssignStoragesService.Get(x => x.StaffId == userId).Select(a => a.StorageId).ToList();
                 var staff = _staffAssignStoragesService.Get(x => storageIds.Contains(x.StorageId)).Select(a => a.StaffId).ToList();
-                requests = requests.Where(x => staff.Contains((Guid)x.CreatedBy) || x.CreatedBy == userId || x.CreatedByNavigation.Role.Name == "Customer")
+                requests = requests.Where(x => staff.Contains((Guid)x.CreatedBy) || x.CreatedBy == userId || x.CreatedByNavigation.Role.Name == "Customer" || storageIds.Contains((Guid)x.StorageId))
                     .Include(request => request.Customer)
                     .Include(a => a.Schedules).Include(a => a.CreatedByNavigation).ThenInclude(b => b.StaffAssignStorages)
                     .Include(x => x.Storage)
@@ -165,7 +165,8 @@ namespace RSSMS.DataService.Services
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-
+            Guid? storageId = null;
+            if(role == "Office Staff") storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
             Request request = null;
             if (role == "Delivery Staff" && model.Type == (int)RequestType.Delivery_Cancel_Schedule) // huy lich giao hang
             {
@@ -267,6 +268,7 @@ namespace RSSMS.DataService.Services
                 request = _mapper.Map<Request>(model);
                 request.CreatedBy = userId;
                 if (role == "Customer") request.CustomerId = userId;
+                if (role == "Office Staff") request.StorageId = storageId;
                 await CreateAsync(request);
 
                 await _orderTimelineService.CreateAsync(new OrderTimeline
