@@ -71,9 +71,9 @@ namespace RSSMS.DataService.Services
             try
             {
                 var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Floors).ThenInclude(Floors => Floors.OrderDetails).FirstOrDefaultAsync();
-                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf id not found");
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space id not found");
                 var shelfIsUsed = CheckIsUsed(id);
-                if (shelfIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf is in used");
+                if (shelfIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space is in used");
                 entity.IsActive = false;
                 await UpdateAsync(entity);
                 return _mapper.Map<SpaceViewModel>(entity);
@@ -211,7 +211,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 var entity = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Floors).FirstOrDefault();
-                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Shelf id not found");
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space id not found");
                 var BoxAssignedToOrder = entity.Floors.Where(x => x.OrderDetails.Count > 0).ToList();
                 if (BoxAssignedToOrder.Count() > 0) return true;
                 return false;

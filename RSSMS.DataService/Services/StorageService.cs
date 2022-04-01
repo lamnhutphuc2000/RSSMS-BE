@@ -191,14 +191,12 @@ namespace RSSMS.DataService.Services
             {
                 if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage Id not matched");
 
-                var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Areas).FirstOrDefaultAsync();
+                var entity = await Get(storage => storage.Id == id && storage.IsActive).Include(a => a.Areas).FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
 
-                var areas = entity.Areas;
+                var areas = entity.Areas.Where(area => area.IsActive);
                 foreach (var area in areas)
-                {
                     if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
-                }
 
                 var updateEntity = _mapper.Map(model, entity);
 
