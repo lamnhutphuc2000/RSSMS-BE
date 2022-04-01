@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
+using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.OrderHistoryExtension;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace RSSMS.DataService.ViewModels.Orders
             "Id","CustomerName","Name","CustomerPhone","DeliveryAddress","ReturnAddress","TotalPrice",
             "AdditionalFee","AdditionalFeeDescription","TypeOrder","RejectedReason"
                 ,"IsUserDelivery","PaymentMethod","DeliveryTime","DeliveryDate","ReturnDate","DurationDays","DurationMonths","Status","IsPaid","OrderBoxDetails","OrderHistoryExtensions"
+                ,"OrderAdditionalFees"
         };
         [JsonProperty("id")]
         public Guid? Id { get; set; }
@@ -91,5 +93,8 @@ namespace RSSMS.DataService.ViewModels.Orders
         [JsonProperty("orderHistoryExtensions")]
         [BindNever]
         public virtual ICollection<OrderHistoryExtensionViewModel> OrderHistoryExtensions { get; set; }
+        [JsonProperty("orderAdditionalFees")]
+        [BindNever]
+        public virtual ICollection<OrderAdditionalFee> OrderAdditionalFees { get; set; }
     }
 }

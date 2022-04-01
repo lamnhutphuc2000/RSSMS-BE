@@ -70,6 +70,7 @@ namespace RSSMS.DataService.Services
                 .Include(order => order.OrderDetails).Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
                 .ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
                 .Include(order => order.Requests)
+                .Include(order => order.OrderAdditionalFees)
                 .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
                 .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
@@ -79,7 +80,6 @@ namespace RSSMS.DataService.Services
                 request = request.Where(request => requestTypes.Contains((int)request.Type)).ToList();
                 result.Requests = request;
             }
-
             if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
             return result;
         }
@@ -97,7 +97,8 @@ namespace RSSMS.DataService.Services
             .Include(x => x.OrderDetails)
             .ThenInclude(orderDetail => orderDetail.Images)
             .Include(x => x.OrderDetails)
-            .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
+            .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+            .Include(order => order.OrderAdditionalFees);
 
             if (OrderStatuses.Count > 0)
             {
@@ -107,7 +108,8 @@ namespace RSSMS.DataService.Services
                     .Include(x => x.OrderDetails)
                     .ThenInclude(orderDetail => orderDetail.Images)
                     .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
+                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                    .Include(order => order.OrderAdditionalFees);
             }
 
 
@@ -116,7 +118,8 @@ namespace RSSMS.DataService.Services
                 order = order
                     .Where(x => (x.ReturnDate >= dateFrom && x.ReturnDate <= dateTo) || (x.DeliveryDate >= dateFrom && x.DeliveryDate <= dateTo))
                 .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
+                .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                .Include(order => order.OrderAdditionalFees);
             }
             if (role == "Manager")
             {
@@ -124,7 +127,8 @@ namespace RSSMS.DataService.Services
                     .Include(x => x.Storage)
                     .Include(x => x.Requests).ThenInclude(request => request.Schedules)
                     .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
+                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                    .Include(order => order.OrderAdditionalFees);
             }
 
             if (role == "Office Staff")
@@ -133,7 +137,8 @@ namespace RSSMS.DataService.Services
                 order = order.Where(x => x.StorageId == storageId || x.StorageId == null)
                     .Include(x => x.Storage)
                     .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
+                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                    .Include(order => order.OrderAdditionalFees);
             }
 
             if (role == "Customer")
@@ -141,7 +146,8 @@ namespace RSSMS.DataService.Services
                 order = order.Where(x => x.CustomerId == userId)
                     .Include(x => x.Storage)
                     .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps);
+                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                    .Include(order => order.OrderAdditionalFees);
             }
 
             var result = order.OrderByDescending(x => x.CreatedDate)
@@ -610,17 +616,25 @@ namespace RSSMS.DataService.Services
                 var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
+                    if (orderDetailToAssignFloor.OldFloorId != null)
+                    {
+                        var oldOrderDetail = _orderDetailService.Get(x => x.FloorId == orderDetailToAssignFloor.OldFloorId && x.Id == orderDetailToAssignFloor.OrderDetailId).FirstOrDefault();
+                        if (oldOrderDetail != null)
+                        {
+                            oldOrderDetail.FloorId = null;
+                            await _orderDetailService.UpdateAsync(oldOrderDetail);
+                        }
+
+                    }
+                }
+                foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
+                {
                     foreach (var orderDetail in orderDetails)
                     {
                         if (orderDetail.Id == orderDetailToAssignFloor.OrderDetailId)
                             orderDetail.FloorId = orderDetailToAssignFloor.FloorId;
                     }
-                    if(orderDetailToAssignFloor.OldFloorId != null)
-                    {
-                        var oldOrderDetail = _orderDetailService.Get(x => x.FloorId == orderDetailToAssignFloor.OldFloorId && x.Id == orderDetailToAssignFloor.OrderDetailId).FirstOrDefault();
-                        oldOrderDetail.FloorId = null;
-                        await _orderDetailService.UpdateAsync(oldOrderDetail);
-                    }
+
                 }
                 order.OrderDetails = orderDetails;
                 order.Status = 2;

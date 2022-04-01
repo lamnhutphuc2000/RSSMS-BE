@@ -1,6 +1,6 @@
-﻿using System;
+﻿using RSSMS.DataService.Models;
+using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace RSSMS.DataService.ViewModels.Orders
 {
@@ -10,7 +10,6 @@ namespace RSSMS.DataService.ViewModels.Orders
         public Guid RequestId { get; set; }
         public decimal? CompensationFee { get; set; }
         public string CompensationDescription { get; set; }
-        public string AdditionalFeeDescription { get; set; }
-        public double? AdditionalFee { get; set; }
+        public virtual ICollection<OrderAdditionalFee> OrderAdditionalFees { get; set; }
     }
 }

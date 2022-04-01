@@ -23,6 +23,7 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<Image> Images { get; set; }
         public virtual DbSet<Notification> Notifications { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
+        public virtual DbSet<OrderAdditionalFee> OrderAdditionalFees { get; set; }
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
         public virtual DbSet<OrderDetailServiceMap> OrderDetailServiceMaps { get; set; }
         public virtual DbSet<OrderHistoryExtension> OrderHistoryExtensions { get; set; }
@@ -237,6 +238,20 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.StorageId)
                     .HasConstraintName("FK_Order_Storage");
+            });
+
+            modelBuilder.Entity<OrderAdditionalFee>(entity =>
+            {
+                entity.ToTable("OrderAdditionalFee");
+
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.Description).HasMaxLength(255);
+
+                entity.HasOne(d => d.Order)
+                    .WithMany(p => p.OrderAdditionalFees)
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_OrderAdditionalFee_Order");
             });
 
             modelBuilder.Entity<OrderDetail>(entity =>

@@ -6,6 +6,7 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
 {
     public class OrderDetailInFloorViewModel
     {
+        public Guid Id { get; set; }
         public string OrderName { get; set; }
         public string CustomerName { get; set; }
         public int? OrderStatus { get; set; }
