@@ -72,7 +72,7 @@ namespace RSSMS.DataService.Services
             .ThenInclude(x => x.OrderDetails).ThenInclude(x => x.Order).FirstOrDefaultAsync();
             if (space == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space id not found");
             var result = _mapper.Map<SpaceViewModel>(space);
-            result.Floors = _floorsService.GetFloorInSpace(id);
+            result.Floors = await _floorsService.GetFloorInSpace(id);
             return result;
         }
 
@@ -126,7 +126,7 @@ namespace RSSMS.DataService.Services
             if (result.Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space not found");
             foreach (var space in result)
             {
-                space.Floors = _floorsService.GetFloorInSpace((Guid)space.Id);
+                space.Floors = await _floorsService.GetFloorInSpace((Guid)space.Id);
             }
 
             var rs = new DynamicModelResponse<SpaceViewModel>
