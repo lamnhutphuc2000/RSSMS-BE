@@ -12,10 +12,10 @@ namespace RSSMS.API.Controllers
     [Route("api/v{version:apiVersion}/ordertimelines")]
     [ApiController]
     [ApiVersion("1")]
-    public class OrderTimelinesController : ControllerBase
+    public class OrderTimelineController : ControllerBase
     {
         private readonly IOrderTimelinesService _orderTimelinesService;
-        public OrderTimelinesController(IOrderTimelinesService orderTimelinesService)
+        public OrderTimelineController(IOrderTimelinesService orderTimelinesService)
         {
             _orderTimelinesService = orderTimelinesService;
         }

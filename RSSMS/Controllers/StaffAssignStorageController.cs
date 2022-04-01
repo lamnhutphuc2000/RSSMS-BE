@@ -13,10 +13,10 @@ namespace RSSMS.API.Controllers
     [Route("api/v{version:apiVersion}/staff-assign-storages")]
     [ApiController]
     [ApiVersion("1")]
-    public class StaffAssignStoragesController : ControllerBase
+    public class StaffAssignStorageController : ControllerBase
     {
         private readonly IStaffAssignStoragesService _staffAssignStoragesService;
-        public StaffAssignStoragesController(IStaffAssignStoragesService staffAssignStoragesService)
+        public StaffAssignStorageController(IStaffAssignStoragesService staffAssignStoragesService)
         {
             _staffAssignStoragesService = staffAssignStoragesService;
         }

@@ -12,10 +12,10 @@ namespace RSSMS.API.Controllers
     [Route("api/v{version:apiVersion}/services")]
     [ApiController]
     [ApiVersion("1")]
-    public class ServicesController : Controller
+    public class ServiceController : Controller
     {
         private readonly IServicesService _servicesService;
-        public ServicesController(IServicesService servicesService)
+        public ServiceController(IServicesService servicesService)
         {
             _servicesService = servicesService;
         }

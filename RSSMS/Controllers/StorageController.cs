@@ -15,10 +15,10 @@ namespace RSSMS.API.Controllers
     [Route("api/v{version:apiVersion}/storages")]
     [ApiController]
     [ApiVersion("1")]
-    public class StoragesController : ControllerBase
+    public class StorageController : ControllerBase
     {
         private readonly IStorageService _storagesService;
-        public StoragesController(IStorageService storageService)
+        public StorageController(IStorageService storageService)
         {
             _storagesService = storageService;
         }
