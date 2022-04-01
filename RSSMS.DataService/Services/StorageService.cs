@@ -40,142 +40,190 @@ namespace RSSMS.DataService.Services
 
         public async Task<StorageViewModel> Create(StorageCreateViewModel model)
         {
-            var storage = _mapper.Map<Storage>(model);
-            var image = model.Image;
-            if (image != null)
+            try
             {
-                if (image.File != null)
+                var storage = _mapper.Map<Storage>(model);
+                var image = model.Image;
+                if (image != null)
                 {
-                    var url = await _firebaseService.UploadImageToFirebase(image.File, "storages", storage.Id, "avatar");
-                    if (url != null)
+                    if (image.File != null)
                     {
-                        storage.ImageUrl = url;
-                    }
+                        var url = await _firebaseService.UploadImageToFirebase(image.File, "storages", storage.Id, "avatar");
+                        if (url != null)
+                        {
+                            storage.ImageUrl = url;
+                        }
 
+                    }
                 }
+                await CreateAsync(storage);
+                return _mapper.Map<StorageViewModel>(storage);
             }
-            await CreateAsync(storage);
-            //if (model.ListStaff != null)
-            //{
-            //    foreach (UserListStaffViewModel staffAssigned in model.ListStaff)
-            //    {
-            //        StaffAssignStorageCreateViewModel staffAssignModel = new StaffAssignStorageCreateViewModel
-            //        {
-            //            StorageId = storage.Id,
-            //            UserId = staffAssigned.Id
-            //        };
-            //        await _staffAssignStoragesService.Create(staffAssignModel);
-            //    }
-            //}
-            return _mapper.Map<StorageViewModel>(storage);
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception e)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
+            }
+            
 
         }
 
         public async Task<StorageViewModel> Delete(Guid id)
         {
-            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Areas).FirstOrDefaultAsync();
-            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
-            var areas = entity.Areas;
-            foreach (var area in areas)
+            try
             {
-                if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage is in used");
+                var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Areas).FirstOrDefaultAsync();
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
+                var areas = entity.Areas;
+                foreach (var area in areas)
+                {
+                    if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage is in used");
+                }
+                entity.IsActive = false;
+                await UpdateAsync(entity);
+                return _mapper.Map<StorageViewModel>(entity);
             }
-            entity.IsActive = false;
-            await UpdateAsync(entity);
-            return _mapper.Map<StorageViewModel>(entity);
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception e)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
+            }
+            
         }
 
         public async Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, List<int> types, string[] fields, int page, int size, string accessToken)
         {
-            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-
-            var storages = Get(x => x.IsActive == true).Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Manager" && s.IsActive == true)).ThenInclude(a => a.Staff).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model);
-
-
-
-            if (types.Count > 0)
-                storages = storages.Where(x => types.Contains((int)x.Type));
-
-
-            if (role == "Manager")
+            try
             {
-                var storagesManagerManage = _staffAssignStoragesService.Get(x => x.StaffId == userId && x.IsActive == true).Select(x => x.StorageId).ToList();
-                storages = storages.Where(x => storagesManagerManage.Contains((Guid)x.Id));
-            }
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+
+                var storages = Get(x => x.IsActive == true).Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Manager" && s.IsActive == true)).ThenInclude(a => a.Staff).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model);
 
 
-            var result = storages.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
 
-            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
-            var rs = new DynamicModelResponse<StorageViewModel>
-            {
-                Metadata = new PagingMetaData
+                if (types.Count > 0)
+                    storages = storages.Where(x => types.Contains((int)x.Type));
+
+
+                if (role == "Manager")
                 {
-                    Page = page,
-                    Size = size,
-                    Total = result.Item1,
-                    TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
-                },
-                Data = await result.Item2.ToListAsync()
-            };
-            return rs;
+                    var storagesManagerManage = _staffAssignStoragesService.Get(x => x.StaffId == userId && x.IsActive == true).Select(x => x.StorageId).ToList();
+                    storages = storages.Where(x => storagesManagerManage.Contains((Guid)x.Id));
+                }
+
+
+                var result = storages.PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+
+                if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+                var rs = new DynamicModelResponse<StorageViewModel>
+                {
+                    Metadata = new PagingMetaData
+                    {
+                        Page = page,
+                        Size = size,
+                        Total = result.Item1,
+                        TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
+                    },
+                    Data = await result.Item2.ToListAsync()
+                };
+                return rs;
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception e)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
+            }
+            
         }
 
         public async Task<StorageDetailViewModel> GetById(Guid id, string accessToken)
         {
-            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-
-            var result = await Get(x => x.Id == id && x.IsActive == true)
-                                .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Manager" && s.IsActive == true))
-                                .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
-            if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
-
-            if (role == "Office Staff")
+            try
             {
-                result = await Get(x => x.Id == id && x.IsActive == true)
-                .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Office Staff" && s.IsActive == true && s.StaffId == userId))
-                .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider)
-                .FirstOrDefaultAsync();
-                //if (result.StaffManageStorages == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
+                var result = await Get(x => x.Id == id && x.IsActive == true)
+                                    .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Manager" && s.IsActive == true))
+                                    .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
+                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
+
+                if (role == "Office Staff")
+                {
+                    result = await Get(x => x.Id == id && x.IsActive == true)
+                    .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Office Staff" && s.IsActive == true && s.StaffId == userId))
+                    .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider)
+                    .FirstOrDefaultAsync();
+                    //if (result.StaffManageStorages == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
+
+                }
+
+                //if (result != null && result.StaffManageStorages != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
+
+                return result;
             }
-
-            //if (result != null && result.StaffManageStorages != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
-
-            return result;
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception e)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
+            }
+            
         }
 
         public async Task<StorageUpdateViewModel> Update(Guid id, StorageUpdateViewModel model)
         {
-            if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage Id not matched");
-
-            var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Areas).FirstOrDefaultAsync();
-            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
-
-            var areas = entity.Areas;
-            foreach (var area in areas)
+            try
             {
-                if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
-            }
+                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage Id not matched");
 
-            var updateEntity = _mapper.Map(model, entity);
+                var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Areas).FirstOrDefaultAsync();
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
 
-            var image = model.Image;
-            if (image != null)
-            {
-                if (image.File != null)
+                var areas = entity.Areas;
+                foreach (var area in areas)
                 {
-                    var url = await _firebaseService.UploadImageToFirebase(image.File, "storages", id, "avatar");
-                    if (url != null) updateEntity.ImageUrl = url;
+                    if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
                 }
-            }
-            await UpdateAsync(updateEntity);
 
-            return _mapper.Map<StorageUpdateViewModel>(updateEntity);
+                var updateEntity = _mapper.Map(model, entity);
+
+                var image = model.Image;
+                if (image != null)
+                {
+                    if (image.File != null)
+                    {
+                        var url = await _firebaseService.UploadImageToFirebase(image.File, "storages", id, "avatar");
+                        if (url != null) updateEntity.ImageUrl = url;
+                    }
+                }
+                await UpdateAsync(updateEntity);
+
+                return _mapper.Map<StorageUpdateViewModel>(updateEntity);
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception e)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
+            }
+            
         }
     }
 }
