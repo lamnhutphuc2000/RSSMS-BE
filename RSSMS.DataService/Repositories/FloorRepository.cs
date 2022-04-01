@@ -7,9 +7,9 @@ namespace RSSMS.DataService.Repositories
     {
 
     }
-    public class FloorsRepository : BaseRepository<Floor>, IFloorsRepository
+    public class FloorRepository : BaseRepository<Floor>, IFloorsRepository
     {
-        public FloorsRepository(DbContext dbContext) : base(dbContext)
+        public FloorRepository(DbContext dbContext) : base(dbContext)
         {
         }
     }

@@ -7,9 +7,9 @@ namespace RSSMS.DataService.Repositories
     {
 
     }
-    public class StaffAssignStoragesRepository : BaseRepository<StaffAssignStorage>, IStaffAssignStoragesRepository
+    public class StaffAssignStorageRepository : BaseRepository<StaffAssignStorage>, IStaffAssignStoragesRepository
     {
-        public StaffAssignStoragesRepository(DbContext dbContext) : base(dbContext)
+        public StaffAssignStorageRepository(DbContext dbContext) : base(dbContext)
         {
         }
     }

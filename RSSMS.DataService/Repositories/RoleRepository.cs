@@ -7,9 +7,9 @@ namespace RSSMS.DataService.Repositories
     {
 
     }
-    public class RolesRepository : BaseRepository<Role>, IRolesRepository
+    public class RoleRepository : BaseRepository<Role>, IRolesRepository
     {
-        public RolesRepository(DbContext dbContext) : base(dbContext)
+        public RoleRepository(DbContext dbContext) : base(dbContext)
         {
         }
     }

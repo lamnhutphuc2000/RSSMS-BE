@@ -7,9 +7,9 @@ namespace RSSMS.DataService.Repositories
     {
 
     }
-    public class ServicesRepository : BaseRepository<Service>, IServicesRepository
+    public class ServiceRepository : BaseRepository<Service>, IServicesRepository
     {
-        public ServicesRepository(DbContext dbContext) : base(dbContext)
+        public ServiceRepository(DbContext dbContext) : base(dbContext)
         {
         }
     }

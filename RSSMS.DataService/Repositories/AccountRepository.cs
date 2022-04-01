@@ -7,9 +7,9 @@ namespace RSSMS.DataService.Repositories
     {
 
     }
-    public class AccountsRepository : BaseRepository<Account>, IAccountsRepository
+    public class AccountRepository : BaseRepository<Account>, IAccountsRepository
     {
-        public AccountsRepository(DbContext dbContext) : base(dbContext)
+        public AccountRepository(DbContext dbContext) : base(dbContext)
         {
         }
     }

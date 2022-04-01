@@ -7,9 +7,9 @@ namespace RSSMS.DataService.Repositories
     {
 
     }
-    public class OrderTimelinesRepository : BaseRepository<OrderTimeline>, IOrderTimelinesRepository
+    public class OrderTimelineRepository : BaseRepository<OrderTimeline>, IOrderTimelinesRepository
     {
-        public OrderTimelinesRepository(DbContext dbContext) : base(dbContext)
+        public OrderTimelineRepository(DbContext dbContext) : base(dbContext)
         {
         }
     }
