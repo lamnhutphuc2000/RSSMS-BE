@@ -31,118 +31,216 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly ISpaceService _spaceService;
-        public AreaService(IUnitOfWork unitOfWork, ISpaceService spaceService, IAreaRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IUtilService _utilService;
+        public AreaService(IUnitOfWork unitOfWork, ISpaceService spaceService,
+            IUtilService utilService,
+            IAreaRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _spaceService = spaceService;
-        }
+            _utilService = utilService;
+    }
 
         public async Task<AreaViewModel> Create(AreaCreateViewModel model)
         {
-            var area = Get(x => x.StorageId == model.StorageId && x.Name == model.Name && x.IsActive == true).FirstOrDefault();
-            if (area != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
-            var areaToCreate = _mapper.Map<Area>(model);
-            await CreateAsync(areaToCreate);
-            return _mapper.Map<AreaViewModel>(areaToCreate);
+            try
+            {
+                // Validate input
+                _utilService.ValidateString(model.Name,"Area name");
+
+                // Check area name is existed
+                var area = Get(area => area.StorageId == model.StorageId && area.Name == model.Name && area.IsActive).FirstOrDefault();
+                if (area != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
+
+                // Create new Area
+                var areaToCreate = _mapper.Map<Area>(model);
+                await CreateAsync(areaToCreate);
+                return _mapper.Map<AreaViewModel>(areaToCreate);
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
 
         public async Task<AreaViewModel> Delete(Guid id)
         {
-            var area = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Spaces).FirstOrDefaultAsync();
-            if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
-            var areaIsUsed = CheckIsUsed(id);
-            if (areaIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area is in used");
-            area.IsActive = false;
-            await UpdateAsync(area);
-            return _mapper.Map<AreaViewModel>(area);
+            try
+            {
+                // Get area to delete
+                var area = await Get(area => area.Id == id && area.IsActive).Include(area => area.Spaces).FirstOrDefaultAsync();
+                if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
+
+                // Check area is inused or not
+                var areaIsUsed = CheckIsUsed(id);
+                if (areaIsUsed) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area is in used");
+
+                // Change area isActive to false and update
+                area.IsActive = false;
+                await UpdateAsync(area);
+                return _mapper.Map<AreaViewModel>(area);
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
 
         public async Task<AreaDetailViewModel> GetById(Guid id)
         {
-            var area = await Get(x => x.Id == id && x.IsActive == true).Include(area => area.Spaces).ThenInclude(space => space.Floors).FirstOrDefaultAsync();
-            if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
-            var result = _mapper.Map<AreaDetailViewModel>(area);
-            var spaces = area.Spaces.Where(spaces => spaces.IsActive).ToList();
-            if (spaces.Count == 0) return result;
-
-            double usage = 0;
-            double used = 0;
-            double available = 0;
-            foreach (var space in spaces)
+            try
             {
-                var spaceById = await _spaceService.GetById(space.Id);
-                usage += spaceById.Floors.Select(x => x.Usage).Sum();
+                // Get area
+                var area = await Get(area => area.Id == id && area.IsActive).Include(area => area.Spaces).ThenInclude(space => space.Floors).FirstOrDefaultAsync();
+                if (area == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area id not found");
+
+                // Mapping area to the result
+                var result = _mapper.Map<AreaDetailViewModel>(area);
+
+                // Get space list in area
+                var spaces = area.Spaces.Where(spaces => spaces.IsActive).ToList();
+                if (spaces.Count == 0) return result;
+
+                if(area.Height == null || area.Width == null || area.Length == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area height, width, length can not be null");
+
+                // Get usage inside of each space in space list
+                double usage = 0;
+                double used = 0;
+                double available = 0;
+                foreach (var space in spaces)
+                {
+                    var spaceById = await _spaceService.GetById(space.Id);
+                    usage += spaceById.Floors.Select(floor => floor.Usage).Sum();
+                }
+
+                // Calculate area used, available and total size
+                double total = (double)(area.Height * area.Width * area.Length);
+                used = usage * total / 100;
+                available = total - used;
+
+                result.Usage = usage;
+                result.Used = used;
+                result.Available = available;
+
+                return result;
             }
-
-            double total = (double)(area.Height * area.Width * area.Length);
-            used = usage * total / 100;
-            available = total - used;
-
-            result.Usage = usage;
-            result.Used = used;
-            result.Available = available;
-
-            return result;
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+            
         }
 
         public async Task<DynamicModelResponse<AreaViewModel>> GetByStorageId(Guid id, AreaViewModel model, List<int> types, string[] fields, int page, int size)
         {
-            var areas = Get(x => x.StorageId == id && x.IsActive == true)
+            try
+            {
+                // Get area list
+                var areas = Get(area => area.StorageId == id && area.IsActive)
                 .ProjectTo<AreaViewModel>(_mapper.ConfigurationProvider);
 
-            if (types.Count > 0)
-            {
-                areas = areas.Where(x => types.Contains((int)x.Type));
-            }
+                // Get type required
+                if (types.Count > 0) areas = areas.Where(area => types.Contains((int)area.Type));
 
-            var result = areas
-                 .DynamicFilter(model)
-                .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area not found");
-
-
-
-            var rs = new DynamicModelResponse<AreaViewModel>
-            {
-
-                Metadata = new PagingMetaData
+                // Filter the result
+                var result = areas
+                     .DynamicFilter(model)
+                    .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+                if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area not found");
+                var rs = new DynamicModelResponse<AreaViewModel>
                 {
-                    Page = page,
-                    Size = size,
-                    Total = result.Item1,
-                    TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
-                },
-                Data = await result.Item2.ToListAsync()
-            };
 
-            return rs;
+                    Metadata = new PagingMetaData
+                    {
+                        Page = page,
+                        Size = size,
+                        Total = result.Item1,
+                        TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
+                    },
+                    Data = await result.Item2.ToListAsync()
+                };
+
+                return rs;
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
 
         public async Task<AreaViewModel> Update(Guid id, AreaUpdateViewModel model)
         {
-            if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area Id not matched");
+            try
+            {
+                // Validate input
+                _utilService.ValidateString(model.Name, "Area name");
 
-            var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
-            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area not found");
+                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area Id not matched");
 
-            var area = Get(x => x.Id != id && x.Name == model.Name && x.StorageId == entity.StorageId && x.IsActive == true).FirstOrDefault();
-            if (area != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
-            var updateEntity = _mapper.Map(model, entity);
-            await UpdateAsync(updateEntity);
+                Area entity = await Get(area => area.Id == id && area.IsActive).FirstOrDefaultAsync();
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area not found");
 
-            return _mapper.Map<AreaViewModel>(updateEntity);
+                Area anotherArea = Get(area => area.Id != id && area.Name == model.Name && area.StorageId == entity.StorageId && area.IsActive).FirstOrDefault();
+                if (anotherArea != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
+
+                if(entity.Height != model.Height || entity.Length != model.Length || entity.Width != model.Width)
+                {
+                    AreaDetailViewModel area = await GetById(id);
+                    double newAreaSize = (double)(model.Height * model.Width * model.Length);
+                    if(newAreaSize - area.Used < 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "New area size is smaller than the total service in area");
+                }
+
+                Area updateEntity = _mapper.Map(model, entity);
+                await UpdateAsync(updateEntity);
+
+                return _mapper.Map<AreaViewModel>(updateEntity);
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
 
         public bool CheckIsUsed(Guid id)
         {
-            var area = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Spaces).FirstOrDefault();
-            if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
-            var spaces = area.Spaces;
-            foreach (var space in spaces)
+            try
             {
-                if (_spaceService.CheckIsUsed(space.Id)) return true;
+                Area area = Get(area => area.Id == id && area.IsActive).Include(area => area.Spaces).FirstOrDefault();
+                if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area not found");
+                var spaces = area.Spaces.Where(space => space.IsActive);
+                foreach (var space in spaces)
+                    if (_spaceService.CheckIsUsed(space.Id)) return true;
+                return false;
             }
-            return false;
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+            
         }
     }
 }

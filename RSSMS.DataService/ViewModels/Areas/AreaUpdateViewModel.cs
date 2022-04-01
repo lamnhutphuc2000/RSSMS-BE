@@ -6,6 +6,7 @@ namespace RSSMS.DataService.ViewModels.Areas
 {
     public class AreaUpdateViewModel
     {
+        // có dùng
         public Guid Id { get; set; }
         public string Name { get; set; }
         public decimal? Height { get; set; }
