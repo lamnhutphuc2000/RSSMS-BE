@@ -48,7 +48,7 @@ namespace RSSMS.DataService.Services
                         Total = notifications.Item1,
                         TotalPage = (int)Math.Ceiling((double)notifications.Item1 / size)
                     },
-                    Data = await notifications.Item2.ToListAsync()
+                    Data = notifications.Item2.ToList()
                 };
                 return rs;
             }
