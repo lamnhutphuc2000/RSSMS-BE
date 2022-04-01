@@ -10,24 +10,24 @@ namespace RSSMS.API.App_Start
         {
             var mappingConfig = new MapperConfiguration(mc =>
             {
-                mc.ConfigRolesModule();
-                mc.ConfigAccountsModule();
-                mc.ConfigImageModule();
-                mc.ConfigStorageModule();
-                mc.ConfigStaffAssignStoragesModule();
+                mc.ConfigAccountModule();
                 mc.ConfigAreaModule();
-                mc.ConfigOrderModule();
-                mc.ConfigOrderTimelinesModule();
-                mc.ConfigShelfModule();
                 mc.ConfigFloorModule();
+                mc.ConfigImageModule();
+                mc.ConfigNotificationModule();
                 mc.ConfigOrderDetailModule();
                 mc.ConfigOrderDetailServiceMapModule();
-                mc.ConfigServicesModule();
-                mc.ConfigRequestModule();
-                mc.ConfigRequestDetailsModule();
-                mc.ConfigScheduleModule();
-                mc.ConfigNotificationModule();
                 mc.ConfigOrderHistoryExtensionModule();
+                mc.ConfigOrderModule();
+                mc.ConfigOrderTimelineModule();
+                mc.ConfigRequestDetailModule();
+                mc.ConfigRequestModule();
+                mc.ConfigRoleModule();
+                mc.ConfigScheduleModule();
+                mc.ConfigServiceModule();
+                mc.ConfigSpaceModule();
+                mc.ConfigStaffAssignStorageModule();
+                mc.ConfigStorageModule();
             });
             IMapper mapper = mappingConfig.CreateMapper();
             services.AddSingleton(mapper);
