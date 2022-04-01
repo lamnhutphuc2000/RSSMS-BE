@@ -29,7 +29,7 @@ namespace RSSMS.DataService.Services
         Task<OrderUpdateViewModel> Update(Guid id, OrderUpdateViewModel model);
         Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes);
         Task<OrderViewModel> Cancel(Guid id, OrderCancelViewModel model, string accessToken);
-        Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken);
+        //Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken);
         Task<OrderByIdViewModel> Done(OrderDoneViewModel model, string accessToken);
         Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model);
         Task<OrderViewModel> AssignStorage(OrderAssignStorageViewModel model, string accessToken);
@@ -65,7 +65,9 @@ namespace RSSMS.DataService.Services
         }
         public async Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes)
         {
-            var result = await Get(x => x.Id == id && x.IsActive == true)
+            try
+            {
+                var result = await Get(x => x.Id == id && x.IsActive == true)
                 .Include(order => order.OrderDetails).Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
                 .ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
                 .Include(order => order.Requests)
@@ -73,480 +75,541 @@ namespace RSSMS.DataService.Services
                 .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
                 .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
-            var request = result.Requests;
-            if (requestTypes.Count > 0)
-            {
+                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
+                var request = result.Requests;
+                if (requestTypes == null) return result;
+
                 request = request.Where(request => requestTypes.Contains((int)request.Type)).ToList();
                 result.Requests = request;
+                return result;
             }
-            if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
-            return result;
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
         public async Task<DynamicModelResponse<OrderViewModel>> GetAll(OrderViewModel model, IList<int> OrderStatuses, DateTime? dateFrom, DateTime? dateTo, string[] fields, int page, int size, string accessToken)
         {
-            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-
-
-            var order = Get(x => x.IsActive == true)
-                .Include(x => x.OrderHistoryExtensions)
-            .Include(x => x.Storage)
-            .Include(x => x.Requests).ThenInclude(request => request.Schedules)
-            .Include(x => x.OrderDetails)
-            .ThenInclude(orderDetail => orderDetail.Images)
-            .Include(x => x.OrderDetails)
-            .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
-            .Include(order => order.OrderAdditionalFees);
-
-            if (OrderStatuses.Count > 0)
+            try
             {
-                order = Get(x => x.IsActive == true).Where(x => OrderStatuses.Contains((int)x.Status))
-                    .Include(x => x.OrderHistoryExtensions)
-                    .Include(x => x.Storage).Include(x => x.Requests).ThenInclude(request => request.Schedules)
-                    .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.Images)
-                    .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+
+
+                var order = Get(order => order.IsActive)
+                    .Include(order => order.OrderHistoryExtensions)
+                    .Include(order => order.Storage)
+                    .Include(order => order.Requests).ThenInclude(request => request.Schedules)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
                     .Include(order => order.OrderAdditionalFees);
-            }
 
-
-            if (dateFrom != null && dateTo != null)
-            {
-                order = order
-                    .Where(x => (x.ReturnDate >= dateFrom && x.ReturnDate <= dateTo) || (x.DeliveryDate >= dateFrom && x.DeliveryDate <= dateTo))
-                .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
-                .Include(order => order.OrderAdditionalFees);
-            }
-            if (role == "Manager")
-            {
-                order = order.Where(x => x.StorageId == null || x.Storage.StaffAssignStorages.Where(x => x.StaffId == userId).First() != null)
-                    .Include(x => x.Storage)
-                    .Include(x => x.Requests).ThenInclude(request => request.Schedules)
-                    .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
-                    .Include(order => order.OrderAdditionalFees);
-            }
-
-            if (role == "Office Staff")
-            {
-                var storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
-                order = order.Where(x => x.StorageId == storageId || x.StorageId == null)
-                    .Include(x => x.Storage)
-                    .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
-                    .Include(order => order.OrderAdditionalFees);
-            }
-
-            if (role == "Customer")
-            {
-                order = order.Where(x => x.CustomerId == userId)
-                    .Include(x => x.Storage)
-                    .Include(x => x.OrderDetails)
-                    .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
-                    .Include(order => order.OrderAdditionalFees);
-            }
-
-            var result = order.OrderByDescending(x => x.CreatedDate)
-                .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
-                .DynamicFilter(model)
-                .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-            var meo = result.Item2.ToList();
-            if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
-
-
-            var rs = new DynamicModelResponse<OrderViewModel>
-            {
-                Metadata = new PagingMetaData
+                if (OrderStatuses.Count > 0)
                 {
-                    Page = page,
-                    Size = size,
-                    Total = result.Item1,
-                    TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
-                },
-                Data = await result.Item2.ToListAsync()
-            };
-            return rs;
+                    order = order.Where(order => OrderStatuses.Contains((int)order.Status))
+                        .Include(order => order.OrderHistoryExtensions)
+                        .Include(order => order.Storage)
+                        .Include(order => order.Requests).ThenInclude(request => request.Schedules)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                        .Include(order => order.OrderAdditionalFees);
+                }
+
+
+                if (dateFrom != null && dateTo != null)
+                {
+                    order = order
+                        .Where(order => (order.ReturnDate >= dateFrom && order.ReturnDate <= dateTo) || (order.DeliveryDate >= dateFrom && order.DeliveryDate <= dateTo))
+                        .Include(order => order.OrderHistoryExtensions)
+                        .Include(order => order.Storage)
+                        .Include(order => order.Requests).ThenInclude(request => request.Schedules)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                        .Include(order => order.OrderAdditionalFees);
+                }
+                if (role == "Manager")
+                {
+                    order = order
+                        .Where(order => order.StorageId == null || order.Storage.StaffAssignStorages.Where(order => order.StaffId == userId).First() != null)
+                        .Include(order => order.OrderHistoryExtensions)
+                        .Include(order => order.Storage)
+                        .Include(order => order.Requests).ThenInclude(request => request.Schedules)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                        .Include(order => order.OrderAdditionalFees);
+                }
+
+                if (role == "Office Staff")
+                {
+                    Guid? storageId = null;
+                    if(secureToken.Claims.First(claim => claim.Type == "storage_id").Value != null) 
+                        storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
+                    if(storageId != null)
+                    order = order.Where(order => order.StorageId == storageId || order.StorageId == null)
+                        .Include(order => order.OrderHistoryExtensions)
+                        .Include(order => order.Storage)
+                        .Include(order => order.Requests).ThenInclude(request => request.Schedules)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                        .Include(order => order.OrderAdditionalFees);
+                }
+
+                if (role == "Customer")
+                {
+                    order = order.Where(order => order.CustomerId == userId)
+                        .Include(order => order.OrderHistoryExtensions)
+                        .Include(order => order.Storage)
+                        .Include(order => order.Requests).ThenInclude(request => request.Schedules)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                        .Include(order => order.OrderAdditionalFees);
+                }
+
+                var result = order.OrderByDescending(order => order.CreatedDate)
+                    .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
+                    .DynamicFilter(model)
+                    .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+                var meo = result.Item2.ToList();
+                if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+
+
+                var rs = new DynamicModelResponse<OrderViewModel>
+                {
+                    Metadata = new PagingMetaData
+                    {
+                        Page = page,
+                        Size = size,
+                        Total = result.Item1,
+                        TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
+                    },
+                    Data = await result.Item2.ToListAsync()
+                };
+                return rs;
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+            
         }
 
         public async Task<OrderCreateViewModel> Create(OrderCreateViewModel model, string accessToken)
         {
-            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-            Guid? storageId = null;
-
-
-            string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-            var order = _mapper.Map<Order>(model);
-            var now = DateTime.Now;
-            order.Id = new Guid();
-
-            if (role == "Office Staff")
+            try
             {
-                storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
-                order.StorageId = storageId;
-            }
-
-            if (role == "Delivery Staff")
-            {
-                storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
-                order.StorageId = storageId;
-            }
-
-            if (role == "Customer")
-            {
-                order.CustomerId = userId;
-            }
-
-            //Check Type of Order
-            //if (order.Type == 1)
-            //{
-            //    order.ReturnDate = order.DeliveryDate.Value.AddDays((double)model.Duration);
-            //}
-            //else if (order.Type == 0)
-            //{
-            //    order.ReturnDate = order.DeliveryDate.Value.AddMonths((int)model.Duration);
-            //}
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+                Guid? storageId = null;
 
 
-            //OrderTimeline deliveryTimeline = new OrderTimeline
-            //{
-            //    CreatedDate = now,
-            //    OrderId = order.Id,
-            //    Date = order.DeliveryDate.Value,
-            //    Description = "Delivery date of order",
-            //};
-            order.Status = 1;
-            //order.OrderTimelines.Add(deliveryTimeline);
+                string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-            // random a name for order
-            Random random = new Random();
-            order.Name = now.Day + now.Month + now.Year + now.Minute + now.Hour + new string(Enumerable.Repeat(chars, 5).Select(s => s[random.Next(s.Length)]).ToArray());
+                var order = _mapper.Map<Order>(model);
+                var now = DateTime.Now;
+                order.Id = new Guid();
 
-
-            var orderDetailImagesList = model.OrderDetails.Select(orderDetail => orderDetail.OrderDetailImages.ToList()).ToList();
-            order.CreatedBy = userId;
-            await CreateAsync(order);
-            List<OrderDetail> orderDetailToUpdate = new List<OrderDetail>();
-            int index = 0;
-            foreach (var orderDetailImages in orderDetailImagesList)
-            {
-                var orderDetailToAddImg = order.OrderDetails.ElementAt(index);
-                int num = 1;
-                List<Image> listImageToAdd = new List<Image>();
-                foreach (var orderDetailImage in orderDetailImages)
+                if (role == "Office Staff")
                 {
-                    if (orderDetailImage.File != null)
-                    {
-                        var url = await _firebaseService.UploadImageToFirebase(orderDetailImage.File, "OrderDetail in Order " + order.Id, orderDetailToAddImg.Id, "Order detail image - " + num);
-                        if (url != null)
-                        {
-                            Image tmp = new Image
-                            {
-                                IsActive = true,
-                                Url = url,
-                                Name = "Order detail image - " + num,
-                                Note = orderDetailImage.Note,
-                                OrderDetailid = orderDetailToAddImg.Id
-                            };
-                            listImageToAdd.Add(tmp);
-                        }
-                    }
-                    num++;
+                    if (secureToken.Claims.First(claim => claim.Type == "storage_id").Value != null)
+                        storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
+                    if (storageId != null)
+                        order.StorageId = storageId;
                 }
-                orderDetailToAddImg.Images = listImageToAdd;
-                orderDetailToUpdate.Add(orderDetailToAddImg);
-                index++;
+
+                if (role == "Delivery Staff")
+                {
+                    storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
+                    order.StorageId = storageId;
+                }
+
+                if (role == "Customer")
+                    order.CustomerId = userId;
+
+                order.Status = 1;
+                
+                // Random Order name
+                Random random = new Random();
+                order.Name = now.Day + now.Month + now.Year + now.Minute + now.Hour + new string(Enumerable.Repeat(chars, 5).Select(s => s[random.Next(s.Length)]).ToArray());
+
+                
+                // Get list order detail images
+                var orderDetailImagesList = model.OrderDetails.Select(orderDetail => orderDetail.OrderDetailImages.ToList()).ToList();
+
+                List<OrderDetail> orderDetailToUpdate = new List<OrderDetail>();
+                int index = 0;
+
+                // Upload Order detail images to firebase
+                foreach (var orderDetailImages in orderDetailImagesList)
+                {
+                    var orderDetailToAddImg = order.OrderDetails.ElementAt(index);
+                    int num = 1;
+                    List<Image> listImageToAdd = new List<Image>();
+                    foreach (var orderDetailImage in orderDetailImages)
+                    {
+                        if (orderDetailImage.File != null)
+                        {
+                            var url = await _firebaseService.UploadImageToFirebase(orderDetailImage.File, "OrderDetail in Order " + order.Id, orderDetailToAddImg.Id, "Order detail image - " + num);
+                            if (url != null)
+                            {
+                                Image tmp = new Image
+                                {
+                                    IsActive = true,
+                                    Url = url,
+                                    Name = "Order detail image - " + num,
+                                    Note = orderDetailImage.Note,
+                                    OrderDetailid = orderDetailToAddImg.Id
+                                };
+                                listImageToAdd.Add(tmp);
+                            }
+                        }
+                        num++;
+                    }
+                    orderDetailToAddImg.Images = listImageToAdd;
+                    orderDetailToUpdate.Add(orderDetailToAddImg);
+                    index++;
+                }
+                
+                // Add order detail back to order and update order
+                order.OrderDetails = orderDetailToUpdate;
+                order.CreatedBy = userId;
+                await UpdateAsync(order);
+
+                //
+                Request request = _requestService.Get(request => request.Id == model.RequestId).FirstOrDefault();
+                request.OrderId = order.Id;
+                request.Status = 3;
+
+                await _requestService.UpdateAsync(request);
+
+                await _orderTimelineService.CreateAsync(new OrderTimeline
+                {
+                    RequestId = model.RequestId,
+                    CreatedDate = DateTime.Now,
+                    CreatedBy = userId,
+                    Datetime = DateTime.Now,
+                    Name = "Đơn đang vận chuyển về kho"
+                });
+
+                await _firebaseService.PushOrderNoti("New order arrive!", order.Id, null);
+
+                return model;
             }
-            order.OrderDetails = orderDetailToUpdate;
-            await UpdateAsync(order);
-            Request request = _requestService.Get(request => request.Id == model.RequestId).FirstOrDefault();
-            request.OrderId = order.Id;
-            request.Status = 3;
-
-            await _requestService.UpdateAsync(request);
-
-            await _orderTimelineService.CreateAsync(new OrderTimeline
+            catch (ErrorResponse e)
             {
-                RequestId = model.RequestId,
-                CreatedDate = DateTime.Now,
-                CreatedBy = userId,
-                Datetime = DateTime.Now,
-                Name = "Đơn đang vận chuyển về kho"
-            });
-
-            await _firebaseService.PushOrderNoti("New order arrive!", order.Id, null);
-
-            return model;
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+            
         }
 
         public async Task<OrderUpdateViewModel> Update(Guid id, OrderUpdateViewModel model)
         {
-            if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order Id not matched");
+            try
+            {
+                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order Id not matched");
 
-            var entity = await Get(x => x.Id == id && x.IsActive == true)
-                .Include(x => x.Requests).ThenInclude(request => request.Schedules)
-                .Include(x => x.OrderDetails)
-                .ThenInclude(orderDetails => orderDetails.Images).AsNoTracking().FirstOrDefaultAsync();
-            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+                var entity = await Get(x => x.Id == id && x.IsActive == true)
+                    .Include(x => x.Requests).ThenInclude(request => request.Schedules)
+                    .Include(x => x.OrderDetails)
+                    .ThenInclude(orderDetails => orderDetails.Images).AsNoTracking().FirstOrDefaultAsync();
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
 
 
 
-            var updateEntity = _mapper.Map(model, entity);
-            var orderDetails = updateEntity.OrderDetails.Select(c => { c.OrderId = id; return c; }).ToList();
-            updateEntity.OrderDetails = orderDetails;
-            await UpdateAsync(updateEntity);
+                var updateEntity = _mapper.Map(model, entity);
+                var orderDetails = updateEntity.OrderDetails.Select(c => { c.OrderId = id; return c; }).ToList();
+                updateEntity.OrderDetails = orderDetails;
+                await UpdateAsync(updateEntity);
 
-            return model;
+                return model;
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+            
         }
 
         public async Task<OrderViewModel> Cancel(Guid id, OrderCancelViewModel model, string accessToken)
         {
-            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-
-            if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id not matched");
-            var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
-            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-            entity.Status = 0;
-            entity.ModifiedBy = userId;
-            entity.RejectedReason = model.RejectedReason;
-            await UpdateAsync(entity);
-            return _mapper.Map<OrderViewModel>(entity);
-        }
-
-        //public static void CopyTo(Stream src, Stream dest)
-        //{
-        //    byte[] bytes = new byte[4096];
-
-        //    int cnt;
-
-        //    while ((cnt = src.Read(bytes, 0, bytes.Length)) != 0)
-        //    {
-        //        dest.Write(bytes, 0, cnt);
-        //    }
-        //}
-        public static byte[] Decompress(byte[] input)
-        {
-            using var source = new MemoryStream(input);
-            byte[] lengthBytes = new byte[4];
-            source.Read(lengthBytes, 0, 4);
-
-            var length = BitConverter.ToInt32(lengthBytes, 0);
-            using var decompressionStream = new GZipStream(source,
-                CompressionMode.Decompress);
-            var result = new byte[length];
-            decompressionStream.Read(result, 0, length);
-            return result;
-        }
-
-
-        public async Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken)
-        {
-
-            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-            var order = _mapper.Map<OrderByIdViewModel>(model);
             try
             {
-                if (role == "Delivery Staff")
-                {
-                    var customer = _accountService.Get(x => x.Id == model.CustomerId).First();
-                    var registrationId = customer.DeviceTokenId;
-                    order.CustomerName = customer.Name;
-                    order.CustomerPhone = customer.Phone;
-                    string description = "Đơn cần được cập nhật";
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
-
-                    // Get list of images
-                    var orderDetailImagesList = model.OrderDetails.Select(orderDetail => orderDetail.OrderDetailImages.ToList()).ToList();
-                    List<OrderDetailByIdViewModel> orderDetailToUpdate = new List<OrderDetailByIdViewModel>();
-                    int index = 0;
-                    foreach (var orderDetailImages in orderDetailImagesList)
-                    {
-                        var orderDetailToAdd = order.OrderDetails.ElementAt(index);
-                        int num = 1;
-                        List<AvatarImageViewModel> listImageToAdd = new List<AvatarImageViewModel>();
-                        foreach (var orderDetailImage in orderDetailImages)
-                        {
-                            if (orderDetailImage.File != null)
-                            {
-                                var url = await _firebaseService.UploadImageToFirebase(orderDetailImage.File, "OrderDetail in Order " + order.Id, orderDetailToAdd.Id, "Order detail image - " + num);
-                                if (url != null)
-                                {
-                                    AvatarImageViewModel tmp = new AvatarImageViewModel
-                                    {
-                                        Url = url,
-                                        Name = "Order detail image - " + num,
-                                        Note = orderDetailImage.Note,
-                                    };
-                                    listImageToAdd.Add(tmp);
-                                }
-                            }
-                            num++;
-                        }
-                        orderDetailToAdd.Images = listImageToAdd;
-                        string mainServiceName = null;
-                        decimal? mainServicePrice = null;
-                        int? mainServiceType = null;
-                        string mainServiceUrl = null;
-                        Guid? mainServiceId = null;
-                        if (orderDetailToAdd.OrderDetailServices == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail service can not null");
-                        var orderDetailServices = orderDetailToAdd.OrderDetailServices.ToList();
-                        foreach (var orderDetailService in orderDetailServices)
-                        {
-                            var service = _serviceService.Get(x => x.IsActive && x.Id == orderDetailService.ServiceId).FirstOrDefault();
-                            if (service == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Service not found");
-                            orderDetailService.ServiceName = service.Name;
-                            orderDetailService.ServiceType = service.Type;
-                            orderDetailService.ServiceUrl = service.ImageUrl;
-                            if (service.Type == 3 || service.Type == 2)
-                            {
-                                mainServiceName = service.Name;
-                                mainServicePrice = service.Price;
-                                mainServiceType = service.Type;
-                                mainServiceUrl = service.ImageUrl;
-                                mainServiceId = service.Id;
-                            }
-                            if (mainServiceType == null)
-                            {
-                                mainServiceName = service.Name;
-                                mainServicePrice = service.Price;
-                                mainServiceType = service.Type;
-                                mainServiceUrl = service.ImageUrl;
-                                mainServiceId = service.Id;
-                            }
-                        }
-                        orderDetailToAdd.ServiceId = mainServiceId;
-                        orderDetailToAdd.ServiceName = mainServiceName;
-                        orderDetailToAdd.ServicePrice = mainServicePrice;
-                        orderDetailToAdd.ServiceType = mainServiceType;
-                        orderDetailToAdd.ServiceImageUrl = mainServiceUrl;
-                        orderDetailToAdd.OrderDetailServices = orderDetailServices;
-                        orderDetailToUpdate.Add(orderDetailToAdd);
-                        index++;
-                    }
-                    order.OrderDetails = orderDetailToUpdate;
-                    order.RequestId = model.RequestId;
-                    var result = await _firebaseService.SendNoti(description, customer.Id, customer.DeviceTokenId, null, order);
-
-
-                    //Dictionary<int, List<AvatarImageViewModel>> imagesOfOrder = new Dictionary<int, List<AvatarImageViewModel>>();
-                    //var orderDetails = model.OrderDetails;
-                    //int num = 0;
-                    //foreach (var orderDetail in orderDetails)
-                    //{
-                    //    var images = orderDetail.Images;
-                    //    foreach (var image in images)
-                    //    {
-                    //        var url = await _firebaseService.UploadImageToFirebase(image.File, "temp", order.Id, orderDetail.Id + "-" + num);
-                    //        if (url != null)
-                    //        {
-                    //            image.File = null;
-                    //            image.Url = url;
-                    //        }
-                    //        num++;
-                    //    }
-                    //    orderDetail.Images = images;
-                    //}
-                    //model.OrderDetails = orderDetails;
-
-                    //var result = await _firebaseService.SendNoti(description, customerId, registrationId, order.Id, null, model);
-                }
+                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id not matched");
+                var entity = await Get(order => order.Id == id && order.IsActive).FirstOrDefaultAsync();
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+                entity.Status = 0;
+                entity.ModifiedBy = userId;
+                entity.RejectedReason = model.RejectedReason;
+                await UpdateAsync(entity);
+                return _mapper.Map<OrderViewModel>(entity);
             }
-            catch (Exception e)
+            catch (ErrorResponse e)
             {
-                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
             }
-            return order;
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+            
         }
+
+
+        //public async Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken)
+        //{
+
+        //    var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+        //    var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+        //    var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+        //    var order = _mapper.Map<OrderByIdViewModel>(model);
+        //    try
+        //    {
+        //        if (role == "Delivery Staff")
+        //        {
+        //            var customer = _accountService.Get(x => x.Id == model.CustomerId).First();
+        //            var registrationId = customer.DeviceTokenId;
+        //            order.CustomerName = customer.Name;
+        //            order.CustomerPhone = customer.Phone;
+        //            string description = "Đơn cần được cập nhật";
+
+
+        //            // Get list of images
+        //            var orderDetailImagesList = model.OrderDetails.Select(orderDetail => orderDetail.OrderDetailImages.ToList()).ToList();
+        //            List<OrderDetailByIdViewModel> orderDetailToUpdate = new List<OrderDetailByIdViewModel>();
+        //            int index = 0;
+        //            foreach (var orderDetailImages in orderDetailImagesList)
+        //            {
+        //                var orderDetailToAdd = order.OrderDetails.ElementAt(index);
+        //                int num = 1;
+        //                List<AvatarImageViewModel> listImageToAdd = new List<AvatarImageViewModel>();
+        //                foreach (var orderDetailImage in orderDetailImages)
+        //                {
+        //                    if (orderDetailImage.File != null)
+        //                    {
+        //                        var url = await _firebaseService.UploadImageToFirebase(orderDetailImage.File, "OrderDetail in Order " + order.Id, orderDetailToAdd.Id, "Order detail image - " + num);
+        //                        if (url != null)
+        //                        {
+        //                            AvatarImageViewModel tmp = new AvatarImageViewModel
+        //                            {
+        //                                Url = url,
+        //                                Name = "Order detail image - " + num,
+        //                                Note = orderDetailImage.Note,
+        //                            };
+        //                            listImageToAdd.Add(tmp);
+        //                        }
+        //                    }
+        //                    num++;
+        //                }
+        //                orderDetailToAdd.Images = listImageToAdd;
+        //                string mainServiceName = null;
+        //                decimal? mainServicePrice = null;
+        //                int? mainServiceType = null;
+        //                string mainServiceUrl = null;
+        //                Guid? mainServiceId = null;
+        //                if (orderDetailToAdd.OrderDetailServices == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail service can not null");
+        //                var orderDetailServices = orderDetailToAdd.OrderDetailServices.ToList();
+        //                foreach (var orderDetailService in orderDetailServices)
+        //                {
+        //                    var service = _serviceService.Get(x => x.IsActive && x.Id == orderDetailService.ServiceId).FirstOrDefault();
+        //                    if (service == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Service not found");
+        //                    orderDetailService.ServiceName = service.Name;
+        //                    orderDetailService.ServiceType = service.Type;
+        //                    orderDetailService.ServiceUrl = service.ImageUrl;
+        //                    if (service.Type == 3 || service.Type == 2)
+        //                    {
+        //                        mainServiceName = service.Name;
+        //                        mainServicePrice = service.Price;
+        //                        mainServiceType = service.Type;
+        //                        mainServiceUrl = service.ImageUrl;
+        //                        mainServiceId = service.Id;
+        //                    }
+        //                    if (mainServiceType == null)
+        //                    {
+        //                        mainServiceName = service.Name;
+        //                        mainServicePrice = service.Price;
+        //                        mainServiceType = service.Type;
+        //                        mainServiceUrl = service.ImageUrl;
+        //                        mainServiceId = service.Id;
+        //                    }
+        //                }
+        //                orderDetailToAdd.ServiceId = mainServiceId;
+        //                orderDetailToAdd.ServiceName = mainServiceName;
+        //                orderDetailToAdd.ServicePrice = mainServicePrice;
+        //                orderDetailToAdd.ServiceType = mainServiceType;
+        //                orderDetailToAdd.ServiceImageUrl = mainServiceUrl;
+        //                orderDetailToAdd.OrderDetailServices = orderDetailServices;
+        //                orderDetailToUpdate.Add(orderDetailToAdd);
+        //                index++;
+        //            }
+        //            order.OrderDetails = orderDetailToUpdate;
+        //            order.RequestId = model.RequestId;
+        //            var result = await _firebaseService.SendNoti(description, customer.Id, customer.DeviceTokenId, null, order);
+
+
+        //            //Dictionary<int, List<AvatarImageViewModel>> imagesOfOrder = new Dictionary<int, List<AvatarImageViewModel>>();
+        //            //var orderDetails = model.OrderDetails;
+        //            //int num = 0;
+        //            //foreach (var orderDetail in orderDetails)
+        //            //{
+        //            //    var images = orderDetail.Images;
+        //            //    foreach (var image in images)
+        //            //    {
+        //            //        var url = await _firebaseService.UploadImageToFirebase(image.File, "temp", order.Id, orderDetail.Id + "-" + num);
+        //            //        if (url != null)
+        //            //        {
+        //            //            image.File = null;
+        //            //            image.Url = url;
+        //            //        }
+        //            //        num++;
+        //            //    }
+        //            //    orderDetail.Images = images;
+        //            //}
+        //            //model.OrderDetails = orderDetails;
+
+        //            //var result = await _firebaseService.SendNoti(description, customerId, registrationId, order.Id, null, model);
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
+        //    }
+        //    return order;
+        //}
 
         public async Task<OrderByIdViewModel> Done(OrderDoneViewModel model, string accessToken)
         {
-            var order = await Get(x => x.Id == model.OrderId && x.IsActive == true).Include(x => x.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
-                .Include(x => x.Requests).FirstOrDefaultAsync();
-            if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-
-            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-
-
-            var requests = order.Requests;
-            foreach (var request in requests)
+            try
             {
-                if (request.Id == model.RequestId) request.Status = 3;
+                var order = await Get(order => order.Id == model.OrderId && order.IsActive)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
+                    .Include(order => order.Requests).FirstOrDefaultAsync();
+                if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+
+                var requests = order.Requests;
+                foreach (var request in requests)
+                    if (request.Id == model.RequestId) request.Status = 3;
+
+                order.Requests = requests;
+
+
+                var orderDetails = order.OrderDetails;
+                foreach (var orderDetail in orderDetails)
+                    if (orderDetail.FloorId != null) orderDetail.FloorId = null;
+
+                order.Status = 6;
+                order.OrderDetails = orderDetails;
+                order.ModifiedDate = DateTime.Now;
+                order.ModifiedBy = userId;
+                await UpdateAsync(order);
+                return await GetById(model.OrderId, new List<int>());
             }
-            order.Requests = requests;
-
-
-            var orderDetails = order.OrderDetails;
-            foreach (var orderDetail in orderDetails)
+            catch (ErrorResponse e)
             {
-                if (orderDetail.FloorId != null)
-                {
-                    orderDetail.FloorId = null;
-                }
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
             }
-            order.Status = 6;
-            order.OrderDetails = orderDetails;
-            order.ModifiedDate = DateTime.Now;
-            order.ModifiedBy = userId;
-            await UpdateAsync(order);
-            return await GetById(model.OrderId, new List<int>());
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+            
         }
 
         public async Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model)
         {
-            var orderIds = model.Select(x => x.Id);
-            var orders = await Get(x => orderIds.Contains(x.Id) && x.IsActive == true).ToListAsync();
-            if (orders == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-            if (orders.Count < model.Count) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-
-            foreach (var order in orders)
+            try
             {
-                order.Status = model.Where(a => a.Id == order.Id).First().Status;
-                await UpdateAsync(order);
-            }
+                var orderIds = model.Select(order => order.Id);
+                var orders = await Get(order => orderIds.Contains(order.Id) && order.IsActive).ToListAsync();
+                if (orders == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+                if (orders.Count < model.Count) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
 
-            return null;
+                foreach (var order in orders)
+                {
+                    order.Status = model.Where(a => a.Id == order.Id).First().Status;
+                    await UpdateAsync(order);
+                }
+
+                return null;
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+            
         }
 
         public async Task<OrderViewModel> AssignStorage(OrderAssignStorageViewModel model, string accessToken)
         {
-            var storageId = model.StorageId;
-            var storage = await _storageService.Get(x => x.Id == storageId && x.IsActive == true).Include(x => x.StaffAssignStorages.Where(staff => staff.IsActive == true)).ThenInclude(staffAssign => staffAssign.Staff).FirstOrDefaultAsync();
-            if (storage == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
-            var order = await Get(x => x.Id == model.OrderId && x.IsActive == true).Include(x => x.Customer).FirstOrDefaultAsync();
-            if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-            if (order.Status > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order had assigned to storage");
+            try
+            {
+                var storageId = model.StorageId;
+                var storage = await _storageService.Get(order => order.Id == storageId && order.IsActive)
+                    .Include(order => order.StaffAssignStorages.Where(staff => staff.IsActive == true)).ThenInclude(staffAssign => staffAssign.Staff).FirstOrDefaultAsync();
+                if (storage == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
+                var order = await Get(order => order.Id == model.OrderId && order.IsActive).Include(order => order.Customer).FirstOrDefaultAsync();
+                if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+                if (order.Status > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order had assigned to storage");
 
-            order.Status = 2;
-            order.StorageId = storageId;
-            await UpdateAsync(order);
+                order.Status = 2;
+                order.StorageId = storageId;
+                await UpdateAsync(order);
 
-            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
 
-            var manager = storage.StaffAssignStorages.Where(x => x.IsActive == true && x.RoleName == "Manager").Select(x => x.Staff).FirstOrDefault();
-            var customer = order.Customer;
-            string description = "Don " + order.Id + " cua khach hang " + customer.Name + " da duoc xu ly ";
+                var manager = storage.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.RoleName == "Manager").Select(staffAssign => staffAssign.Staff).FirstOrDefault();
+                var customer = order.Customer;
+                string description = "Don " + order.Id + " cua khach hang " + customer.Name + " da duoc xu ly ";
 
-            await _firebaseService.SendNoti(description, manager.Id, manager.DeviceTokenId, null, null);
-            return _mapper.Map<OrderViewModel>(order);
+                await _firebaseService.SendNoti(description, manager.Id, manager.DeviceTokenId, null, null);
+                return _mapper.Map<OrderViewModel>(order);
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+            
         }
 
         public async Task<OrderViewModel> AssignFloor(OrderAssignFloorViewModel model, string accessToken)
         {
             try
             {
-                var orderDetailIds = model.OrderDetailAssignFloor.Select(x => x.OrderDetailId).ToList();
-                var orders = Get(x => x.IsActive)
+                var orderDetailIds = model.OrderDetailAssignFloor.Select(orderDetailAssign => orderDetailAssign.OrderDetailId).ToList();
+                var orders = Get(order => order.IsActive)
                     .Include(order => order.OrderDetails)
                     .Where(order => order.OrderDetails.Any(orderDetail => orderDetailIds.Contains(orderDetail.Id)))
                     .Include(order => order.Requests)
@@ -572,7 +635,7 @@ namespace RSSMS.DataService.Services
                 order.OrderDetails = orderDetails;
                 order.Status = 2;
                 await UpdateAsync(order);
-                var request = order.Requests.Where(x => x.Type == (int)RequestType.Create_Order).First();
+                var request = order.Requests.Where(request => request.Type == (int)RequestType.Create_Order).First();
                 await _orderTimelineService.CreateAsync(new OrderTimeline
                 {
                     RequestId = request.Id,
@@ -589,14 +652,18 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
             }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
 
         public async Task<OrderViewModel> AssignAnotherFloor(OrderAssignAnotherFloorViewModel model, string accessToken)
         {
             try
             {
-                var orderDetailIds = model.OrderDetailAssignFloor.Select(x => x.OrderDetailId).ToList();
-                var orders = Get(x => x.IsActive)
+                var orderDetailIds = model.OrderDetailAssignFloor.Select(orderDetailAssign => orderDetailAssign.OrderDetailId).ToList();
+                var orders = Get(order => order.IsActive)
                     .Include(order => order.OrderDetails)
                     .Where(order => order.OrderDetails.Any(orderDetail => orderDetailIds.Contains(orderDetail.Id)))
                     .Include(order => order.Requests)
@@ -617,7 +684,7 @@ namespace RSSMS.DataService.Services
                 {
                     if (orderDetailToAssignFloor.OldFloorId != null)
                     {
-                        var oldOrderDetail = _orderDetailService.Get(x => x.FloorId == orderDetailToAssignFloor.OldFloorId && x.Id == orderDetailToAssignFloor.OrderDetailId).FirstOrDefault();
+                        var oldOrderDetail = _orderDetailService.Get(orderDetail => orderDetail.FloorId == orderDetailToAssignFloor.OldFloorId && orderDetail.Id == orderDetailToAssignFloor.OrderDetailId).FirstOrDefault();
                         if (oldOrderDetail != null)
                         {
                             oldOrderDetail.FloorId = null;
@@ -644,6 +711,10 @@ namespace RSSMS.DataService.Services
             catch (ErrorResponse e)
             {
                 throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
         }
     }
