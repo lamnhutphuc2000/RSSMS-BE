@@ -34,28 +34,21 @@ namespace RSSMS.DataService.Services
             try
             {
                 if (numberOfFloor <= 0) return false;
-                try
+                for (int i = 1; i <= numberOfFloor; i++)
                 {
-                    for (int i = 1; i <= numberOfFloor; i++)
+                    string name = "Tầng - " + i;
+                    if (i == 1) name = "Tầng trệt";
+                    Floor floorToCreate = new Floor
                     {
-                        string name = "Tầng - " + i;
-                        if (i == 1) name = "Tầng trệt";
-                        Floor floorToCreate = new Floor
-                        {
-                            SpaceId = spaceId,
-                            Name = name,
-                            Height = floorHeight,
-                            Width = floorWidth,
-                            Length = floorLength,
-                            IsActive = true,
-                            CreatedDate = now
-                        };
-                        await CreateAsync(floorToCreate);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new ErrorResponse((int)HttpStatusCode.InternalServerError, "" + ex.Message);
+                        SpaceId = spaceId,
+                        Name = name,
+                        Height = floorHeight,
+                        Width = floorWidth,
+                        Length = floorLength,
+                        IsActive = true,
+                        CreatedDate = now
+                    };
+                    await CreateAsync(floorToCreate);
                 }
                 return true;
             }

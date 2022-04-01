@@ -10,7 +10,6 @@ namespace RSSMS.DataService.AutoMapper
         {
             mc.CreateMap<Notification, NotificationViewModel>()
                 .ForMember(des => des.IsRead, opt => opt.MapFrom(src => src.IsRead));
-            mc.CreateMap<NotificationViewModel, Notification>();
         }
     }
 }
