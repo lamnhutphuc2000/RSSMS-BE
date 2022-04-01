@@ -175,8 +175,9 @@ namespace RSSMS.DataService.Services
                 var accounts = Get(account => !account.Role.Name.Equals("Admin") && account.IsActive).Include(account => account.Role);
                 if (role == "Manager")
                 {
+                    var manager = await Get(account => account.Id == uid).Include(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive)).FirstOrDefaultAsync();
                     // get storage id of storage where manager manage
-                    List<Guid> storageIds = await Get(account => account.Id == uid).Include(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive)).First().StaffAssignStorages.Select(staffAssignStorage => staffAssignStorage.StorageId).AsQueryable().ToListAsync();
+                    List<Guid> storageIds = manager.StaffAssignStorages.Select(staffAssignStorage => staffAssignStorage.StorageId).ToList();
 
                     // account list remove manager
                     accounts = accounts.Where(account => account.Role.Name != "Manager").Include(accounts => accounts.Role);
