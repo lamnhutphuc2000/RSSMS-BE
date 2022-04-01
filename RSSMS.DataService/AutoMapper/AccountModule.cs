@@ -12,8 +12,6 @@ namespace RSSMS.DataService.AutoMapper
         {
             mc.CreateMap<Account, AccountViewModel>();
 
-            mc.CreateMap<AccountsCreateThirdPartyViewModel, Account>();
-            mc.CreateMap<Account, AccountsCreateThirdPartyViewModel>();
 
             mc.CreateMap<AccountCreateViewModel, Account>()
                 .ForMember(des => des.IsActive, opt => opt.MapFrom(src => true))

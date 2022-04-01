@@ -42,17 +42,15 @@ namespace RSSMS.DataService.Services
     public class AccountService : BaseService<Account>, IAccountService
     {
         private readonly IMapper _mapper;
-        private readonly IStaffAssignStorageService _staffAssignStoragesService;
         private readonly IFirebaseService _firebaseService;
         private readonly IScheduleService _scheduleService;
         private readonly IRoleService _roleService;
         private readonly IUtilService _utilService;
-        public AccountService(IUnitOfWork unitOfWork, IAccountRepository repository, IMapper mapper, IStaffAssignStorageService staffAssignStoragesService
+        public AccountService(IUnitOfWork unitOfWork, IAccountRepository repository, IMapper mapper 
             , IFirebaseService firebaseService, IScheduleService scheduleService, IRoleService roleService
             , IUtilService utilService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
-            _staffAssignStoragesService = staffAssignStoragesService;
             _firebaseService = firebaseService;
             _scheduleService = scheduleService;
             _roleService = roleService;
@@ -179,7 +177,8 @@ namespace RSSMS.DataService.Services
                 if (role == "Manager")
                 {
                     // get storage id of storage where manager manage
-                    var storageIds = await _staffAssignStoragesService.Get(staffAssignStorage => staffAssignStorage.StaffId == uid && staffAssignStorage.IsActive).Select(staffAssignStorage => staffAssignStorage.StorageId).ToListAsync();
+                    List<Guid> storageIds = await Get(account => account.Id == uid).Include(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive)).First().StaffAssignStorages.Select(staffAssignStorage => staffAssignStorage.StorageId).AsQueryable().ToListAsync();
+
                     // account list remove manager
                     accounts = accounts.Where(account => account.Role.Name != "Manager").Include(accounts => accounts.Role);
                     // account list get account if storageIds contain storage id of manager manage
@@ -297,21 +296,26 @@ namespace RSSMS.DataService.Services
                     if (url != null) userCreate.ImageUrl = url;
                 }
 
-
+                List<StaffAssignStorage> staffToAssigns = null;
                 // Assign user to storages
                 if (model.StorageIds != null)
                 {
+                    staffToAssigns = new List<StaffAssignStorage>();
+                    DateTime now = DateTime.Now;
                     for (int i = 0; i < model.StorageIds.Count; i++)
                     {
-                        StaffAssignStorageCreateViewModel staffAssignModel = new StaffAssignStorageCreateViewModel
+                        StaffAssignStorage staffAssignModel = new StaffAssignStorage
                         {
-                            UserId = userCreate.Id,
+                            CreatedDate = now,
+                            IsActive = true,
                             StorageId = model.StorageIds.ElementAt(i),
                             RoleName = userCreate.Role.Name
                         };
-                        await _staffAssignStoragesService.Create(staffAssignModel);
+                        staffToAssigns.Add(staffAssignModel);
                     }
                 }
+
+                if (staffToAssigns != null) userCreate.StaffAssignStorages = staffToAssigns;
 
                 // update user devicetoken
                 userCreate.DeviceTokenId = model.DeviceToken;
