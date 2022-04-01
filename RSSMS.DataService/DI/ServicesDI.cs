@@ -14,10 +14,10 @@ namespace RSSMS.DataService.DI
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<DbContext, RSSMSContext>();
 
-            services.AddScoped<IAccountsRepository, AccountsRepository>();
+            services.AddScoped<IAccountsRepository, AccountRepository>();
             services.AddScoped<IAccountsService, AccountsService>();
 
-            services.AddScoped<IRolesRepository, RolesRepository>();
+            services.AddScoped<IRolesRepository, RoleRepository>();
             services.AddScoped<IRolesService, RolesService>();
 
             services.AddScoped<IStorageRepository, StorageRepository>();
@@ -26,7 +26,7 @@ namespace RSSMS.DataService.DI
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IOrderService, OrderService>();
 
-            services.AddScoped<IStaffAssignStoragesRepository, StaffAssignStoragesRepository>();
+            services.AddScoped<IStaffAssignStoragesRepository, StaffAssignStorageRepository>();
             services.AddScoped<IStaffAssignStoragesService, StaffAssignStoragesService>();
 
             services.AddScoped<IAreaRepository, AreaRepository>();
@@ -35,16 +35,16 @@ namespace RSSMS.DataService.DI
             services.AddScoped<ISpaceRepository, SpaceRepository>();
             services.AddScoped<ISpaceService, SpaceService>();
 
-            services.AddScoped<IFloorsRepository, FloorsRepository>();
+            services.AddScoped<IFloorsRepository, FloorRepository>();
             services.AddScoped<IFloorsService, FloorsService>();
 
             services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
             services.AddScoped<IOrderDetailService, OrderDetailService>();
 
-            services.AddScoped<IOrderTimelinesRepository, OrderTimelinesRepository>();
+            services.AddScoped<IOrderTimelinesRepository, OrderTimelineRepository>();
             services.AddScoped<IOrderTimelinesService, OrderTimelinesService>();
 
-            services.AddScoped<IServicesRepository, ServicesRepository>();
+            services.AddScoped<IServicesRepository, ServiceRepository>();
             services.AddScoped<IServicesService, ServicesService>();
 
             services.AddScoped<IRequestRepository, RequestRepository>();
