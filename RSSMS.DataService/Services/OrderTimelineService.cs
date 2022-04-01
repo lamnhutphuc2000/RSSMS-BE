@@ -19,10 +19,10 @@ namespace RSSMS.DataService.Services
     {
         Task<DynamicModelResponse<OrderTimelinesViewModel>> Get(OrderTimelinesViewModel model, string[] fields, int page, int size);
     }
-    public class OrderTimelinesService : BaseService<OrderTimeline>, IOrderTimelinesService
+    public class OrderTimelineService : BaseService<OrderTimeline>, IOrderTimelinesService
     {
         private readonly IMapper _mapper;
-        public OrderTimelinesService(IUnitOfWork unitOfWork, IOrderTimelinesRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public OrderTimelineService(IUnitOfWork unitOfWork, IOrderTimelinesRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
         }

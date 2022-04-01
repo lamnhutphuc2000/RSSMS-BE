@@ -18,10 +18,10 @@ namespace RSSMS.DataService.Services
         Task<StaffAssignStorageCreateViewModel> Create(StaffAssignStorageCreateViewModel model);
         Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken);
     }
-    public class StaffAssignStoragesService : BaseService<StaffAssignStorage>, IStaffAssignStoragesService
+    public class StaffAssignStorageService : BaseService<StaffAssignStorage>, IStaffAssignStoragesService
     {
         private readonly IMapper _mapper;
-        public StaffAssignStoragesService(IUnitOfWork unitOfWork, IStaffAssignStoragesRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public StaffAssignStorageService(IUnitOfWork unitOfWork, IStaffAssignStoragesRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
         }

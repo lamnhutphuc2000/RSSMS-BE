@@ -20,11 +20,11 @@ namespace RSSMS.DataService.Services
     {
         Task<DynamicModelResponse<RolesViewModel>> GetAll(string[] fields, int page, int size, string accessToken);
     }
-    public class RolesService : BaseService<Role>, IRolesService
+    public class RoleService : BaseService<Role>, IRolesService
 
     {
         private readonly IMapper _mapper;
-        public RolesService(IUnitOfWork unitOfWork, IRolesRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public RoleService(IUnitOfWork unitOfWork, IRolesRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
         }

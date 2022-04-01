@@ -23,11 +23,11 @@ namespace RSSMS.DataService.Services
         Task<ServicesUpdateViewModel> Update(Guid id, ServicesUpdateViewModel model);
         Task<ServicesViewModel> Delete(Guid id);
     }
-    public class ServicesService : BaseService<Service>, IServicesService
+    public class ServiceService : BaseService<Service>, IServicesService
     {
         private readonly IMapper _mapper;
         private readonly IFirebaseService _firebaseService;
-        public ServicesService(IUnitOfWork unitOfWork, IServicesRepository repository, IMapper mapper, IFirebaseService firebaseService) : base(unitOfWork, repository)
+        public ServiceService(IUnitOfWork unitOfWork, IServicesRepository repository, IMapper mapper, IFirebaseService firebaseService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _firebaseService = firebaseService;

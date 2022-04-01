@@ -20,11 +20,11 @@ namespace RSSMS.DataService.Services
         List<FloorInSpaceViewModel> GetFloorInSpace(Guid spaceId);
         Task<FloorGetByIdViewModel> GetById(Guid id);
     }
-    public class FloorsService : BaseService<Floor>, IFloorsService
+    public class FloorService : BaseService<Floor>, IFloorsService
 
     {
         private readonly IMapper _mapper;
-        public FloorsService(IUnitOfWork unitOfWork, IFloorsRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public FloorService(IUnitOfWork unitOfWork, IFloorsRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
         }

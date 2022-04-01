@@ -40,14 +40,14 @@ namespace RSSMS.DataService.Services
         Task<TokenViewModel> CheckLogin(string firebaseID, string deviceToken);
         Task<List<AccountsViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes);
     }
-    public class AccountsService : BaseService<Account>, IAccountsService
+    public class AccountService : BaseService<Account>, IAccountsService
     {
         private readonly IMapper _mapper;
         private readonly IStaffAssignStoragesService _staffAssignStoragesService;
         private readonly IFirebaseService _firebaseService;
         private readonly IScheduleService _scheduleService;
         private readonly static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
-        public AccountsService(IUnitOfWork unitOfWork, IAccountsRepository repository, IMapper mapper, IStaffAssignStoragesService staffAssignStoragesService, IFirebaseService firebaseService, IScheduleService scheduleService) : base(unitOfWork, repository)
+        public AccountService(IUnitOfWork unitOfWork, IAccountsRepository repository, IMapper mapper, IStaffAssignStoragesService staffAssignStoragesService, IFirebaseService firebaseService, IScheduleService scheduleService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffAssignStoragesService = staffAssignStoragesService;
