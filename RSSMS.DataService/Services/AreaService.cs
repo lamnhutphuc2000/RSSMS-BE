@@ -62,7 +62,7 @@ namespace RSSMS.DataService.Services
             var area = await Get(x => x.Id == id && x.IsActive == true).Include(area => area.Spaces).ThenInclude(space => space.Floors).FirstOrDefaultAsync();
             if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
             var result = _mapper.Map<AreaDetailViewModel>(area);
-            var spaces = area.Spaces;
+            var spaces = area.Spaces.Where(spaces => spaces.IsActive).ToList();
             if (spaces.Count == 0) return result;
 
             double usage = 0;

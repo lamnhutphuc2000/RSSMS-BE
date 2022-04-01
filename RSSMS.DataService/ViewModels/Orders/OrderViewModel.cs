@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
 using RSSMS.DataService.Models;
+using RSSMS.DataService.ViewModels.OrderAdditionalFees;
 using RSSMS.DataService.ViewModels.OrderHistoryExtension;
 using System;
 using System.Collections.Generic;
@@ -95,6 +96,6 @@ namespace RSSMS.DataService.ViewModels.Orders
         public virtual ICollection<OrderHistoryExtensionViewModel> OrderHistoryExtensions { get; set; }
         [JsonProperty("orderAdditionalFees")]
         [BindNever]
-        public virtual ICollection<OrderAdditionalFee> OrderAdditionalFees { get; set; }
+        public virtual ICollection<OrderAdditionalFeeViewModel> OrderAdditionalFees { get; set; }
     }
 }

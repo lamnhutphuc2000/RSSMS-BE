@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using RSSMS.DataService.Models;
+using RSSMS.DataService.ViewModels.OrderAdditionalFees;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.OrderHistoryExtension;
 using RSSMS.DataService.ViewModels.Requests;
@@ -75,6 +76,6 @@ namespace RSSMS.DataService.ViewModels.Orders
         [JsonProperty("orderHistoryExtensions")]
         public virtual ICollection<OrderHistoryExtensionViewModel> OrderHistoryExtensions { get; set; }
         [JsonProperty("orderAdditionalFees")]
-        public virtual ICollection<OrderAdditionalFee> OrderAdditionalFees { get; set; }
+        public virtual ICollection<OrderAdditionalFeeViewModel> OrderAdditionalFees { get; set; }
     }
 }

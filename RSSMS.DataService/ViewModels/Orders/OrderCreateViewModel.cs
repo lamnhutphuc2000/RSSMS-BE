@@ -1,4 +1,5 @@
 ﻿using RSSMS.DataService.Models;
+using RSSMS.DataService.ViewModels.OrderAdditionalFees;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,6 @@ namespace RSSMS.DataService.ViewModels.Orders
         public string ReturnTime { get; set; }
         public int? Status { get; set; }
         public virtual ICollection<OrderDetailViewModel> OrderDetails { get; set; }
-        public virtual ICollection<OrderAdditionalFee> OrderAdditionalFees { get; set; }
+        public virtual ICollection<OrderAdditionalFeeCreateViewModel> OrderAdditionalFees { get; set; }
     }
 }
