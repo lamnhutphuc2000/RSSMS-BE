@@ -3,11 +3,11 @@ using RSSMS.DataService.Models;
 
 namespace RSSMS.DataService.Repositories
 {
-    public interface IFloorsRepository : IBaseRepository<Floor>
+    public interface IFloorRepository : IBaseRepository<Floor>
     {
 
     }
-    public class FloorRepository : BaseRepository<Floor>, IFloorsRepository
+    public class FloorRepository : BaseRepository<Floor>, IFloorRepository
     {
         public FloorRepository(DbContext dbContext) : base(dbContext)
         {

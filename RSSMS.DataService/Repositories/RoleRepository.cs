@@ -3,11 +3,11 @@ using RSSMS.DataService.Models;
 
 namespace RSSMS.DataService.Repositories
 {
-    public interface IRolesRepository : IBaseRepository<Role>
+    public interface IRoleRepository : IBaseRepository<Role>
     {
 
     }
-    public class RoleRepository : BaseRepository<Role>, IRolesRepository
+    public class RoleRepository : BaseRepository<Role>, IRoleRepository
     {
         public RoleRepository(DbContext dbContext) : base(dbContext)
         {

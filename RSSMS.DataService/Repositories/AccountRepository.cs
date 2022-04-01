@@ -3,11 +3,11 @@ using RSSMS.DataService.Models;
 
 namespace RSSMS.DataService.Repositories
 {
-    public interface IAccountsRepository : IBaseRepository<Account>
+    public interface IAccountRepository : IBaseRepository<Account>
     {
 
     }
-    public class AccountRepository : BaseRepository<Account>, IAccountsRepository
+    public class AccountRepository : BaseRepository<Account>, IAccountRepository
     {
         public AccountRepository(DbContext dbContext) : base(dbContext)
         {

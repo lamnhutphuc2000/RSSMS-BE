@@ -14,8 +14,8 @@ namespace RSSMS.API.Controllers
     [ApiVersion("1")]
     public class ServiceController : Controller
     {
-        private readonly IServicesService _servicesService;
-        public ServiceController(IServicesService servicesService)
+        private readonly IServiceService _servicesService;
+        public ServiceController(IServiceService servicesService)
         {
             _servicesService = servicesService;
         }

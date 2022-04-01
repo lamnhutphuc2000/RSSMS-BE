@@ -14,8 +14,8 @@ namespace RSSMS.API.Controllers
     [ApiVersion("1")]
     public class FloorController : ControllerBase
     {
-        private readonly IFloorsService _floorService;
-        public FloorController(IFloorsService floorService)
+        private readonly IFloorService _floorService;
+        public FloorController(IFloorService floorService)
         {
             _floorService = floorService;
         }

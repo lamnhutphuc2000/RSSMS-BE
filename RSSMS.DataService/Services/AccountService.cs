@@ -27,7 +27,7 @@ using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
 {
-    public interface IAccountsService : IBaseService<Account>
+    public interface IAccountService : IBaseService<Account>
     {
         Task<TokenViewModel> Login(AccountsLoginViewModel model);
         Task<AccountsViewModel> ChangePassword(AccountsChangePasswordViewModel model);
@@ -40,14 +40,14 @@ namespace RSSMS.DataService.Services
         Task<TokenViewModel> CheckLogin(string firebaseID, string deviceToken);
         Task<List<AccountsViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes);
     }
-    public class AccountService : BaseService<Account>, IAccountsService
+    public class AccountService : BaseService<Account>, IAccountService
     {
         private readonly IMapper _mapper;
-        private readonly IStaffAssignStoragesService _staffAssignStoragesService;
+        private readonly IStaffAssignStorageService _staffAssignStoragesService;
         private readonly IFirebaseService _firebaseService;
         private readonly IScheduleService _scheduleService;
         private readonly static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
-        public AccountService(IUnitOfWork unitOfWork, IAccountsRepository repository, IMapper mapper, IStaffAssignStoragesService staffAssignStoragesService, IFirebaseService firebaseService, IScheduleService scheduleService) : base(unitOfWork, repository)
+        public AccountService(IUnitOfWork unitOfWork, IAccountRepository repository, IMapper mapper, IStaffAssignStorageService staffAssignStoragesService, IFirebaseService firebaseService, IScheduleService scheduleService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffAssignStoragesService = staffAssignStoragesService;

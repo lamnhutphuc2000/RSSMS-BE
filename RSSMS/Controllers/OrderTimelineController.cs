@@ -14,8 +14,8 @@ namespace RSSMS.API.Controllers
     [ApiVersion("1")]
     public class OrderTimelineController : ControllerBase
     {
-        private readonly IOrderTimelinesService _orderTimelinesService;
-        public OrderTimelineController(IOrderTimelinesService orderTimelinesService)
+        private readonly IOrderTimelineService _orderTimelinesService;
+        public OrderTimelineController(IOrderTimelineService orderTimelinesService)
         {
             _orderTimelinesService = orderTimelinesService;
         }

@@ -13,15 +13,15 @@ using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
 {
-    public interface IStaffAssignStoragesService : IBaseService<StaffAssignStorage>
+    public interface IStaffAssignStorageService : IBaseService<StaffAssignStorage>
     {
         Task<StaffAssignStorageCreateViewModel> Create(StaffAssignStorageCreateViewModel model);
         Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken);
     }
-    public class StaffAssignStorageService : BaseService<StaffAssignStorage>, IStaffAssignStoragesService
+    public class StaffAssignStorageService : BaseService<StaffAssignStorage>, IStaffAssignStorageService
     {
         private readonly IMapper _mapper;
-        public StaffAssignStorageService(IUnitOfWork unitOfWork, IStaffAssignStoragesRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public StaffAssignStorageService(IUnitOfWork unitOfWork, IStaffAssignStorageRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
         }

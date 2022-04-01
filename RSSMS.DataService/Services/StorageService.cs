@@ -27,10 +27,10 @@ namespace RSSMS.DataService.Services
     public class StorageService : BaseService<Storage>, IStorageService
     {
         private readonly IMapper _mapper;
-        private readonly IStaffAssignStoragesService _staffAssignStoragesService;
+        private readonly IStaffAssignStorageService _staffAssignStoragesService;
         private readonly IAreaService _areaService;
         private readonly IFirebaseService _firebaseService;
-        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IStaffAssignStoragesService staffAssignStoragesService, IAreaService areaService, IFirebaseService firebaseService) : base(unitOfWork, repository)
+        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IStaffAssignStorageService staffAssignStoragesService, IAreaService areaService, IFirebaseService firebaseService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffAssignStoragesService = staffAssignStoragesService;

@@ -16,15 +16,15 @@ using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
 {
-    public interface IRolesService : IBaseService<Role>
+    public interface IRoleService : IBaseService<Role>
     {
         Task<DynamicModelResponse<RolesViewModel>> GetAll(string[] fields, int page, int size, string accessToken);
     }
-    public class RoleService : BaseService<Role>, IRolesService
+    public class RoleService : BaseService<Role>, IRoleService
 
     {
         private readonly IMapper _mapper;
-        public RoleService(IUnitOfWork unitOfWork, IRolesRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public RoleService(IUnitOfWork unitOfWork, IRoleRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
         }

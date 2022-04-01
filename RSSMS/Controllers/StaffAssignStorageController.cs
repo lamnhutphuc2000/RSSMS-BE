@@ -15,8 +15,8 @@ namespace RSSMS.API.Controllers
     [ApiVersion("1")]
     public class StaffAssignStorageController : ControllerBase
     {
-        private readonly IStaffAssignStoragesService _staffAssignStoragesService;
-        public StaffAssignStorageController(IStaffAssignStoragesService staffAssignStoragesService)
+        private readonly IStaffAssignStorageService _staffAssignStoragesService;
+        public StaffAssignStorageController(IStaffAssignStorageService staffAssignStoragesService)
         {
             _staffAssignStoragesService = staffAssignStoragesService;
         }

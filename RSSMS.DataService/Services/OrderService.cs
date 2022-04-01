@@ -41,16 +41,16 @@ namespace RSSMS.DataService.Services
         private readonly IMapper _mapper;
         private readonly IFirebaseService _firebaseService;
         private readonly IStorageService _storageService;
-        private readonly IAccountsService _accountService;
-        private readonly IServicesService _serviceService;
+        private readonly IAccountService _accountService;
+        private readonly IServiceService _serviceService;
         private readonly IRequestService _requestService;
-        private readonly IOrderTimelinesService _orderTimelineService;
+        private readonly IOrderTimelineService _orderTimelineService;
         private readonly IOrderDetailService _orderDetailService;
         public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository
-            , IFirebaseService firebaseService, IAccountsService accountService,
-            IServicesService serviceService,
+            , IFirebaseService firebaseService, IAccountService accountService,
+            IServiceService serviceService,
             IRequestService requestService,
-            IOrderTimelinesService orderTimelineService,
+            IOrderTimelineService orderTimelineService,
             IOrderDetailService orderDetailService,
             IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {

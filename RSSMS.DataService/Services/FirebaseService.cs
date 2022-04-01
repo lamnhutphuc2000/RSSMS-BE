@@ -26,9 +26,9 @@ namespace RSSMS.DataService.Services
     {
         private static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
         private static string Bucket = "rssms-5fcc8.appspot.com";
-        private readonly IStaffAssignStoragesService _staffAssignStoragesService;
+        private readonly IStaffAssignStorageService _staffAssignStoragesService;
         private readonly INotificationService _notificationService;
-        public FirebaseService(IStaffAssignStoragesService staffAssignStoragesService, INotificationService notificationService)
+        public FirebaseService(IStaffAssignStorageService staffAssignStoragesService, INotificationService notificationService)
         {
             _staffAssignStoragesService = staffAssignStoragesService;
             _notificationService = notificationService;

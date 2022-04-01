@@ -31,7 +31,6 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly ISpaceService _spaceService;
-        private readonly IFloorsService _floorService;
         public AreaService(IUnitOfWork unitOfWork, ISpaceService spaceService, IAreaRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;

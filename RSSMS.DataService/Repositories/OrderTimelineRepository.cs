@@ -3,11 +3,11 @@ using RSSMS.DataService.Models;
 
 namespace RSSMS.DataService.Repositories
 {
-    public interface IOrderTimelinesRepository : IBaseRepository<OrderTimeline>
+    public interface IOrderTimelineRepository : IBaseRepository<OrderTimeline>
     {
 
     }
-    public class OrderTimelineRepository : BaseRepository<OrderTimeline>, IOrderTimelinesRepository
+    public class OrderTimelineRepository : BaseRepository<OrderTimeline>, IOrderTimelineRepository
     {
         public OrderTimelineRepository(DbContext dbContext) : base(dbContext)
         {

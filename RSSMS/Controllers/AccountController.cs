@@ -19,8 +19,8 @@ namespace RSSMS.API.Controllers
     [ApiVersion("1")]
     public class AccountController : ControllerBase
     {
-        private readonly IAccountsService _accountsService;
-        public AccountController(IAccountsService accountsService)
+        private readonly IAccountService _accountsService;
+        public AccountController(IAccountService accountsService)
         {
             _accountsService = accountsService;
         }

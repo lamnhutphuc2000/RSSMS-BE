@@ -37,14 +37,14 @@ namespace RSSMS.DataService.Services
         private readonly IMapper _mapper;
         private readonly IScheduleService _scheduleService;
         private readonly IFirebaseService _firebaseService;
-        private readonly IStaffAssignStoragesService _staffAssignStoragesService;
+        private readonly IStaffAssignStorageService _staffAssignStoragesService;
         private readonly IOrderHistoryExtensionService _orderHistoryExtensionService;
-        private readonly IOrderTimelinesService _orderTimelineService;
+        private readonly IOrderTimelineService _orderTimelineService;
         public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper
             , IScheduleService scheduleService
-            , IFirebaseService firebaseService, IStaffAssignStoragesService staffAssignStoragesService
+            , IFirebaseService firebaseService, IStaffAssignStorageService staffAssignStoragesService
             , IOrderHistoryExtensionService orderHistoryExtensionService
-            , IOrderTimelinesService orderTimelineService
+            , IOrderTimelineService orderTimelineService
             ) : base(unitOfWork, repository)
         {
             _mapper = mapper;

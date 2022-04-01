@@ -15,14 +15,14 @@ using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
 {
-    public interface IOrderTimelinesService : IBaseService<OrderTimeline>
+    public interface IOrderTimelineService : IBaseService<OrderTimeline>
     {
         Task<DynamicModelResponse<OrderTimelinesViewModel>> Get(OrderTimelinesViewModel model, string[] fields, int page, int size);
     }
-    public class OrderTimelineService : BaseService<OrderTimeline>, IOrderTimelinesService
+    public class OrderTimelineService : BaseService<OrderTimeline>, IOrderTimelineService
     {
         private readonly IMapper _mapper;
-        public OrderTimelineService(IUnitOfWork unitOfWork, IOrderTimelinesRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public OrderTimelineService(IUnitOfWork unitOfWork, IOrderTimelineRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
         }

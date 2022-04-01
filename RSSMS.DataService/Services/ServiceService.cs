@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
 {
-    public interface IServicesService : IBaseService<Service>
+    public interface IServiceService : IBaseService<Service>
     {
         Task<Dictionary<string, List<ServicesViewModel>>> GetAll(ServicesViewModel model);
         Task<ServicesViewModel> GetById(Guid id);
@@ -23,11 +23,11 @@ namespace RSSMS.DataService.Services
         Task<ServicesUpdateViewModel> Update(Guid id, ServicesUpdateViewModel model);
         Task<ServicesViewModel> Delete(Guid id);
     }
-    public class ServiceService : BaseService<Service>, IServicesService
+    public class ServiceService : BaseService<Service>, IServiceService
     {
         private readonly IMapper _mapper;
         private readonly IFirebaseService _firebaseService;
-        public ServiceService(IUnitOfWork unitOfWork, IServicesRepository repository, IMapper mapper, IFirebaseService firebaseService) : base(unitOfWork, repository)
+        public ServiceService(IUnitOfWork unitOfWork, IServiceRepository repository, IMapper mapper, IFirebaseService firebaseService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _firebaseService = firebaseService;

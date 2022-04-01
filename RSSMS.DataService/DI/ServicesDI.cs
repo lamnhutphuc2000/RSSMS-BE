@@ -14,50 +14,50 @@ namespace RSSMS.DataService.DI
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<DbContext, RSSMSContext>();
 
-            services.AddScoped<IAccountsRepository, AccountRepository>();
-            services.AddScoped<IAccountsService, AccountService>();
-
-            services.AddScoped<IRolesRepository, RoleRepository>();
-            services.AddScoped<IRolesService, RoleService>();
-
-            services.AddScoped<IStorageRepository, StorageRepository>();
-            services.AddScoped<IStorageService, StorageService>();
-
-            services.AddScoped<IOrderRepository, OrderRepository>();
-            services.AddScoped<IOrderService, OrderService>();
-
-            services.AddScoped<IStaffAssignStoragesRepository, StaffAssignStorageRepository>();
-            services.AddScoped<IStaffAssignStoragesService, StaffAssignStorageService>();
+            services.AddScoped<IAccountRepository, AccountRepository>();
+            services.AddScoped<IAccountService, AccountService>();
 
             services.AddScoped<IAreaRepository, AreaRepository>();
             services.AddScoped<IAreaService, AreaService>();
 
-            services.AddScoped<ISpaceRepository, SpaceRepository>();
-            services.AddScoped<ISpaceService, SpaceService>();
-
-            services.AddScoped<IFloorsRepository, FloorRepository>();
-            services.AddScoped<IFloorsService, FloorService>();
-
-            services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
-            services.AddScoped<IOrderDetailService, OrderDetailService>();
-
-            services.AddScoped<IOrderTimelinesRepository, OrderTimelineRepository>();
-            services.AddScoped<IOrderTimelinesService, OrderTimelineService>();
-
-            services.AddScoped<IServicesRepository, ServiceRepository>();
-            services.AddScoped<IServicesService, ServiceService>();
-
-            services.AddScoped<IRequestRepository, RequestRepository>();
-            services.AddScoped<IRequestService, RequestService>();
-
-            services.AddScoped<IScheduleRepository, ScheduleRepository>();
-            services.AddScoped<IScheduleService, ScheduleService>();
+            services.AddScoped<IFloorRepository, FloorRepository>();
+            services.AddScoped<IFloorService, FloorService>();
 
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<INotificationService, NotificationService>();
 
+            services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
+            services.AddScoped<IOrderDetailService, OrderDetailService>();
+
             services.AddScoped<IOrderHistoryExtensionRepository, OrderHistoryExtensionRepository>();
             services.AddScoped<IOrderHistoryExtensionService, OrderHistoryExtensionService>();
+
+            services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IOrderService, OrderService>();
+
+            services.AddScoped<IOrderTimelineRepository, OrderTimelineRepository>();
+            services.AddScoped<IOrderTimelineService, OrderTimelineService>();
+
+            services.AddScoped<IRequestRepository, RequestRepository>();
+            services.AddScoped<IRequestService, RequestService>();
+
+            services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<IRoleService, RoleService>();
+
+            services.AddScoped<IScheduleRepository, ScheduleRepository>();
+            services.AddScoped<IScheduleService, ScheduleService>();
+
+            services.AddScoped<IServiceRepository, ServiceRepository>();
+            services.AddScoped<IServiceService, ServiceService>();
+
+            services.AddScoped<ISpaceRepository, SpaceRepository>();
+            services.AddScoped<ISpaceService, SpaceService>();
+
+            services.AddScoped<IStaffAssignStorageRepository, StaffAssignStorageRepository>();
+            services.AddScoped<IStaffAssignStorageService, StaffAssignStorageService>();
+
+            services.AddScoped<IStorageRepository, StorageRepository>();
+            services.AddScoped<IStorageService, StorageService>();
 
             services.AddScoped<IFirebaseService, FirebaseService>();
         }

@@ -15,8 +15,8 @@ namespace RSSMS.API.Controllers
     [ApiVersion("1")]
     public class RoleController : ControllerBase
     {
-        private readonly IRolesService _rolesService;
-        public RoleController(IRolesService rolesService)
+        private readonly IRoleService _rolesService;
+        public RoleController(IRoleService rolesService)
         {
             _rolesService = rolesService;
         }

@@ -13,18 +13,18 @@ using System.Threading.Tasks;
 
 namespace RSSMS.DataService.Services
 {
-    public interface IFloorsService : IBaseService<Floor>
+    public interface IFloorService : IBaseService<Floor>
     {
         Task<bool> CreateNumberOfFloor(Guid spaceId, int numberOfFloor, decimal floorHeight, decimal floorWidth, decimal floorLength, DateTime now);
         Task<bool> RemoveFloors(Guid spaceId);
         List<FloorInSpaceViewModel> GetFloorInSpace(Guid spaceId);
         Task<FloorGetByIdViewModel> GetById(Guid id);
     }
-    public class FloorService : BaseService<Floor>, IFloorsService
+    public class FloorService : BaseService<Floor>, IFloorService
 
     {
         private readonly IMapper _mapper;
-        public FloorService(IUnitOfWork unitOfWork, IFloorsRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        public FloorService(IUnitOfWork unitOfWork, IFloorRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
         }

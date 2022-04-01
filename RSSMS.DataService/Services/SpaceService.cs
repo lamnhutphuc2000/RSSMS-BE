@@ -29,8 +29,8 @@ namespace RSSMS.DataService.Services
     public class SpaceService : BaseService<Space>, ISpaceService
     {
         private readonly IMapper _mapper;
-        private readonly IFloorsService _floorsService;
-        public SpaceService(IUnitOfWork unitOfWork, IFloorsService floorsService, ISpaceRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IFloorService _floorsService;
+        public SpaceService(IUnitOfWork unitOfWork, IFloorService floorsService, ISpaceRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _floorsService = floorsService;
