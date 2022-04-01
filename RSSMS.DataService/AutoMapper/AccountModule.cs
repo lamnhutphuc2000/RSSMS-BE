@@ -10,18 +10,16 @@ namespace RSSMS.DataService.AutoMapper
     {
         public static void ConfigAccountModule(this IMapperConfigurationExpression mc)
         {
-            mc.CreateMap<Account, AccountsViewModel>();
-            mc.CreateMap<AccountsViewModel, Account>();
+            mc.CreateMap<Account, AccountViewModel>();
 
             mc.CreateMap<AccountsCreateThirdPartyViewModel, Account>();
             mc.CreateMap<Account, AccountsCreateThirdPartyViewModel>();
 
-            mc.CreateMap<AccountsCreateViewModel, Account>()
+            mc.CreateMap<AccountCreateViewModel, Account>()
                 .ForMember(des => des.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(des => des.CreatedDate, opt => opt.MapFrom(src => DateTime.Now));
 
-            mc.CreateMap<AccountsUpdateViewModel, Account>();
-            mc.CreateMap<Account, AccountsUpdateViewModel>();
+            mc.CreateMap<AccountUpdateViewModel, Account>();
 
             mc.CreateMap<Account, TokenViewModel>()
                 .ForMember(des => des.UserId, opt => opt.MapFrom(src => src.Id));

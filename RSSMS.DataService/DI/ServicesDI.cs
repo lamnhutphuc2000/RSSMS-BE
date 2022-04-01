@@ -11,6 +11,8 @@ namespace RSSMS.DataService.DI
     {
         public static void ConfigServicesDI(this IServiceCollection services)
         {
+            services.AddScoped<IUtilService, UtilService>();
+
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<DbContext, RSSMSContext>();
 

@@ -20,6 +20,6 @@ namespace RSSMS.DataService.ViewModels.Schedules
 
         public int? Status { get; set; }
         public bool? IsActive { get; set; }
-        public List<AccountsViewModel> Accounts { get; set; }
+        public List<AccountViewModel> Accounts { get; set; }
     }
 }

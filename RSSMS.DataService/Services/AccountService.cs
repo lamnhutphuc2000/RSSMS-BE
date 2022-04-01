@@ -29,16 +29,15 @@ namespace RSSMS.DataService.Services
 {
     public interface IAccountService : IBaseService<Account>
     {
-        Task<TokenViewModel> Login(AccountsLoginViewModel model);
-        Task<AccountsViewModel> ChangePassword(AccountsChangePasswordViewModel model);
-        Task<DynamicModelResponse<AccountsViewModel>> GetAll(AccountsViewModel model, Guid? storageId, Guid? orderId, string[] fields, int page, int size, string accessToken);
-        Task<AccountsViewModel> GetById(Guid id);
-        Task<AccountsViewModel> GetByPhone(string phone);
-        Task<TokenViewModel> Create(AccountsCreateViewModel model);
-        Task<AccountsViewModel> Update(Guid id, AccountsUpdateViewModel model);
-        Task<AccountsViewModel> Delete(Guid id);
-        Task<TokenViewModel> CheckLogin(string firebaseID, string deviceToken);
-        Task<List<AccountsViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes);
+        Task<TokenViewModel> Login(AccountLoginViewModel model);
+        Task<AccountViewModel> ChangePassword(AccountChangePasswordViewModel model);
+        Task<DynamicModelResponse<AccountViewModel>> GetAll(AccountViewModel model, Guid? storageId, string[] fields, int page, int size, string accessToken);
+        Task<AccountViewModel> GetById(Guid id);
+        Task<AccountViewModel> GetByPhone(string phone);
+        Task<TokenViewModel> Create(AccountCreateViewModel model);
+        Task<AccountViewModel> Update(Guid id, AccountUpdateViewModel model);
+        Task<AccountViewModel> Delete(Guid id);
+        Task<List<AccountViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes);
     }
     public class AccountService : BaseService<Account>, IAccountService
     {
@@ -46,304 +45,372 @@ namespace RSSMS.DataService.Services
         private readonly IStaffAssignStorageService _staffAssignStoragesService;
         private readonly IFirebaseService _firebaseService;
         private readonly IScheduleService _scheduleService;
-        private readonly static string apiKEY = "AIzaSyCbxMnxwCfJgCJtvaBeRdvvZ3y1Ucuyv2s";
-        public AccountService(IUnitOfWork unitOfWork, IAccountRepository repository, IMapper mapper, IStaffAssignStorageService staffAssignStoragesService, IFirebaseService firebaseService, IScheduleService scheduleService) : base(unitOfWork, repository)
+        private readonly IRoleService _roleService;
+        private readonly IUtilService _utilService;
+        public AccountService(IUnitOfWork unitOfWork, IAccountRepository repository, IMapper mapper, IStaffAssignStorageService staffAssignStoragesService
+            , IFirebaseService firebaseService, IScheduleService scheduleService, IRoleService roleService
+            , IUtilService utilService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffAssignStoragesService = staffAssignStoragesService;
             _firebaseService = firebaseService;
             _scheduleService = scheduleService;
+            _roleService = roleService;
+            _utilService = utilService;
         }
 
 
-        public async Task<TokenViewModel> Login(AccountsLoginViewModel model)
+        public async Task<TokenViewModel> Login(AccountLoginViewModel model)
         {
-            Firebase.Auth.User us = null;
             try
             {
-                var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
-                var a = await auth.SignInWithEmailAndPasswordAsync(model.Email, model.Password);
+                // Validate input
+                if(!_utilService.ValidateEmail(model.Email)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email invalid format");
+                _utilService.ValidatePassword(model.Password);
 
-                string tok = a.FirebaseToken;
-                us = a.User;
+                // Check account in firebase
+                User us = null;
+                try
+                {
+                    FirebaseAuthProvider auth = new FirebaseAuthProvider(new FirebaseConfig(FirebaseKeyConstant.apiKEY));
+                    FirebaseAuthLink a = await auth.SignInWithEmailAndPasswordAsync(model.Email, model.Password);
+                    string tok = a.FirebaseToken;
+                    us = a.User;
+                }
+                catch (Exception ex)
+                {
+                    throw new ErrorResponse((int)HttpStatusCode.NotFound, ex.Message);
+                }
 
+                // Get account in database
+                Account acc = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password == model.Password && account.IsActive)
+                    .Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefaultAsync();
+                if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Email or password not found");
+                TokenViewModel result = _mapper.Map<TokenViewModel>(acc);
+                
+                // Generate Token to return
+                TokenGenerateViewModel token = GenerateToken(acc);
+                string refreshToken = GenerateRefreshToken(acc);
+                token.RefreshToken = refreshToken;
+                result = _mapper.Map(token, result);
+                result.StorageId = null;
+                
+                // Update user Device token
+                acc.DeviceTokenId = model.DeviceToken;
+                await UpdateAsync(acc);
+
+                // Check user role
+                if (acc.Role.Name != "Office Staff") return result;
+
+                // Get office staff storage Id
+                Guid? storageId = acc.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).FirstOrDefault()?.StorageId;
+                if (storageId != null) result.StorageId = storageId;
+
+                return result;
+            }
+            catch(ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch(Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+        }
+
+        public async Task<AccountViewModel> ChangePassword(AccountChangePasswordViewModel model)
+        {
+            try
+            {
+                // Validate input
+                _utilService.ValidatePassword(model.Password);
+                _utilService.ValidatePassword(model.ConfirmPassword);
+                _utilService.ValidatePassword(model.OldPassword);
+                if (!model.ConfirmPassword.Equals(model.Password)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Confirm password not matched");
+
+                Account account = await Get(account => account.Id == model.Id).FirstOrDefaultAsync();
+                if(account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
+                if (account.Password != model.OldPassword) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Wrong old password");
+                if (account.FirebaseId == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "FirebaseID null");
+
+
+                // Config firebaseApp
+                if (FirebaseApp.DefaultInstance == null)
+                    FirebaseApp.Create(new AppOptions()
+                    {
+                        Credential = GoogleCredential.FromFile("privatekey.json"),
+                    });
+
+                UserRecord firebaseUser = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.GetUserAsync(account.FirebaseId);
+                UserRecordArgs args = new UserRecordArgs()
+                {
+                    Uid = firebaseUser.Uid,
+                    PhoneNumber = firebaseUser.PhoneNumber,
+                    Password = model.Password
+                };
+
+                UserRecord userRecordUpdate = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.UpdateUserAsync(args);
+
+                //Update account password
+                account.Password = model.Password;
+                await UpdateAsync(account);
+                return _mapper.Map<AccountViewModel>(account);
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
             }
             catch (Exception ex)
             {
-                throw new ErrorResponse((int)HttpStatusCode.NotFound, ex.Message);
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-
-            var acc = await Get(x => x.Email == model.Email && us.LocalId == x.FirebaseId && x.Password == model.Password && x.IsActive == true).Include(x => x.Role).Include(x => x.StaffAssignStorages).FirstOrDefaultAsync();
-            if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
-            var result = _mapper.Map<TokenViewModel>(acc);
-            var token = GenerateToken(acc);
-            var refreshToken = GenerateRefreshToken(acc);
-            token.RefreshToken = refreshToken;
-            result = _mapper.Map(token, result);
-            result.StorageId = null;
-            var storageId = acc.StaffAssignStorages.Where(x => x.IsActive == true).FirstOrDefault()?.StorageId;
-            if (storageId != null && acc.Role.Name == "Office Staff")
-            {
-                result.StorageId = storageId;
-            }
-            acc.DeviceTokenId = model.DeviceToken;
-            await UpdateAsync(acc);
-            return result;
         }
 
-        public async Task<AccountsViewModel> ChangePassword(AccountsChangePasswordViewModel model)
+        public async Task<DynamicModelResponse<AccountViewModel>> GetAll(AccountViewModel model, Guid? storageId, string[] fields, int page, int size, string accessToken)
         {
-            if (!model.ConfirmPassword.Equals(model.Password)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Confirm password not matched");
-            var user = await Get(x => x.Id == model.Id && x.IsActive == true).FirstOrDefaultAsync();
-            if (user == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User not found");
-            if (user.Password != model.OldPassword) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Password not matched");
-
-            if (FirebaseApp.DefaultInstance == null)
-            {
-                FirebaseApp.Create(new AppOptions()
-                {
-                    Credential = GoogleCredential.FromFile("privatekey.json"),
-                });
-            }
-
-            if (user.FirebaseId == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "FirebaseID null");
-            var firebaseUser = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.GetUserAsync(user.FirebaseId);
-            UserRecordArgs args = new UserRecordArgs()
-            {
-                Uid = firebaseUser.Uid,
-                PhoneNumber = firebaseUser.PhoneNumber,
-                Password = model.Password
-            };
-            UserRecord userRecordUpdate = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.UpdateUserAsync(args);
-
-            user.Password = model.Password;
-            await UpdateAsync(user);
-            return _mapper.Map<AccountsViewModel>(user);
-        }
-
-        public async Task<DynamicModelResponse<AccountsViewModel>> GetAll(AccountsViewModel model, Guid? storageId, Guid? orderId, string[] fields, int page, int size, string accessToken)
-        {
-            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
-            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-
-            var user = await Get(x => x.Id == Guid.Parse(uid)).Include(x => x.Role).FirstOrDefaultAsync();
-
-            var users = Get(x => x.IsActive == true && !x.Role.Name.Equals("Admin")).Include(x => x.Role);
-            if (user.Role.Name == "Manager")
-            {
-                var storageIds = _staffAssignStoragesService.Get(x => x.StaffId == user.Id && x.IsActive == true).Select(x => x.StorageId).ToList();
-                users = users.Where(x => x.Role.Name != "Manager").Include(x => x.Role);
-                users = users.Where(x => x.StaffAssignStorages.Any(x => storageIds.Contains((Guid)x.StorageId)) || x.StaffAssignStorages.Count == 0)
-                    .Include(x => x.Role);
-            }
-            if (role == "Office Staff")
-                users = users.Where(x => x.Role.Name == "Customer").Include(x => x.Role);
-
-
-            var result = users.ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider)
-                .DynamicFilter(model).PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-            if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
-            var rs = new DynamicModelResponse<AccountsViewModel>
-            {
-                Metadata = new PagingMetaData
-                {
-                    Page = page,
-                    Size = size,
-                    Total = result.Item1,
-                    TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
-                },
-                Data = result.Item2.ToList()
-            };
-            return rs;
-        }
-
-        public async Task<AccountsViewModel> GetById(Guid id)
-        {
-            var result = await Get(x => x.Id == id && x.IsActive == true).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
-            if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id not found");
-            return result;
-        }
-
-        public async Task<AccountsViewModel> GetByPhone(string phone)
-        {
-            var result = await Get(x => x.Phone == phone && x.IsActive == true).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
-            if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User phone not found");
-            return result;
-        }
-
-        public async Task<TokenViewModel> Create(AccountsCreateViewModel model)
-        {
-            var autho = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
-            Firebase.Auth.User us = null;
             try
             {
-                var a = await autho.CreateUserWithEmailAndPasswordAsync(model.Email, model.Password, model.Name, false);
-                us = a.User;
-            }
-            catch (Exception e)
-            {
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, e.Message);
-            }
-            var user = await Get(x => x.Email == model.Email).FirstOrDefaultAsync();
-            if (user != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email is existed");
+                // Get account token
+                JwtSecurityToken secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                Guid uid = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                string role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-            // Create user
-            var userCreate = _mapper.Map<Account>(model);
-            var image = model.Image;
-            userCreate.ImageUrl = null;
-            userCreate.FirebaseId = us.LocalId;
-            userCreate.DeviceTokenId = model.DeviceToken;
-            await CreateAsync(userCreate);
-
-            // Upload image to firebase
-            if (image != null)
-            {
-                var url = await _firebaseService.UploadImageToFirebase(image.File, "users", userCreate.Id, "avatar");
-                if (url != null)
+                var accounts = Get(account => !account.Role.Name.Equals("Admin") && account.IsActive).Include(account => account.Role);
+                if (role == "Manager")
                 {
-                    userCreate.ImageUrl = url;
+                    // get storage id of storage where manager manage
+                    var storageIds = await _staffAssignStoragesService.Get(staffAssignStorage => staffAssignStorage.StaffId == uid && staffAssignStorage.IsActive).Select(staffAssignStorage => staffAssignStorage.StorageId).ToListAsync();
+                    // account list remove manager
+                    accounts = accounts.Where(account => account.Role.Name != "Manager").Include(accounts => accounts.Role);
+                    // account list get account if storageIds contain storage id of manager manage
+                    // account list get account if account do not in any storage
+                    accounts = accounts.Where(account => account.StaffAssignStorages.Any(staffAssignStorage => storageIds.Contains((Guid)staffAssignStorage.StorageId)) || account.StaffAssignStorages.Count == 0)
+                        .Include(accounts => accounts.Role);
                 }
-            }
 
-
-            // Assign user to storages
-            if (model.StorageIds != null)
-            {
-                for (int i = 0; i < model.StorageIds.Count; i++)
+                var result = accounts.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider)
+                    .DynamicFilter(model).PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+                if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+                var rs = new DynamicModelResponse<AccountViewModel>
                 {
-                    StaffAssignStorageCreateViewModel staffAssignModel = new StaffAssignStorageCreateViewModel
+                    Metadata = new PagingMetaData
                     {
-                        UserId = userCreate.Id,
-                        StorageId = model.StorageIds.ElementAt(i),
-                        RoleName = userCreate.Role.Name
-                    };
-                    await _staffAssignStoragesService.Create(staffAssignModel);
-                }
+                        Page = page,
+                        Size = size,
+                        Total = result.Item1,
+                        TotalPage = (int)Math.Ceiling((double)result.Item1 / size)
+                    },
+                    Data = result.Item2.ToList()
+                };
+                return rs;
             }
-            var newUser = await Get(x => x.Email == model.Email && us.LocalId == x.FirebaseId && x.Password == model.Password && x.IsActive == true).Include(x => x.Role).Include(x => x.StaffAssignStorages).FirstOrDefaultAsync();
-            var result = _mapper.Map<TokenViewModel>(newUser);
-            var token = GenerateToken(newUser);
-            var refreshToken = GenerateRefreshToken(newUser);
-            token.RefreshToken = refreshToken;
-            result = _mapper.Map(token, result);
-            result.StorageId = null;
-            var storageId = userCreate.StaffAssignStorages.Where(x => x.IsActive == true).FirstOrDefault()?.StorageId;
-            if (storageId != null && userCreate.Role.Name == "Office Staff")
+            catch (ErrorResponse e)
             {
-                result.StorageId = storageId;
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
             }
-            userCreate.DeviceTokenId = model.DeviceToken;
-            await UpdateAsync(userCreate);
-            return result;
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
 
-        public async Task<AccountsViewModel> Update(Guid id, AccountsUpdateViewModel model)
+        public async Task<AccountViewModel> GetById(Guid id)
         {
-            if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User Id not matched");
-
-            var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
-            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User not found");
-
-            var image = model.Image;
-
-            string url = entity.ImageUrl;
-            var updateEntity = _mapper.Map(model, entity);
-            updateEntity.ImageUrl = url;
-            if (image != null)
+            try
             {
-                url = await _firebaseService.UploadImageToFirebase(image.File, "users", id, "avatar");
-                if (url != null)
+                var result = await Get(account => account.Id == id && account.IsActive).ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
+                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
+                return result;
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+        }
+
+        public async Task<AccountViewModel> GetByPhone(string phone)
+        {
+            try
+            {
+                _utilService.ValidatePhonenumber(phone);
+                var result = await Get(account => account.Phone == phone && account.IsActive).ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
+                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User phone not found");
+                return result;
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+        }
+
+        public async Task<TokenViewModel> Create(AccountCreateViewModel model)
+        {
+            try
+            {
+                // Validate input
+                if (!_utilService.ValidateEmail(model.Email)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email invalid format");
+                _utilService.ValidatePassword(model.Password);
+                _utilService.ValidateBirthDate(model.Birthdate);
+                _utilService.ValidatePhonenumber(model.Phone);
+                _utilService.ValidateString(model.Name,"Name");
+                _utilService.ValidateString(model.Address, "Address");
+
+                Role role = _roleService.Get(role => role.Id == model.RoleId && role.IsActive).First();
+                if(role == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Role not found");
+
+                // Create user to firebase
+                var autho = new FirebaseAuthProvider(new FirebaseConfig(FirebaseKeyConstant.apiKEY));
+                Firebase.Auth.User us = null;
+                try
                 {
-                    updateEntity.ImageUrl = url;
+                    var a = await autho.CreateUserWithEmailAndPasswordAsync(model.Email, model.Password, model.Name, false);
+                    us = a.User;
                 }
-            }
-
-            await UpdateAsync(updateEntity);
-
-            return _mapper.Map<AccountsViewModel>(updateEntity);
-        }
-
-        public async Task<AccountsViewModel> Delete(Guid id)
-        {
-            var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
-            if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
-            entity.IsActive = false;
-            await UpdateAsync(entity);
-            return _mapper.Map<AccountsViewModel>(entity);
-        }
-
-        public async Task<TokenViewModel> CheckLogin(string firebaseID, string deviceToken)
-        {
-            if (FirebaseApp.DefaultInstance == null)
-            {
-                FirebaseApp.Create(new AppOptions()
+                catch (Exception e)
                 {
-                    Credential = GoogleCredential.FromFile("privatekey.json"),
-                });
-            }
-
-            if (firebaseID == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "FirebaseID null");
-            var checkFirebase = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.GetUserAsync(firebaseID);
-
-            if (checkFirebase == null)
-            {
-                throw new ErrorResponse((int)HttpStatusCode.NotFound, "FirebaseID not found");
-            }
-            else
-            {
-                var checkLocalID = await Get(x => x.FirebaseId == firebaseID).FirstOrDefaultAsync();
-
-                if (checkLocalID == null)
-                {
-                    AccountsCreateThirdPartyViewModel model = new AccountsCreateThirdPartyViewModel(checkFirebase.DisplayName,
-                        checkFirebase.PhotoUrl, checkFirebase.PhoneNumber, deviceToken);
-                    await CreateWithoutFirebase(model, firebaseID);
-                    await LoginWithFirebaseID(firebaseID);
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, e.Message);
                 }
-                else
+
+                var account = await Get(account => account.Email == model.Email && account.IsActive).FirstOrDefaultAsync();
+                if (account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email existed");
+
+                // Create user to database
+                var userCreate = _mapper.Map<Account>(model);
+                var image = model.Image;
+                userCreate.ImageUrl = null;
+                userCreate.FirebaseId = us.LocalId;
+                userCreate.DeviceTokenId = model.DeviceToken;
+                await CreateAsync(userCreate);
+
+                // Upload image to firebase
+                if (image != null)
                 {
-                    await LoginWithFirebaseID(firebaseID);
+                    var url = await _firebaseService.UploadImageToFirebase(image.File, "accounts", userCreate.Id, "avatar");
+                    if (url != null) userCreate.ImageUrl = url;
                 }
-            }
-            return await LoginWithFirebaseID(firebaseID);
-        }
 
-        public async Task<TokenViewModel> LoginWithFirebaseID(string firebaseID)
-        {
-            var acc = await Get(x => x.FirebaseId == firebaseID && x.IsActive == true).Include(x => x.Role).Include(x => x.StaffAssignStorages).FirstOrDefaultAsync();
-            if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
-            var result = _mapper.Map<TokenViewModel>(acc);
-            var token = GenerateToken(acc);
-            var refreshToken = GenerateRefreshToken(acc);
-            token.RefreshToken = refreshToken;
-            result = _mapper.Map(token, result);
-            result.StorageId = null;
-            var storageId = acc.StaffAssignStorages.Where(x => x.IsActive == true).FirstOrDefault()?.StorageId;
-            if (storageId != null && acc.Role.Name == "Office Staff")
+
+                // Assign user to storages
+                if (model.StorageIds != null)
+                {
+                    for (int i = 0; i < model.StorageIds.Count; i++)
+                    {
+                        StaffAssignStorageCreateViewModel staffAssignModel = new StaffAssignStorageCreateViewModel
+                        {
+                            UserId = userCreate.Id,
+                            StorageId = model.StorageIds.ElementAt(i),
+                            RoleName = userCreate.Role.Name
+                        };
+                        await _staffAssignStoragesService.Create(staffAssignModel);
+                    }
+                }
+
+                // update user devicetoken
+                userCreate.DeviceTokenId = model.DeviceToken;
+                await UpdateAsync(userCreate);
+
+                // Get user token to return
+                var newUser = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password == model.Password && account.IsActive).Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefaultAsync();
+                var result = _mapper.Map<TokenViewModel>(newUser);
+                var token = GenerateToken(newUser);
+                var refreshToken = GenerateRefreshToken(newUser);
+                token.RefreshToken = refreshToken;
+                result = _mapper.Map(token, result);
+                result.StorageId = null;
+                
+                // get office staff storage id
+                var storageId = userCreate.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).FirstOrDefault()?.StorageId;
+                if (storageId != null && userCreate.Role.Name == "Office Staff")
+                    result.StorageId = storageId;
+                
+                return result;
+            }
+            catch (ErrorResponse e)
             {
-                result.StorageId = storageId;
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
             }
-            await UpdateAsync(acc);
-            return result;
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+            
         }
 
-        public async Task<AccountsViewModel> CreateWithoutFirebase(AccountsCreateThirdPartyViewModel model, string fireBaseID)
+        public async Task<AccountViewModel> Update(Guid id, AccountUpdateViewModel model)
         {
-            var userCreate = _mapper.Map<Account>(model);
-            userCreate.DeviceTokenId = model.DeviceToken;
-            userCreate.IsActive = true;
-            userCreate.FirebaseId = fireBaseID;
-            //userCreate.RoleId = 3;
-            await CreateAsync(userCreate);
-            return await GetById(userCreate.Id);
+            try
+            {
+                // validate input
+                _utilService.ValidateBirthDate(model.Birthdate);
+                _utilService.ValidatePhonenumber(model.Phone);
+                _utilService.ValidateString(model.Name, "Name");
+                _utilService.ValidateString(model.Address, "Address");
+
+                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User Id not matched");
+
+                var account = await Get(account => account.Id == id && account.IsActive).FirstOrDefaultAsync();
+                if (account == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User not found");
+
+                var image = model.Image;
+
+                // Upload image to firebase
+                string url = account.ImageUrl;
+                Account updateAccount = _mapper.Map(model, account);
+                updateAccount.ImageUrl = url;
+                if (image != null)
+                {
+                    url = await _firebaseService.UploadImageToFirebase(image.File, "accounts", id, "avatar");
+                    if (url != null)
+                        updateAccount.ImageUrl = url;
+                }
+
+                await UpdateAsync(updateAccount);
+
+                return _mapper.Map<AccountViewModel>(updateAccount);
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
 
+        public async Task<AccountViewModel> Delete(Guid id)
+        {
+            try
+            {
+                var entity = await Get(account => account.Id == id && account.IsActive).FirstOrDefaultAsync();
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
+                entity.IsActive = false;
+                await UpdateAsync(entity);
+                return _mapper.Map<AccountViewModel>(entity);
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
+            
+        }
 
         private TokenGenerateViewModel GenerateToken(Account acc)
         {
             var storageId = acc.StaffAssignStorages.Where(x => x.IsActive == true).FirstOrDefault()?.StorageId.ToString();
-            if (storageId == null) storageId = "-1";
+            if (storageId == null) storageId = "";
             var authClaims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, acc.Name),
@@ -374,7 +441,7 @@ namespace RSSMS.DataService.Services
         private string GenerateRefreshToken(Account acc)
         {
             var storageId = acc.StaffAssignStorages.Where(x => x.IsActive == true).FirstOrDefault()?.StorageId.ToString();
-            if (storageId == null) storageId = "-1";
+            if (storageId == null) storageId = "";
             var authClaims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, acc.Name),
@@ -396,30 +463,34 @@ namespace RSSMS.DataService.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<List<AccountsViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes)
+        public async Task<List<AccountViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
 
-            var staffs = Get(x => x.IsActive == true && x.Role.Name != "Admin" && x.Role.Name != "Customer").Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
-            if (roleName.Count > 0) staffs = Get(x => x.IsActive == true && roleName.Contains(x.Role.Name)).Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
+            var staffs = Get(account => account.IsActive && account.Role.Name != "Admin" && account.Role.Name != "Customer").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+            if (roleName.Count > 0) staffs = Get(account => account.IsActive && roleName.Contains(account.Role.Name)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
             if (role == "Manager")
-                staffs = staffs.Where(x => x.Role.Name != "Manager").Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
+                staffs = staffs.Where(account => account.Role.Name != "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
 
             if (storageId == null)
-                staffs = staffs.Where(x => x.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).Count() == 0).Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
+                staffs = staffs.Where(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).Count() == 0).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
 
             if (storageId != null)
-                staffs = staffs.Where(x => x.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId && staffAssignStorage.IsActive == true)).Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
+                staffs = staffs.Where(account => account.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId && staffAssignStorage.IsActive)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
 
             if (scheduleDay != null)
             {
-                var usersInDelivery = _scheduleService.Get(x => scheduleDay.Value.Date == x.ScheduleDay.Date && deliveryTimes.Contains(x.ScheduleTime) && x.IsActive == true).Select(x => x.UserId).Distinct().ToList();
-                staffs = staffs.Where(x => !usersInDelivery.Contains(x.Id)).Include(x => x.StaffAssignStorages).Include(x => x.Schedules);
+                // delivery staff busy in the time
+                var usersInDelivery = _scheduleService.Get(schedule => scheduleDay.Value.Date == schedule.ScheduleDay.Date && deliveryTimes.Contains(schedule.ScheduleTime) && schedule.IsActive).Select(schedule => schedule.UserId).Distinct().ToList();
+                staffs = staffs.Where(account => !usersInDelivery.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                //delivery staff busy in the day
+                var deliveryStaffBusyInDate = _scheduleService.Get(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && !schedule.IsActive).Select(schedule => schedule.UserId).Distinct().ToList();
+                staffs = staffs.Where(account => !deliveryStaffBusyInDate.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
             }
-            var result = await staffs.ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToListAsync();
+            var result = await staffs.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToListAsync();
             return result;
         }
     }

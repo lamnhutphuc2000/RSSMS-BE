@@ -4,8 +4,9 @@ using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Accounts
 {
-    public class AccountsCreateViewModel
+    public class AccountCreateViewModel
     {
+        // có dùng
         public string Name { get; set; }
         public string Password { get; set; }
         public string Email { get; set; }

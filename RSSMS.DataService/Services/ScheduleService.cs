@@ -122,7 +122,7 @@ namespace RSSMS.DataService.Services
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().ScheduleDay,
                                         ScheduleTime = g.First().ScheduleTime,
-                                        Accounts = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToList()
+                                        Accounts = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToList()
                                     });
                 result = tmp.AsEnumerable().GroupBy(p => (DateTime)p.ScheduleDay)
                     .Select(g => new ScheduleViewModel
@@ -155,7 +155,7 @@ namespace RSSMS.DataService.Services
                                         IsActive = g.First().IsActive,
                                         ScheduleDay = (DateTime)g.First().ScheduleDay,
                                         ScheduleTime = g.First().ScheduleTime,
-                                        Accounts = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountsViewModel>(_mapper.ConfigurationProvider).ToList()
+                                        Accounts = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToList()
                                     }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
             }
             if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");
