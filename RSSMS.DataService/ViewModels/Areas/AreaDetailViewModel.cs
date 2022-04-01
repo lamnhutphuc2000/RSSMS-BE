@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Areas
 {

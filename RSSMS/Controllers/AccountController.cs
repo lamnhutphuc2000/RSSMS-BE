@@ -110,7 +110,7 @@ namespace RSSMS.API.Controllers
         public async Task<IActionResult> GetStaffs([FromQuery] Guid? storageId, [FromQuery] List<string> roleName, [FromQuery] DateTime? scheduleDay, [FromQuery] ICollection<string> deliveryTimes)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            return Ok(await _accountsService.GetStaff(storageId, accessToken, roleName,scheduleDay,deliveryTimes));
+            return Ok(await _accountsService.GetStaff(storageId, accessToken, roleName, scheduleDay, deliveryTimes));
         }
 
         /// <summary>

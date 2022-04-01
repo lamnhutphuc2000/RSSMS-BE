@@ -1,6 +1,5 @@
 ﻿using RSSMS.DataService.ViewModels.Orders;
 using System;
-using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Storages
 {

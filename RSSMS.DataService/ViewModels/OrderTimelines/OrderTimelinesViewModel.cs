@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using RSSMS.DataService.Attributes;
 using System;
 
 namespace RSSMS.DataService.ViewModels.OrderTimelines

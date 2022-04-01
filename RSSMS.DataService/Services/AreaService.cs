@@ -69,13 +69,13 @@ namespace RSSMS.DataService.Services
             double usage = 0;
             double used = 0;
             double available = 0;
-            foreach(var space in spaces)
+            foreach (var space in spaces)
             {
                 var spaceById = await _spaceService.GetById(space.Id);
                 usage += spaceById.Floors.Select(x => x.Usage).Sum();
             }
-            
-            double total = (double) (area.Height * area.Width * area.Length);
+
+            double total = (double)(area.Height * area.Width * area.Length);
             used = usage * total / 100;
             available = total - used;
 

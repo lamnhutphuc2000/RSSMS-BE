@@ -166,7 +166,7 @@ namespace RSSMS.DataService.Services
             var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
             var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
             Guid? storageId = null;
-            if(role == "Office Staff") storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
+            if (role == "Office Staff") storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
             Request request = null;
             if (role == "Delivery Staff" && model.Type == (int)RequestType.Delivery_Cancel_Schedule) // huy lich giao hang
             {
@@ -422,7 +422,7 @@ namespace RSSMS.DataService.Services
         public async Task<RequestByIdViewModel> DeliverRequest(Guid id, string accessToken)
         {
             var request = await Get(x => x.Id == id && x.IsActive).Include(x => x.Customer).Include(x => x.CreatedByNavigation).FirstOrDefaultAsync();
-            if(request == null ) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
+            if (request == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
             request.Status = 4;
 
             await UpdateAsync(request);
@@ -443,15 +443,15 @@ namespace RSSMS.DataService.Services
                 CreatedDate = DateTime.Now,
                 CreatedBy = userId,
                 Datetime = DateTime.Now,
-                Name = "Đơn đang vận chuyển "+name
+                Name = "Đơn đang vận chuyển " + name
             });
 
             var customer = request.Customer;
             if (customer == null) customer = request.CreatedByNavigation;
 
-            await _firebaseService.SendNoti("Nhân viên đang di chuyển đến để "+notiName, userId, customer.DeviceTokenId, request.Id, new
+            await _firebaseService.SendNoti("Nhân viên đang di chuyển đến để " + notiName, userId, customer.DeviceTokenId, request.Id, new
             {
-                Content = "Nhân viên đang di chuyển đến để "+notiName,
+                Content = "Nhân viên đang di chuyển đến để " + notiName,
                 request.OrderId,
                 RequestId = request.Id
             });
@@ -469,18 +469,18 @@ namespace RSSMS.DataService.Services
             if (request == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
 
             var storage = request.Storage;
-            if(storage == null)
+            if (storage == null)
             {
                 if (request.Order == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
-                if(request.Order.Storage == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage not found");
+                if (request.Order.Storage == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage not found");
                 storage = request.Order.Storage;
             }
 
             var staffList = storage.StaffAssignStorages.Where(x => x.RoleName != "Delivery Staff" && x.IsActive).Select(x => x.Staff).ToList();
 
-            foreach(var staff in staffList)
+            foreach (var staff in staffList)
             {
-                if(staff.DeviceTokenId != null)
+                if (staff.DeviceTokenId != null)
                 {
                     await _firebaseService.SendNoti(message, userId, staff.DeviceTokenId, request.Id, new
                     {
