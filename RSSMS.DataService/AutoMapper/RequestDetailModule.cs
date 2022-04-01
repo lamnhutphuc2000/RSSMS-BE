@@ -6,7 +6,7 @@ namespace RSSMS.DataService.AutoMapper
 {
     public static class RequestDetailModule
     {
-        public static void ConfigRequestDetailsModule(this IMapperConfigurationExpression mc)
+        public static void ConfigRequestDetailModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<RequestDetailCreateViewModel, RequestDetail>();
 

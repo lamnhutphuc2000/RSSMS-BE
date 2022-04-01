@@ -4,9 +4,9 @@ using RSSMS.DataService.ViewModels.Roles;
 
 namespace RSSMS.DataService.AutoMapper
 {
-    public static class RolesModule
+    public static class RoleModule
     {
-        public static void ConfigRolesModule(this IMapperConfigurationExpression mc)
+        public static void ConfigRoleModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Role, RolesViewModel>();
 

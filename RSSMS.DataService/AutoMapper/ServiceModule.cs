@@ -4,9 +4,9 @@ using RSSMS.DataService.ViewModels.Services;
 
 namespace RSSMS.DataService.AutoMapper
 {
-    public static class ServicesModule
+    public static class ServiceModule
     {
-        public static void ConfigServicesModule(this IMapperConfigurationExpression mc)
+        public static void ConfigServiceModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Service, ServicesViewModel>();
             mc.CreateMap<ServicesViewModel, Service>();

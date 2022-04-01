@@ -6,9 +6,9 @@ using System;
 
 namespace RSSMS.DataService.AutoMapper
 {
-    public static class AccountsModule
+    public static class AccountModule
     {
-        public static void ConfigAccountsModule(this IMapperConfigurationExpression mc)
+        public static void ConfigAccountModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Account, AccountsViewModel>();
             mc.CreateMap<AccountsViewModel, Account>();

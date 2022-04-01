@@ -6,7 +6,7 @@ namespace RSSMS.DataService.AutoMapper
 {
     public static class SpaceModule
     {
-        public static void ConfigShelfModule(this IMapperConfigurationExpression mc)
+        public static void ConfigSpaceModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Space, SpaceViewModel>();
             //.ForMember(des => des.Boxes, opt => opt.MapFrom(src => src.Boxes.Where(x => x.IsActive == true).OrderByDescending(x => x.CreatedDate)))

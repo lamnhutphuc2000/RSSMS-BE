@@ -4,9 +4,9 @@ using RSSMS.DataService.ViewModels.StaffAssignStorage;
 
 namespace RSSMS.DataService.AutoMapper
 {
-    public static class StaffAssignStoragesModule
+    public static class StaffAssignStorageModule
     {
-        public static void ConfigStaffAssignStoragesModule(this IMapperConfigurationExpression mc)
+        public static void ConfigStaffAssignStorageModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<StaffAssignStorageViewModel, StaffAssignStorage>();
             mc.CreateMap<StaffAssignStorage, StaffAssignStorageViewModel>();
