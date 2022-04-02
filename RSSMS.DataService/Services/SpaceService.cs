@@ -41,7 +41,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 var space = Get(x => x.Name == model.Name && x.AreaId == model.AreaId && x.IsActive == true).FirstOrDefault();
-                if (space != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Shelf name is existed");
+                if (space != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Space name is existed");
 
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
@@ -51,6 +51,28 @@ namespace RSSMS.DataService.Services
                 var spaceToCreate = _mapper.Map<Space>(model);
                 spaceToCreate.ModifiedBy = userId;
                 await CreateAsync(spaceToCreate);
+
+
+                double areaUsed = 0;
+                // Lay space va area cua space vua tao
+                var spaceCreated = Get(space => space.Id == spaceToCreate.Id).Include(space => space.Area).ThenInclude(area => area.Spaces).First();
+                var area = spaceCreated.Area;
+                // lay size cua area
+                double areaSize = (double)(area.Length * area.Width * area.Height);
+                // lay het spaces cua area ra
+                var spacesInArea = area.Spaces.Where(space => space.IsActive).ToList();
+                // tinh tong used cua area hien tai
+                foreach(var spaceInArea in spacesInArea)
+                {
+                    var floorInSpace = await _floorsService.GetFloorInSpace(spaceInArea.Id);
+                    areaUsed = floorInSpace.Select(floor => floor.Used).Sum();
+                }
+
+                if(areaUsed > areaSize)
+                {
+                    await DeleteAsync(spaceCreated);
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area size is overload");
+                }
 
                 await _floorsService.CreateNumberOfFloor(spaceToCreate.Id, model.NumberOfFloor, model.FloorHeight, model.FloorWidth, model.FloorHeight, DateTime.Now);
                 return _mapper.Map<SpaceViewModel>(spaceToCreate);

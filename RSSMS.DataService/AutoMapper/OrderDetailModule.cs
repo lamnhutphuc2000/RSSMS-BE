@@ -2,6 +2,7 @@
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Services;
+using System;
 using System.Linq;
 
 namespace RSSMS.DataService.AutoMapper
@@ -37,6 +38,7 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<OrderDetailByIdViewModel, OrderDetail>();
 
             mc.CreateMap<OrderDetail, OrderDetailInFloorViewModel>()
+                .ForMember(des => des.OrderStatus, opt => opt.MapFrom(src => (src.Order.ReturnDate - DateTime.Now).Value.Days > 0 ? (int?)(src.Order.ReturnDate - DateTime.Now).Value.Days <= 3 ? 3 : src.Order.Status : 4))
                 .ForMember(des => des.FloorName, opt => opt.MapFrom(src => src.Floor.Name))
                 .ForMember(des => des.SpaceName, opt => opt.MapFrom(src => src.Floor.Space.Name))
                 .ForMember(des => des.AreaName, opt => opt.MapFrom(src => src.Floor.Space.Area.Name))

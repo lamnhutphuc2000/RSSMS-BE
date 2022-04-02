@@ -29,6 +29,8 @@ namespace RSSMS.DataService.ViewModels.Requests
         public string DeliveryTime { get; set; }
         [JsonProperty("deliveryAddress")]
         public string DeliveryAddress { get; set; }
+        [JsonProperty("isCustomerDelivery")]
+        public bool? IsCustomerDelivery { get; set; }
         [JsonProperty("returnAddress")]
         public string ReturnAddress { get; set; }
         [JsonProperty("returnDate")]

@@ -8,6 +8,8 @@ namespace RSSMS.DataService.ViewModels.Floors
         public Guid Id { get; set; }
         public string Name { get; set; }
         public double Usage { get; set; }
+        public double Used { get; set; }
+        public double Available { get; set; }
         public decimal? Height { get; set; }
         public decimal? Width { get; set; }
         public decimal? Length { get; set; }

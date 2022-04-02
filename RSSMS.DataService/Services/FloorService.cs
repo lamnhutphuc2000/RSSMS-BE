@@ -88,14 +88,21 @@ namespace RSSMS.DataService.Services
                 List<FloorInSpaceViewModel> result = new List<FloorInSpaceViewModel>();
                 var floors = Get(floor => floor.SpaceId == spaceId && floor.IsActive)
                     .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(orderDetailServiceMaps => orderDetailServiceMaps.Service)
-                    .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage);
+                    .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
+                    .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Order);
                 if (floors.ToList().Count() == 0) return null;
 
                 foreach (Floor floor in floors)
                 {
                     var floorUsage = await GetFloorUsage(floor.Id);
                     FloorInSpaceViewModel floorToResult = _mapper.Map<FloorInSpaceViewModel>(floor);
-                    if (floorUsage != null) floorToResult.Usage = floorUsage[0];
+                    if (floorUsage != null)
+                    {
+                        floorToResult.Usage = floorUsage[0];
+                        floorToResult.Used = floorUsage[1];
+                        floorToResult.Available = floorUsage[2];
+                    }
+                        
                     result.Add(floorToResult);
                 }
                 result.Sort();

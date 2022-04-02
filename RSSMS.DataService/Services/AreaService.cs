@@ -199,9 +199,12 @@ namespace RSSMS.DataService.Services
                 Area anotherArea = Get(area => area.Id != id && area.Name == model.Name && area.StorageId == entity.StorageId && area.IsActive).FirstOrDefault();
                 if (anotherArea != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
 
-                if(entity.Height != model.Height || entity.Length != model.Length || entity.Width != model.Width)
+                AreaDetailViewModel area = await GetById(id);
+                if(area.Used > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area is already in used");
+
+                if (entity.Height != model.Height || entity.Length != model.Length || entity.Width != model.Width)
                 {
-                    AreaDetailViewModel area = await GetById(id);
+                    area = await GetById(id);
                     double newAreaSize = (double)(model.Height * model.Width * model.Length);
                     if(newAreaSize - area.Used < 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "New area size is smaller than the total service in area");
                 }

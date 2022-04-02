@@ -21,6 +21,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -70,7 +71,7 @@ namespace RSSMS.DataService.Services
                 try
                 {
                     FirebaseAuthProvider auth = new FirebaseAuthProvider(new FirebaseConfig(FirebaseKeyConstant.apiKEY));
-                    FirebaseAuthLink a = await auth.SignInWithEmailAndPasswordAsync(model.Email, model.Password);
+                    FirebaseAuthLink a = await auth.SignInWithEmailAndPasswordAsync(model.Email, EncryptedPassword(model.Password).ToString());
                     string tok = a.FirebaseToken;
                     us = a.User;
                 }
@@ -80,7 +81,7 @@ namespace RSSMS.DataService.Services
                 }
 
                 // Get account in database
-                Account acc = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password == model.Password && account.IsActive)
+                Account acc = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password.SequenceEqual(EncryptedPassword(model.Password))  && account.IsActive)
                     .Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefaultAsync();
                 if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Email or password not found");
                 TokenViewModel result = _mapper.Map<TokenViewModel>(acc);
@@ -127,7 +128,9 @@ namespace RSSMS.DataService.Services
 
                 Account account = await Get(account => account.Id == model.Id).FirstOrDefaultAsync();
                 if(account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
-                if (account.Password != model.OldPassword) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Wrong old password");
+
+                byte[] OldPassword = EncryptedPassword(model.OldPassword);
+                if (!account.Password.SequenceEqual(OldPassword)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Wrong old password");
                 if (account.FirebaseId == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "FirebaseID null");
 
 
@@ -143,13 +146,13 @@ namespace RSSMS.DataService.Services
                 {
                     Uid = firebaseUser.Uid,
                     PhoneNumber = firebaseUser.PhoneNumber,
-                    Password = model.Password
+                    Password = EncryptedPassword(model.Password).ToString()
                 };
 
                 UserRecord userRecordUpdate = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.UpdateUserAsync(args);
 
                 //Update account password
-                account.Password = model.Password;
+                account.Password = EncryptedPassword(model.Password);
                 await UpdateAsync(account);
                 return _mapper.Map<AccountViewModel>(account);
             }
@@ -270,7 +273,7 @@ namespace RSSMS.DataService.Services
                 Firebase.Auth.User us = null;
                 try
                 {
-                    var a = await autho.CreateUserWithEmailAndPasswordAsync(model.Email, model.Password, model.Name, false);
+                    var a = await autho.CreateUserWithEmailAndPasswordAsync(model.Email, EncryptedPassword(model.Password).ToString(), model.Name, false);
                     us = a.User;
                 }
                 catch (Exception e)
@@ -287,6 +290,7 @@ namespace RSSMS.DataService.Services
                 userCreate.ImageUrl = null;
                 userCreate.FirebaseId = us.LocalId;
                 userCreate.DeviceTokenId = model.DeviceToken;
+                userCreate.Password = EncryptedPassword(model.Password);
                 await CreateAsync(userCreate);
 
                 // Upload image to firebase
@@ -322,7 +326,7 @@ namespace RSSMS.DataService.Services
                 await UpdateAsync(userCreate);
 
                 // Get user token to return
-                var newUser = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password == model.Password && account.IsActive).Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefaultAsync();
+                var newUser = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password == EncryptedPassword(model.Password) && account.IsActive).Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefaultAsync();
                 var result = _mapper.Map<TokenViewModel>(newUser);
                 var token = GenerateToken(newUser);
                 var refreshToken = GenerateRefreshToken(newUser);
@@ -394,8 +398,17 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                var entity = await Get(account => account.Id == id && account.IsActive).FirstOrDefaultAsync();
+                var entity = await Get(account => account.Id == id && account.IsActive)
+                    .Include(account => account.Role)
+                    .Include(account => account.Schedules).FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
+                if(entity.Role.Name == "Customer") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Can not delete customer");
+                if (entity.Role.Name == "Delivery Staff")
+                {
+                    DateTime now = DateTime.Now;
+                    var schedules = entity.Schedules.Where(schedule => schedule.Status == 1 && schedule.ScheduleDay.Date >= now.Date && schedule.IsActive).ToList();
+                    if(schedules.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Delivery Staff has schedules to delivery");
+                }
                 entity.IsActive = false;
                 await UpdateAsync(entity);
                 return _mapper.Map<AccountViewModel>(entity);
@@ -495,6 +508,15 @@ namespace RSSMS.DataService.Services
                 staffs = staffs.Where(account => !deliveryStaffBusyInDate.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
             }
             var result = await staffs.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToListAsync();
+            return result;
+        }
+
+        private byte[] EncryptedPassword(string password)
+        {
+            byte[] result;
+            SHA256 mySha = SHA256.Create();
+            Encoding enc = Encoding.UTF8;
+            result = mySha.ComputeHash(enc.GetBytes(password));
             return result;
         }
     }

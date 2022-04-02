@@ -41,33 +41,31 @@ namespace RSSMS.DataService.Services
         private readonly IMapper _mapper;
         private readonly IFirebaseService _firebaseService;
         private readonly IStorageService _storageService;
-        private readonly IAccountService _accountService;
-        private readonly IServiceService _serviceService;
         private readonly IRequestService _requestService;
         private readonly IOrderTimelineService _orderTimelineService;
         private readonly IOrderDetailService _orderDetailService;
+        private readonly IFloorService _floorService;
         public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository
-            , IFirebaseService firebaseService, IAccountService accountService,
-            IServiceService serviceService,
+            , IFirebaseService firebaseService,
             IRequestService requestService,
             IOrderTimelineService orderTimelineService,
             IOrderDetailService orderDetailService,
+            IFloorService floorService,
             IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _firebaseService = firebaseService;
             _storageService = storageService;
-            _accountService = accountService;
-            _serviceService = serviceService;
             _requestService = requestService;
             _orderTimelineService = orderTimelineService;
             _orderDetailService = orderDetailService;
+            _floorService = floorService;
         }
         public async Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes)
         {
             try
             {
-                var result = await Get(x => x.Id == id && x.IsActive == true)
+                var result = await Get(x => x.Id == id && x.IsActive)
                 .Include(order => order.OrderDetails).Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
                 .ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
                 .Include(order => order.Requests)
@@ -77,7 +75,7 @@ namespace RSSMS.DataService.Services
                 .FirstOrDefaultAsync();
                 if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
                 var request = result.Requests;
-                if (requestTypes == null) return result;
+                if (requestTypes.Count > 0) return result;
 
                 request = request.Where(request => requestTypes.Contains((int)request.Type)).ToList();
                 result.Requests = request;
@@ -619,13 +617,23 @@ namespace RSSMS.DataService.Services
                 if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail not in the same order");
                 var order = orders.First();
 
+                var orderDetails = order.OrderDetails;
+                var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
+                foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
+                {
+                    var floor = await _floorService.GetById(orderDetailToAssignFloor.FloorId);
+                    var orderDetail = orderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssignFloor.OrderDetailId).First();
+                    var orderDetailSize = (double)(orderDetail.Height * orderDetail.Width * orderDetail.Length);
+                    if (floor.Available - orderDetailSize < 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
+                }
+
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
+
+
                 order.ModifiedBy = userId;
                 order.ModifiedDate = DateTime.Now;
-                var orderDetails = order.OrderDetails;
-                var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
                     foreach (var orderDetail in orderDetails)
@@ -673,13 +681,22 @@ namespace RSSMS.DataService.Services
                 if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail not in the same order");
                 var order = orders.First();
 
+                var orderDetails = order.OrderDetails;
+                var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
+                foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
+                {
+                    var floor = await _floorService.GetById(orderDetailToAssignFloor.FloorId);
+                    var orderDetail = orderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssignFloor.OrderDetailId).First();
+                    var orderDetailSize = (double)(orderDetail.Height * orderDetail.Width * orderDetail.Length);
+                    if (floor.Available - orderDetailSize < 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
+                }
+
+
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
                 order.ModifiedBy = userId;
                 order.ModifiedDate = DateTime.Now;
-                var orderDetails = order.OrderDetails;
-                var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
                     if (orderDetailToAssignFloor.OldFloorId != null)

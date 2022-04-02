@@ -14,6 +14,7 @@ namespace RSSMS.DataService.AutoMapper
 
 
             mc.CreateMap<AccountCreateViewModel, Account>()
+                .ForMember(des => des.Password, opt => opt.Ignore())
                 .ForMember(des => des.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(des => des.CreatedDate, opt => opt.MapFrom(src => DateTime.Now));
 

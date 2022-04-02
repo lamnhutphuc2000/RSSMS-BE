@@ -426,11 +426,15 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                var request = await Get(request => request.Id == model.RequestId && request.IsActive).FirstOrDefaultAsync();
+                var request = await Get(request => request.Id == model.RequestId && request.IsActive)
+                                        .Include(request => request.RequestDetails)
+                                        .ThenInclude(requestDetail => requestDetail.Service).FirstOrDefaultAsync();
                 if (request == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request not found");
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+
 
                 request.StorageId = model.StorageId;
                 request.ModifiedBy = userId;
