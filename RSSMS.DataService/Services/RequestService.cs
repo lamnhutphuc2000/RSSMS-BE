@@ -501,6 +501,71 @@ namespace RSSMS.DataService.Services
                                         .ThenInclude(requestDetail => requestDetail.Service).FirstOrDefaultAsync();
                 if (request == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request not found");
 
+                // check xem còn nhân viên trong storage nào không 
+                var deliveryStaffs = await _accountService.GetStaff(model.StorageId, accessToken, new List<string> { "Delivery Staff" }, request.DeliveryDate, new List<string> { request.DeliveryTime }, false);
+                if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+
+                // check xem còn kho nào còn trống không
+                var storages = await _storageService.GetStorageWithUsage(model.StorageId);
+                var services = request.RequestDetails.Select(requestDetail => new {
+                    ServiceId = requestDetail.ServiceId,
+                    Amount = requestDetail.Amount
+                }).ToList();
+                double height = 0;
+                double width = 0;
+                double length = 0;
+                double volumne = 0;
+                for (int i = 1; i <= services.Count; i++)
+                {
+                    height = 0;
+                    width = 0;
+                    length = 0;
+                    var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
+                    height += Decimal.ToDouble(service.Height);
+                    width += Decimal.ToDouble(service.Width);
+                    length += Decimal.ToDouble(service.Length);
+                    volumne += (int)services[i-1].Amount * height * width * length;
+                }
+
+                bool flag = false;
+                if (request.TypeOrder == 1)
+                {
+                    int i = 0;
+                    do
+                    {
+                        var areas = storages[i].Areas.Where(area => area.Type == 1).ToList();
+                        if (areas.Select(area => area.Available).Sum() >= volumne) flag = true;
+                        if (areas.Count == 0) flag = false;
+                        i++;
+                    } while (!flag && i < storages.Count);
+                }
+                if (request.TypeOrder == 0)
+                {
+                    int i = 0;
+                    do
+                    {
+                        var areas = storages[i].Areas.Where(area => area.Type == 0).ToList();
+                        foreach (var area in areas)
+                        {
+                            var spaces = area.SpacesInArea;
+                            if (!flag)
+                                foreach (var space in spaces)
+                                {
+                                    if (space.Floors.Count > 0)
+                                        if (space.Floors.Select(floor => floor.Available).Sum() >= volumne) flag = true;
+                                }
+
+
+                        }
+                        i++;
+                    } while (!flag && i < storages.Count);
+                }
+
+                if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+
+
+
+
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 

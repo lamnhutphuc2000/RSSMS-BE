@@ -45,12 +45,14 @@ namespace RSSMS.DataService.Services
         private readonly IOrderTimelineService _orderTimelineService;
         private readonly IOrderDetailService _orderDetailService;
         private readonly IFloorService _floorService;
+        private readonly IAccountService _accountService;
         public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository
             , IFirebaseService firebaseService,
             IRequestService requestService,
             IOrderTimelineService orderTimelineService,
             IOrderDetailService orderDetailService,
             IFloorService floorService,
+            IAccountService accountService,
             IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -60,6 +62,7 @@ namespace RSSMS.DataService.Services
             _orderTimelineService = orderTimelineService;
             _orderDetailService = orderDetailService;
             _floorService = floorService;
+            _accountService = accountService;
         }
         public async Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes)
         {
@@ -230,8 +233,70 @@ namespace RSSMS.DataService.Services
                     order.StorageId = storageId;
                 }
 
+
+
                 if (role == "Customer")
                     order.CustomerId = userId;
+
+
+                // check xem còn nhân viên trong storage nào không 
+                var deliveryStaffs = await _accountService.GetStaff(storageId, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, true);
+                if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+
+                // check xem còn kho nào còn trống không
+                var storages = await _storageService.GetStorageWithUsage(storageId);
+                var orderDetail = model.OrderDetails.ToList();
+                double height = 0;
+                double width = 0;
+                double length = 0;
+                double volumne = 0;
+                for (int i = 1; i <= orderDetail.Count; i++)
+                {
+                    height = 0;
+                    width = 0;
+                    length = 0;
+                    height += Decimal.ToDouble((decimal)orderDetail[i].Height);
+                    width += Decimal.ToDouble((decimal)orderDetail[i].Width);
+                    length += Decimal.ToDouble((decimal)orderDetail[i].Length);
+                    volumne +=  height * width * length;
+                }
+
+                bool flag = false;
+                if (model.Type == 1)
+                {
+                    int i = 0;
+                    do
+                    {
+                        var areas = storages[i].Areas.Where(area => area.Type == 1).ToList();
+                        if (areas.Select(area => area.Available).Sum() >= volumne) flag = true;
+                        if (areas.Count == 0) flag = false;
+                        i++;
+                    } while (!flag && i < storages.Count);
+                }
+                if (model.Type == 0)
+                {
+                    int i = 0;
+                    do
+                    {
+                        var areas = storages[i].Areas.Where(area => area.Type == 0).ToList();
+                        foreach (var area in areas)
+                        {
+                            var spaces = area.SpacesInArea;
+                            if (!flag)
+                                foreach (var space in spaces)
+                                {
+                                    if (space.Floors.Count > 0)
+                                        if (space.Floors.Select(floor => floor.Available).Sum() >= volumne) flag = true;
+                                }
+
+
+                        }
+                        i++;
+                    } while (!flag && i < storages.Count);
+                }
+
+                if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+
 
                 order.Status = 1;
                 
