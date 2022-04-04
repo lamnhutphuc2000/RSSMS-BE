@@ -29,13 +29,13 @@ namespace RSSMS.DataService.Services
             TimeSpan span = DateTime.Now - (DateTime)date;
             DateTime zeroTime = new DateTime(1, 1, 1);
             int years = (zeroTime + span).Year - 1;
-            if (years <= 12 || years >= 99) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Invalid birthdate");
+            if (years <= 17 || years >= 99) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập ngày sinh đúng");
             return true;
         }
 
         public bool ValidateEmail(string email)
         {
-            if (string.IsNullOrWhiteSpace(email)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email can not null or have whitespace");
+            if (string.IsNullOrWhiteSpace(email)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tài khoản / mật khẩu không đúng");
             string[] list = new[] { "~", "`", "!", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "\"" };
             if(list.Any(email.Contains)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email contains special character");
             try
@@ -58,11 +58,11 @@ namespace RSSMS.DataService.Services
             }
             catch (RegexMatchTimeoutException)
             {
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email invalid format");
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập đúng email");
             }
             catch (ArgumentException)
             {
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email invalid format");
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập đúng email");
             }
 
             try
@@ -73,30 +73,31 @@ namespace RSSMS.DataService.Services
             }
             catch (RegexMatchTimeoutException)
             {
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email invalid format");
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập đúng email");
             }
         }
 
         public bool ValidatePassword(string password)
         {
-            if (string.IsNullOrWhiteSpace(password)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Password can not null or have whitespace");
-            if(password.Length <= 5) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Password must have atleast 6 characters");
+            if (string.IsNullOrWhiteSpace(password)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tài khoản / mật khẩu không đúng");
+            if(password.Length <= 5) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập mật khẩu hơn 6 ký tự");
             return true;
         }
 
         public bool ValidatePhonenumber(string phonenumber)
         {
-            if (string.IsNullOrWhiteSpace(phonenumber)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Phone number can not null or have whitespace");
-            if(phonenumber.Length != 10) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Phone number must have 10 characters");
+            if (string.IsNullOrWhiteSpace(phonenumber)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại");
+            if(phonenumber.Length != 10) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại đúng");
+            if(!phonenumber.First().Equals('0')) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại đúng");
             var regexItem = new Regex("^[0-9 ]*$");
 
-            if (!regexItem.IsMatch(phonenumber)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Phone number invalid format");
+            if (!regexItem.IsMatch(phonenumber)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại đúng");
             return true;
         }
 
         public bool ValidateString(string input, string name)
         {
-            if (string.IsNullOrWhiteSpace(input)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, name + " can not null or have whitespace");
+            if (string.IsNullOrWhiteSpace(input)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập " + name);
 
             return true;
         }

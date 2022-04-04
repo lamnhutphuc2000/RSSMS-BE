@@ -329,7 +329,7 @@ namespace RSSMS.DataService.Services
                 {
                     // check xem còn nhân viên trong storage nào không 
 
-                    if(model.Type == 1 && (bool)model.IsCustomerDelivery)
+                    if(model.TypeOrder == 1 && (bool)model.IsCustomerDelivery)
                     {
                         var deliveryStaffs = await _accountService.GetStaff(null, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, true);
                         if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");

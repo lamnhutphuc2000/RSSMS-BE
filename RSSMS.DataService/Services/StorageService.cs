@@ -78,13 +78,11 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Areas).FirstOrDefaultAsync();
+                var entity = await Get(x => x.Id == id && x.IsActive).Include(a => a.Areas.Where(area => area.IsActive)).FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
                 var areas = entity.Areas;
                 foreach (var area in areas)
-                {
                     if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage is in used");
-                }
                 entity.IsActive = false;
                 await UpdateAsync(entity);
                 return _mapper.Map<StorageViewModel>(entity);

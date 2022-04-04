@@ -63,7 +63,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 // Validate input
-                if(!_utilService.ValidateEmail(model.Email)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email invalid format");
+                if(!_utilService.ValidateEmail(model.Email)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập đúng email");
                 _utilService.ValidatePassword(model.Password);
 
                 // Check account in firebase
@@ -124,7 +124,7 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidatePassword(model.Password);
                 _utilService.ValidatePassword(model.ConfirmPassword);
                 _utilService.ValidatePassword(model.OldPassword);
-                if (!model.ConfirmPassword.Equals(model.Password)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Confirm password not matched");
+                if (!model.ConfirmPassword.Equals(model.Password)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Mật khẩu không khớp");
 
                 Account account = await Get(account => account.Id == model.Id).FirstOrDefaultAsync();
                 if(account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
@@ -258,10 +258,11 @@ namespace RSSMS.DataService.Services
             try
             {
                 // Validate input
-                if (!_utilService.ValidateEmail(model.Email)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email invalid format");
+                if (!_utilService.ValidateEmail(model.Email)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập đúng email");
                 _utilService.ValidatePassword(model.Password);
                 _utilService.ValidateBirthDate(model.Birthdate);
                 _utilService.ValidatePhonenumber(model.Phone);
+                _utilService.ValidateString(model.Image.File, "Avatar");
                 _utilService.ValidateString(model.Name,"Name");
                 _utilService.ValidateString(model.Address, "Address");
 
