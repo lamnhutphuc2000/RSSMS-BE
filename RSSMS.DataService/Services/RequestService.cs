@@ -343,7 +343,7 @@ namespace RSSMS.DataService.Services
                         int i = 0;
                         do
                         {
-                            var areas = storages[i].Areas;
+                            var areas = storages[i].Areas.Where(area => area.Type == 1).ToList();
                             if (areas.Select(area => area.Available).Sum() >= volumne) flag = true;
                             if (areas.Count == 0) flag = false;
                             i++;
@@ -354,13 +354,17 @@ namespace RSSMS.DataService.Services
                         int i = 0;
                         do
                         {
-                            var areas = storages[i].Areas;
+                            var areas = storages[i].Areas.Where(area => area.Type == 0).ToList();
                             foreach(var area in areas)
                             {
                                 var spaces = area.SpacesInArea;
                                 if(!flag) 
                                     foreach(var space in spaces)
-                                        if (space.Floors.Select(floor => floor.Available).Sum() >= volumne) flag = true;
+                                    {
+                                        if(space.Floors.Count > 0)
+                                            if (space.Floors.Select(floor => floor.Available).Sum() >= volumne) flag = true;
+                                    }
+                                        
 
                             }
                             i++;
