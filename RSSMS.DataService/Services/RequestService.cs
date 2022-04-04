@@ -325,13 +325,16 @@ namespace RSSMS.DataService.Services
                     double width = 0;
                     double length = 0;
                     double volumne = 0;
-                    for (int i =0; i< services.Count; i ++)
+                    for (int i =1; i<= services.Count; i ++)
                     {
-                        var service = _serviceService.Get(service => service.Id == services[i].ServiceId).FirstOrDefault();
+                        height = 0;
+                        width = 0;
+                        length = 0;
+                        var service = _serviceService.Get(service => service.Id == services[i-1].ServiceId).FirstOrDefault();
                         height += Decimal.ToDouble(service.Height);
                         width += Decimal.ToDouble(service.Width);
                         length += Decimal.ToDouble(service.Length);
-                        volumne += services[i].Amount * height * width * length;
+                        volumne += services[i-1].Amount * height * width * length;
                     }
 
                     bool flag = false;
@@ -342,6 +345,8 @@ namespace RSSMS.DataService.Services
                         {
                             var areas = storages[i].Areas;
                             if (areas.Select(area => area.Available).Sum() >= volumne) flag = true;
+                            if (areas.Count == 0) flag = false;
+                            i++;
                         } while (!flag && i < storages.Count);
                     }
                     if(model.TypeOrder == 0)
@@ -358,6 +363,7 @@ namespace RSSMS.DataService.Services
                                         if (space.Floors.Select(floor => floor.Available).Sum() >= volumne) flag = true;
 
                             }
+                            i++;
                         } while (!flag && i < storages.Count);
                     }
 

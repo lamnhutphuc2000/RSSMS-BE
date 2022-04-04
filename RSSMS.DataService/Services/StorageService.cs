@@ -24,7 +24,7 @@ namespace RSSMS.DataService.Services
         Task<StorageViewModel> Create(StorageCreateViewModel model);
         Task<StorageUpdateViewModel> Update(Guid id, StorageUpdateViewModel model);
         Task<StorageViewModel> Delete(Guid id);
-        Task<List<StorageViewModel>> GetStorageWithUsage(Guid? storageId)
+        Task<List<StorageViewModel>> GetStorageWithUsage(Guid? storageId);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -231,8 +231,8 @@ namespace RSSMS.DataService.Services
         public async Task<List<StorageViewModel>> GetStorageWithUsage(Guid? storageId)
         {
             List<StorageViewModel> result = new List<StorageViewModel>();
-            IQueryable<Storage> storages = Get(storage => storage.IsActive);
-            if (storageId != null) storages = storages.Where(storage => storage.Id == storageId);
+            IQueryable<Storage> storages = Get(storage => storage.IsActive).Include(storage => storage.Areas);
+            if (storageId != null) storages = storages.Where(storage => storage.Id == storageId).Include(storage => storage.Areas);
             if (storages.ToList().Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough storage");
             var storageList = storages.ToList();
             result = storages.ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).ToList();
