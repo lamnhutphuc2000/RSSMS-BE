@@ -101,7 +101,7 @@ namespace RSSMS.DataService.Services
                 var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Floors).ThenInclude(Floors => Floors.OrderDetails).FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space id not found");
                 var shelfIsUsed = CheckIsUsed(id);
-                if (shelfIsUsed) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space is in used");
+                if (shelfIsUsed) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space is in used");
                 entity.IsActive = false;
                 await UpdateAsync(entity);
                 return _mapper.Map<SpaceViewModel>(entity);
