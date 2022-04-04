@@ -46,6 +46,7 @@ namespace RSSMS.DataService.Services
         private readonly IOrderDetailService _orderDetailService;
         private readonly IFloorService _floorService;
         private readonly IAccountService _accountService;
+        private readonly IServiceService _serviceService;
         public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository
             , IFirebaseService firebaseService,
             IRequestService requestService,
@@ -53,6 +54,7 @@ namespace RSSMS.DataService.Services
             IOrderDetailService orderDetailService,
             IFloorService floorService,
             IAccountService accountService,
+            IServiceService serviceService,
             IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -63,6 +65,7 @@ namespace RSSMS.DataService.Services
             _orderDetailService = orderDetailService;
             _floorService = floorService;
             _accountService = accountService;
+            _serviceService = serviceService;
         }
         public async Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes)
         {
@@ -207,6 +210,41 @@ namespace RSSMS.DataService.Services
         {
             try
             {
+                var orderDetails = model.OrderDetails.ToList();
+                double height = 0;
+                double width = 0;
+                double length = 0;
+                double volumne = 0;
+                double serviceHeight = 0;
+                double serviceWidth = 0;
+                double serviceLength = 0;
+                double serviceVolumne = 0;
+                foreach (var orderDetail in orderDetails)
+                {
+                    height = Decimal.ToDouble((decimal)orderDetail.Height);
+                    width = Decimal.ToDouble((decimal)orderDetail.Width);
+                    length = Decimal.ToDouble((decimal)orderDetail.Length);
+                    volumne = height * width * length;
+                    var servicesIds = orderDetail.OrderDetailServices.Select(service => new { ServiceId = service.ServiceId, Amount = service.Amount });
+                    serviceHeight = 0;
+                    serviceWidth = 0;
+                    serviceLength = 0;
+                    serviceVolumne = 0;
+                    foreach (var serviceId in servicesIds)
+                    {
+                        var service = await _serviceService.GetById(serviceId.ServiceId);
+                        serviceHeight += Decimal.ToDouble((decimal)service.Height);
+                        serviceWidth += Decimal.ToDouble((decimal)service.Width);
+                        serviceLength += Decimal.ToDouble((decimal)service.Length);
+                        serviceVolumne = (int)serviceId.Amount * serviceHeight * serviceLength * serviceWidth;
+                        
+                    }
+
+                    if(serviceHeight < height || serviceLength < length || serviceWidth < width || serviceVolumne < volumne)
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail is bigger than service");
+                }
+
+
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
@@ -245,19 +283,19 @@ namespace RSSMS.DataService.Services
 
                 // check xem còn kho nào còn trống không
                 var storages = await _storageService.GetStorageWithUsage(storageId);
-                var orderDetail = model.OrderDetails.ToList();
-                double height = 0;
-                double width = 0;
-                double length = 0;
-                double volumne = 0;
-                for (int i = 1; i <= orderDetail.Count; i++)
+                orderDetails = model.OrderDetails.ToList();
+                height = 0;
+                width = 0;
+                length = 0;
+                volumne = 0;
+                for (int i = 1; i <= orderDetails.Count; i++)
                 {
                     height = 0;
                     width = 0;
                     length = 0;
-                    height += Decimal.ToDouble((decimal)orderDetail[i].Height);
-                    width += Decimal.ToDouble((decimal)orderDetail[i].Width);
-                    length += Decimal.ToDouble((decimal)orderDetail[i].Length);
+                    height += Decimal.ToDouble((decimal)orderDetails[i].Height);
+                    width += Decimal.ToDouble((decimal)orderDetails[i].Width);
+                    length += Decimal.ToDouble((decimal)orderDetails[i].Length);
                     volumne +=  height * width * length;
                 }
 
