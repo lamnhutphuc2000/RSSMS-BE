@@ -55,7 +55,8 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetById(Guid id)
         {
-            return Ok(await _requestService.GetById(id));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _requestService.GetById(id,accessToken));
         }
         /// <summary>
         /// Create request

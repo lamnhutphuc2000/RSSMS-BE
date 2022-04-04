@@ -21,7 +21,7 @@ namespace RSSMS.DataService.Services
     public interface IRequestService : IBaseService<Request>
     {
         Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestTypes, string[] fields, int page, int size, string accessToken);
-        Task<RequestByIdViewModel> GetById(Guid id);
+        Task<RequestByIdViewModel> GetById(Guid id, string accessToken);
         Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken);
         Task<RequestUpdateViewModel> Update(Guid id, RequestUpdateViewModel model, string accessToken);
         Task<RequestViewModel> Delete(Guid id);
@@ -178,15 +178,31 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public async Task<RequestByIdViewModel> GetById(Guid id)
+        public async Task<RequestByIdViewModel> GetById(Guid id, string accessToken)
         {
             try
             {
-                var result = await Get(request => request.Id == id && request.IsActive)
-                .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
-                .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role)
-               .ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider)
-               .FirstOrDefaultAsync();
+                var request = Get(request => request.Id == id && request.IsActive)
+                    .Include(request => request.Order)
+                    .Include(request => request.Storage)
+                    .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
+                    .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
+                    
+
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+
+                if (role == "Delivery Staff")
+                {
+                    var storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
+                    request = request.Where(request => request.StorageId == storageId && request.Schedules.Where(schedule => schedule.IsActive && schedule.UserId == userId).ToList().Count() > 0).Include(request => request.Order)
+                                    .Include(request => request.Storage)
+                                    .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
+                                    .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
+                }
+
+                var result = await request.ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
                 if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
                 if (result.Type != 2) return result;
                 var orderHistoryExtension = _orderHistoryExtensionService.Get(orderHistory => orderHistory.RequestId == result.Id).First();
@@ -617,7 +633,7 @@ namespace RSSMS.DataService.Services
                 entity.CancelReason = model.CancelReason;
                 await UpdateAsync(entity);
 
-                return await GetById(id);
+                return await GetById(id, accessToken);
             }
             catch (ErrorResponse e)
             {
@@ -669,7 +685,7 @@ namespace RSSMS.DataService.Services
                     RequestId = request.Id
                 });
 
-                return await GetById(id);
+                return await GetById(id, accessToken);
             }
             catch (ErrorResponse e)
             {
@@ -715,7 +731,7 @@ namespace RSSMS.DataService.Services
                         });
                     }
                 }
-                return await GetById(id);
+                return await GetById(id, accessToken);
             }
             catch (ErrorResponse e)
             {

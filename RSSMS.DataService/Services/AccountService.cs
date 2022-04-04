@@ -427,7 +427,7 @@ namespace RSSMS.DataService.Services
 
         private TokenGenerateViewModel GenerateToken(Account acc)
         {
-            var storageId = acc.StaffAssignStorages.Where(x => x.IsActive == true).FirstOrDefault()?.StorageId.ToString();
+            var storageId = acc.StaffAssignStorages.Where(x => x.IsActive).FirstOrDefault()?.StorageId.ToString();
             if (storageId == null) storageId = "";
             var authClaims = new List<Claim>
                 {
