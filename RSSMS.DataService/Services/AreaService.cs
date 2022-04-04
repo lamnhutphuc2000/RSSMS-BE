@@ -50,12 +50,40 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidateString(model.Name,"Area name");
 
                 // Check area name is existed
-                var area = Get(area => area.StorageId == model.StorageId && area.Name == model.Name && area.IsActive).FirstOrDefault();
-                if (area != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
+                var entity = Get(area => area.StorageId == model.StorageId && area.Name == model.Name && area.IsActive).FirstOrDefault();
+                if (entity != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
 
                 // Create new Area
                 var areaToCreate = _mapper.Map<Area>(model);
                 await CreateAsync(areaToCreate);
+
+
+                var areaCreated = Get(area => area.Id == areaToCreate.Id).Include(area => area.Storage).ThenInclude(storage => storage.Areas).FirstOrDefault();
+                var areas = areaCreated.Storage.Areas.ToList();
+                decimal storageHeight = areaCreated.Storage.Height;
+                decimal storageWidth = areaCreated.Storage.Width;
+                decimal storageLength = areaCreated.Storage.Length;
+                double storageVolumne = (double)(storageHeight * storageWidth * storageLength);
+
+                double areasVolumne = 0;
+                double areasUsed = 0;
+                double areasAvailable = 0;
+                for(int i =0; i <areas.Count; i++)
+                {
+                    areasUsed = 0;
+                    areasAvailable = 0;
+                    var area = await GetById(areas[i].Id);
+                    areasUsed += area.Used;
+                    areasAvailable += area.Available;
+                    areasVolumne += (areasUsed + areasAvailable);
+                }
+
+                if(storageHeight < model.Height || storageLength < model.Length || storageWidth < model.Width || storageVolumne < areasVolumne)
+                {
+                    await DeleteAsync(areaCreated);
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
+                }
+
                 return _mapper.Map<AreaViewModel>(areaToCreate);
             }
             catch (ErrorResponse e)
@@ -109,7 +137,12 @@ namespace RSSMS.DataService.Services
 
                 // Get space list in area
                 var spaces = area.Spaces.Where(spaces => spaces.IsActive).ToList();
-                if (spaces.Count == 0) return result;
+                if (spaces.Count == 0)
+                {
+                    result.Usage = 0;
+                    result.Used = 0;
+                    result.Available = (double)(area.Height * area.Width * area.Length);
+                }
 
                 if(area.Height == null || area.Width == null || area.Length == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area height, width, length can not be null");
 

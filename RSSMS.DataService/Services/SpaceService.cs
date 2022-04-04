@@ -237,9 +237,9 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                var entity = Get(x => x.Id == id && x.IsActive == true).Include(a => a.Floors).FirstOrDefault();
+                var entity = Get(space => space.Id == id && space.IsActive).Include(space => space.Floors).ThenInclude(floor => floor.OrderDetails).FirstOrDefault();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space id not found");
-                var BoxAssignedToOrder = entity.Floors.Where(x => x.OrderDetails.Count > 0).ToList();
+                var BoxAssignedToOrder = entity.Floors.Where(x => x.OrderDetails.Count > 0 && x.IsActive).ToList();
                 if (BoxAssignedToOrder.Count() > 0) return true;
                 return false;
             }
