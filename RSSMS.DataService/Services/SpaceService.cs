@@ -71,7 +71,7 @@ namespace RSSMS.DataService.Services
                     areaUsed += floorInSpace.Select(floor => floor.Available).Sum();
                 }
 
-                if(areaUsed > areaSize)
+                if(areaUsed > areaSize || model.FloorLength > area.Length || model.FloorWidth > area.Width || (model.FloorHeight * model.NumberOfFloor) > area.Height)
                 {
                     var floors = spaceCreated.Floors.ToList();
                     for (int i = 0; i < floors.Count; i++)
