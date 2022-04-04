@@ -278,9 +278,12 @@ namespace RSSMS.DataService.Services
 
 
                 // check xem còn nhân viên trong storage nào không 
-                var deliveryStaffs = await _accountService.GetStaff(storageId, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, true);
-                if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+                if (model.Type == 1 && (bool)model.IsUserDelivery)
+                {
+                    var deliveryStaffs = await _accountService.GetStaff(null, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, true);
+                    if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
 
+                }
                 // check xem còn kho nào còn trống không
                 var storages = await _storageService.GetStorageWithUsage(storageId);
                 orderDetails = model.OrderDetails.ToList();

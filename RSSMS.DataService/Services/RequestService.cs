@@ -328,8 +328,13 @@ namespace RSSMS.DataService.Services
                 if (model.Type == (int)RequestType.Create_Order) // customer tao yeu cau tao don
                 {
                     // check xem còn nhân viên trong storage nào không 
-                    var deliveryStaffs = await _accountService.GetStaff(null,accessToken, new List<string> {"Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime}, true);
-                    if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+
+                    if(model.Type == 1 && (bool)model.IsCustomerDelivery)
+                    {
+                        var deliveryStaffs = await _accountService.GetStaff(null, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, true);
+                        if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+
+                    }
 
                     // check xem còn kho nào còn trống không
                     var storages = await _storageService.GetStorageWithUsage(null);
@@ -518,9 +523,12 @@ namespace RSSMS.DataService.Services
                 if (request == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request not found");
 
                 // check xem còn nhân viên trong storage nào không 
-                var deliveryStaffs = await _accountService.GetStaff(model.StorageId, accessToken, new List<string> { "Delivery Staff" }, request.DeliveryDate, new List<string> { request.DeliveryTime }, false);
-                if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+                if (request.TypeOrder == 1 && (bool)request.IsCustomerDelivery)
+                {
+                    var deliveryStaffs = await _accountService.GetStaff(null, accessToken, new List<string> { "Delivery Staff" }, request.DeliveryDate, new List<string> { request.DeliveryTime }, true);
+                    if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
 
+                }
                 // check xem còn kho nào còn trống không
                 var storages = await _storageService.GetStorageWithUsage(model.StorageId);
                 var services = request.RequestDetails.Select(requestDetail => new {
