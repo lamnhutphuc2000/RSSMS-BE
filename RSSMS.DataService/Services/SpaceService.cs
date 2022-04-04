@@ -147,10 +147,10 @@ namespace RSSMS.DataService.Services
             {
                 if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space Id not matched");
 
-                var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Floors).ThenInclude(floor => floor.OrderDetails).FirstOrDefaultAsync();
+                var entity = await Get(x => x.Id == id && x.IsActive).Include(a => a.Floors).ThenInclude(floor => floor.OrderDetails).FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space not found");
 
-                var space = Get(x => x.Name == model.Name && x.AreaId == entity.AreaId && x.Id != id && x.IsActive == true).Include(x => x.Floors.Where(x => x.IsActive == true)).FirstOrDefault();
+                var space = Get(x => x.Name == model.Name && x.AreaId == entity.AreaId && x.Id != id && x.IsActive).Include(x => x.Floors.Where(x => x.IsActive == true)).FirstOrDefault();
                 if (space != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Space name is existed");
 
 
@@ -178,7 +178,7 @@ namespace RSSMS.DataService.Services
                 spaceToUpdate = _mapper.Map(model, entity);
                 spaceToUpdate.ModifiedBy = userId;
                 await UpdateAsync(spaceToUpdate);
-                return _mapper.Map<SpaceViewModel>(spaceToUpdate);
+                return await GetById(model.Id);
             }
             catch (ErrorResponse e)
             {

@@ -63,7 +63,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 List<Floor> floors = Get(floor => floor.SpaceId == spaceId && floor.IsActive).ToList();
-                if(floors.Any(floor => floor.OrderDetails != null)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor is in used");
+                if(floors.Any(floor => floor.OrderDetails.Count > 0)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor is in used");
                 foreach (var floor in floors)
                 {
                     floor.IsActive = false;
