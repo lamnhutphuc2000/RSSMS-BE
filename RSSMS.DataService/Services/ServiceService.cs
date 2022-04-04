@@ -38,13 +38,14 @@ namespace RSSMS.DataService.Services
             try
             {
                 var service = _mapper.Map<Service>(model);
+                await CreateAsync(service);
                 var image = model.Image;
                 if (image != null)
                 {
                     var url = await _firebaseService.UploadImageToFirebase(image.File, "services", service.Id, "avatar");
                     if (url != null) service.ImageUrl = url;
                 }
-                await CreateAsync(service);
+                await UpdateAsync(service);
 
 
                 return _mapper.Map<ServicesViewModel>(service);

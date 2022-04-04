@@ -17,7 +17,7 @@ namespace RSSMS.DataService.Services
     {
         Task<bool> CreateNumberOfFloor(Guid spaceId, int numberOfFloor, decimal floorHeight, decimal floorWidth, decimal floorLength, DateTime now);
         Task<bool> RemoveFloors(Guid spaceId);
-        Task<List<FloorInSpaceViewModel>> GetFloorInSpace(Guid spaceId);
+        Task<List<FloorInSpaceViewModel>> GetFloorInSpace(Guid spaceId, DateTime? date);
         Task<FloorGetByIdViewModel> GetById(Guid id);
     }
     public class FloorService : BaseService<Floor>, IFloorService
@@ -81,7 +81,7 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public async Task<List<FloorInSpaceViewModel>> GetFloorInSpace(Guid spaceId)
+        public async Task<List<FloorInSpaceViewModel>> GetFloorInSpace(Guid spaceId, DateTime? date)
         {
             try
             {
@@ -89,12 +89,12 @@ namespace RSSMS.DataService.Services
                 var floors = Get(floor => floor.SpaceId == spaceId && floor.IsActive)
                     .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(orderDetailServiceMaps => orderDetailServiceMaps.Service)
                     .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
-                    .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Order);
-                if (floors.ToList().Count() == 0) return null;
+                    .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Order).ToList();
+                if (floors.Count() == 0) return null;
 
                 foreach (Floor floor in floors)
                 {
-                    var floorUsage = await GetFloorUsage(floor.Id);
+                    var floorUsage = await GetFloorUsage(floor.Id, date);
                     FloorInSpaceViewModel floorToResult = _mapper.Map<FloorInSpaceViewModel>(floor);
                     if (floorUsage != null)
                     {
@@ -130,7 +130,7 @@ namespace RSSMS.DataService.Services
                 .FirstOrDefaultAsync();
                 if (floor == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Floor not found");
                 var result = _mapper.Map<FloorGetByIdViewModel>(floor);
-                var floorUsage = await GetFloorUsage(id);
+                var floorUsage = await GetFloorUsage(id, null);
                 if (floorUsage != null)
                 {
                     result.Usage = floorUsage.ElementAt(0);
@@ -150,7 +150,7 @@ namespace RSSMS.DataService.Services
             
         }
 
-        public async Task<List<double>> GetFloorUsage(Guid floorId)
+        public async Task<List<double>> GetFloorUsage(Guid floorId, DateTime? date)
         {
             try
             {
@@ -160,14 +160,22 @@ namespace RSSMS.DataService.Services
                 List<double> floorUsage = new List<double>();
                 var floor = await Get(floor => floor.Id == floorId && floor.IsActive).Include(floor => floor.OrderDetails)
                     .ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
-                    .ThenInclude(orderDetailServiceMaps => orderDetailServiceMaps.Service).FirstOrDefaultAsync();
-                var orderDetails = floor.OrderDetails;
-                if (orderDetails.Count <= 0) return null;
+                    .ThenInclude(orderDetailServiceMaps => orderDetailServiceMaps.Service)
+                    .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Order).FirstOrDefaultAsync();
+                ICollection<OrderDetail> orderDetails = floor.OrderDetails;
+                if (date != null) orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.Order.DeliveryDate <= date && orderDetail.Order.ReturnDate >= date).ToList();
+                double floorVolume = (double)(floor.Height * floor.Width * floor.Length);
+                if (orderDetails.Count <= 0)
+                {
+                    floorUsage.Add(0);
+                    floorUsage.Add(0);
+                    floorUsage.Add(floorVolume);
+                }
                 var totalHeight = orderDetails.Select(orderDetail => orderDetail.Height).ToList().Sum();
                 var totalWidth = orderDetails.Select(orderDetail => orderDetail.Width).ToList().Sum();
                 var totalLength = orderDetails.Select(orderDetail => orderDetail.Length).ToList().Sum();
                 double totalVolume = (double)(totalHeight * totalWidth * totalLength);
-                double floorVolume = (double)(floor.Height * floor.Width * floor.Length);
+                
                 double usage = totalVolume * 100 / floorVolume;
                 floorUsage.Add(usage);
                 floorUsage.Add(totalVolume);

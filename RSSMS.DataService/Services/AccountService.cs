@@ -37,7 +37,7 @@ namespace RSSMS.DataService.Services
         Task<TokenViewModel> Create(AccountCreateViewModel model);
         Task<AccountViewModel> Update(Guid id, AccountUpdateViewModel model);
         Task<AccountViewModel> Delete(Guid id);
-        Task<List<AccountViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes);
+        Task<List<AccountViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes, bool getFromAllStorage);
     }
     public class AccountService : BaseService<Account>, IAccountService
     {
@@ -285,6 +285,7 @@ namespace RSSMS.DataService.Services
                 if (account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email existed");
 
                 // Create user to database
+                
                 var userCreate = _mapper.Map<Account>(model);
                 var image = model.Image;
                 userCreate.ImageUrl = null;
@@ -480,7 +481,7 @@ namespace RSSMS.DataService.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<List<AccountViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes)
+        public async Task<List<AccountViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes, bool getFromAllStorage)
         {
             var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
             var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
@@ -492,8 +493,12 @@ namespace RSSMS.DataService.Services
             if (role == "Manager")
                 staffs = staffs.Where(account => account.Role.Name != "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
 
-            if (storageId == null)
-                staffs = staffs.Where(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).Count() == 0).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+            // Nhân viên không thuộc kho nào
+            if (storageId == null && !getFromAllStorage)
+                staffs = staffs.Where(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() == 0).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+
+            if(getFromAllStorage)
+                staffs = staffs.Where(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() > 0).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
 
             if (storageId != null)
                 staffs = staffs.Where(account => account.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId && staffAssignStorage.IsActive)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
@@ -504,7 +509,7 @@ namespace RSSMS.DataService.Services
                 var usersInDelivery = _scheduleService.Get(schedule => scheduleDay.Value.Date == schedule.ScheduleDay.Date && deliveryTimes.Contains(schedule.ScheduleTime) && schedule.IsActive).Select(schedule => schedule.UserId).Distinct().ToList();
                 staffs = staffs.Where(account => !usersInDelivery.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
                 //delivery staff busy in the day
-                var deliveryStaffBusyInDate = _scheduleService.Get(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && !schedule.IsActive).Select(schedule => schedule.UserId).Distinct().ToList();
+                var deliveryStaffBusyInDate = _scheduleService.Get(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && !schedule.IsActive && schedule.Status == 6).Select(schedule => schedule.UserId).Distinct().ToList();
                 staffs = staffs.Where(account => !deliveryStaffBusyInDate.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
             }
             var result = await staffs.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToListAsync();

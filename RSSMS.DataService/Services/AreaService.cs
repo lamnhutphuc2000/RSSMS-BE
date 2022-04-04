@@ -8,6 +8,7 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Areas;
+using RSSMS.DataService.ViewModels.Spaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,7 +40,7 @@ namespace RSSMS.DataService.Services
             _mapper = mapper;
             _spaceService = spaceService;
             _utilService = utilService;
-    }
+        }
 
         public async Task<AreaViewModel> Create(AreaCreateViewModel model)
         {
@@ -98,6 +99,7 @@ namespace RSSMS.DataService.Services
         {
             try
             {
+                List<SpaceViewModel> spacesInArea = new List<SpaceViewModel>();
                 // Get area
                 var area = await Get(area => area.Id == id && area.IsActive).Include(area => area.Spaces).ThenInclude(space => space.Floors).FirstOrDefaultAsync();
                 if (area == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area id not found");
@@ -119,6 +121,7 @@ namespace RSSMS.DataService.Services
                 {
                     var spaceById = await _spaceService.GetById(space.Id);
                     usage += spaceById.Floors.Select(floor => floor.Usage).Sum();
+                    spacesInArea.Add(spaceById);
                 }
 
                 // Calculate area used, available and total size
@@ -129,7 +132,7 @@ namespace RSSMS.DataService.Services
                 result.Usage = usage;
                 result.Used = used;
                 result.Available = available;
-
+                result.SpacesInArea = spacesInArea;
                 return result;
             }
             catch (ErrorResponse e)

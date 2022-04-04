@@ -94,10 +94,10 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(List<AccountViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetStaffs([FromQuery] Guid? storageId, [FromQuery] List<string> roleName, [FromQuery] DateTime? scheduleDay, [FromQuery] ICollection<string> deliveryTimes)
+        public async Task<IActionResult> GetStaffs([FromQuery] Guid? storageId, [FromQuery] List<string> roleName, [FromQuery] DateTime? scheduleDay, [FromQuery] ICollection<string> deliveryTimes, [FromQuery] bool getFromAllStorage)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            return Ok(await _accountService.GetStaff(storageId, accessToken, roleName, scheduleDay, deliveryTimes));
+            return Ok(await _accountService.GetStaff(storageId, accessToken, roleName, scheduleDay, deliveryTimes, getFromAllStorage));
         }
 
         /// <summary>

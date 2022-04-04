@@ -1,13 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using RSSMS.DataService.Attributes;
+using RSSMS.DataService.ViewModels.Areas;
 using System;
+using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Storages
 {
     public partial class StorageViewModel
     {
         public static string[] Fields = {
-            "Id","Name","Type","Status","Address","Description","ImageUrl","Height","Width","Length","Usage","ManagerName"
+            "Id","Name","Type","Status","Address","Description","ImageUrl","Height","Width","Length","Usage","ManagerName","Areas"
         };
         [BindNever]
         public Guid? Id { get; set; }
@@ -33,5 +35,6 @@ namespace RSSMS.DataService.ViewModels.Storages
         public int? Usage { get; set; }
         [BindNever]
         public string ManagerName { get; set; }
+        public List<AreaDetailViewModel> Areas { get; set; }
     }
 }

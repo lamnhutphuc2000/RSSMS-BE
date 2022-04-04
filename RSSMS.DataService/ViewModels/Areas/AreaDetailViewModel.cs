@@ -1,4 +1,6 @@
-﻿using System;
+﻿using RSSMS.DataService.ViewModels.Spaces;
+using System;
+using System.Collections.Generic;
 
 namespace RSSMS.DataService.ViewModels.Areas
 {
@@ -17,6 +19,7 @@ namespace RSSMS.DataService.ViewModels.Areas
         public int? Type { get; set; }
         public string Description { get; set; }
         public int? Status { get; set; }
+        public List<SpaceViewModel> SpacesInArea { get; set; }
     }
 
 }

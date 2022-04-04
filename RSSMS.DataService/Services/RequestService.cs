@@ -40,11 +40,17 @@ namespace RSSMS.DataService.Services
         private readonly IStaffAssignStorageService _staffAssignStoragesService;
         private readonly IOrderHistoryExtensionService _orderHistoryExtensionService;
         private readonly IOrderTimelineService _orderTimelineService;
+        private readonly IAccountService _accountService;
+        private readonly IStorageService _storageService;
+        private readonly IServiceService _serviceService;
         public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper
             , IScheduleService scheduleService
             , IFirebaseService firebaseService, IStaffAssignStorageService staffAssignStoragesService
             , IOrderHistoryExtensionService orderHistoryExtensionService
             , IOrderTimelineService orderTimelineService
+            , IAccountService accountService
+            , IStorageService storageService
+            , IServiceService serviceService
             ) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -53,6 +59,9 @@ namespace RSSMS.DataService.Services
             _staffAssignStoragesService = staffAssignStoragesService;
             _orderHistoryExtensionService = orderHistoryExtensionService;
             _orderTimelineService = orderTimelineService;
+            _accountService = accountService;
+            _storageService = storageService;
+            _serviceService = serviceService;
         }
 
         public async Task<RequestViewModel> Delete(Guid id)
@@ -302,6 +311,57 @@ namespace RSSMS.DataService.Services
                 }
                 if (model.Type == (int)RequestType.Create_Order) // customer tao yeu cau tao don
                 {
+                    // check xem còn nhân viên trong storage nào không 
+                    var deliveryStaffs = await _accountService.GetStaff(null,accessToken, new List<string> {"Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime}, true);
+                    if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+
+                    // check xem còn kho nào còn trống không
+                    var storages = await _storageService.GetStorageWithUsage(null);
+                    var services = model.RequestDetails.Select(requestDetail => new { 
+                        ServiceId = requestDetail.ServiceId,
+                        Amount = requestDetail.Amount
+                    }).ToList();
+                    double height = 0;
+                    double width = 0;
+                    double length = 0;
+                    double volumne = 0;
+                    for (int i =0; i< services.Count; i ++)
+                    {
+                        var service = _serviceService.Get(service => service.Id == services[i].ServiceId).FirstOrDefault();
+                        height += Decimal.ToDouble(service.Height);
+                        width += Decimal.ToDouble(service.Width);
+                        length += Decimal.ToDouble(service.Length);
+                        volumne += services[i].Amount * height * width * length;
+                    }
+
+                    bool flag = false;
+                    if(model.TypeOrder == 1)
+                    {
+                        int i = 0;
+                        do
+                        {
+                            var areas = storages[i].Areas;
+                            if (areas.Select(area => area.Available).Sum() >= volumne) flag = true;
+                        } while (!flag && i < storages.Count);
+                    }
+                    if(model.TypeOrder == 0)
+                    {
+                        int i = 0;
+                        do
+                        {
+                            var areas = storages[i].Areas;
+                            foreach(var area in areas)
+                            {
+                                var spaces = area.SpacesInArea;
+                                if(!flag) 
+                                    foreach(var space in spaces)
+                                        if (space.Floors.Select(floor => floor.Available).Sum() >= volumne) flag = true;
+
+                            }
+                        } while (!flag && i < storages.Count);
+                    }
+
+                    if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
                     request = _mapper.Map<Request>(model);
                     request.CreatedBy = userId;
                     if (role == "Customer") request.CustomerId = userId;

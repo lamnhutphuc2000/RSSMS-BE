@@ -37,7 +37,7 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Get([FromQuery] SpaceViewModel model, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
         {
-            return Ok(await _spaceService.GetAll(model, fields, page, size));
+            return Ok(await _spaceService.GetAll(model, null, fields, page, size));
         }
         /// <summary>
         /// Get space by Id

@@ -9,6 +9,7 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Spaces;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
@@ -18,7 +19,7 @@ namespace RSSMS.DataService.Services
 {
     public interface ISpaceService : IBaseService<Space>
     {
-        Task<DynamicModelResponse<SpaceViewModel>> GetAll(SpaceViewModel model, string[] fields, int page, int size);
+        Task<DynamicModelResponse<SpaceViewModel>> GetAll(SpaceViewModel model, DateTime? date, string[] fields, int page, int size);
         Task<SpaceViewModel> GetById(Guid id);
         Task<SpaceViewModel> Create(SpaceCreateViewModel model, string accessToken);
         Task<SpaceViewModel> Delete(Guid id);
@@ -52,10 +53,11 @@ namespace RSSMS.DataService.Services
                 spaceToCreate.ModifiedBy = userId;
                 await CreateAsync(spaceToCreate);
 
+                await _floorsService.CreateNumberOfFloor(spaceToCreate.Id, model.NumberOfFloor, model.FloorHeight, model.FloorWidth, model.FloorLength, DateTime.Now);
 
                 double areaUsed = 0;
                 // Lay space va area cua space vua tao
-                var spaceCreated = Get(space => space.Id == spaceToCreate.Id).Include(space => space.Area).ThenInclude(area => area.Spaces).First();
+                var spaceCreated = Get(space => space.Id == spaceToCreate.Id).Include(space => space.Area).ThenInclude(area => area.Spaces).Include(space => space.Floors).First();
                 var area = spaceCreated.Area;
                 // lay size cua area
                 double areaSize = (double)(area.Length * area.Width * area.Height);
@@ -64,17 +66,21 @@ namespace RSSMS.DataService.Services
                 // tinh tong used cua area hien tai
                 foreach(var spaceInArea in spacesInArea)
                 {
-                    var floorInSpace = await _floorsService.GetFloorInSpace(spaceInArea.Id);
-                    areaUsed = floorInSpace.Select(floor => floor.Used).Sum();
+                    var floorInSpace = await _floorsService.GetFloorInSpace(spaceInArea.Id, null);
+                    areaUsed += floorInSpace.Select(floor => floor.Used).Sum();
+                    areaUsed += floorInSpace.Select(floor => floor.Available).Sum();
                 }
 
                 if(areaUsed > areaSize)
                 {
+                    var floors = spaceCreated.Floors.ToList();
+                    for (int i = 0; i < floors.Count; i++)
+                        await _floorsService.DeleteAsync(floors[i]);
                     await DeleteAsync(spaceCreated);
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area size is overload");
                 }
 
-                await _floorsService.CreateNumberOfFloor(spaceToCreate.Id, model.NumberOfFloor, model.FloorHeight, model.FloorWidth, model.FloorHeight, DateTime.Now);
+                
                 return _mapper.Map<SpaceViewModel>(spaceToCreate);
             }
             catch (ErrorResponse e)
@@ -121,7 +127,7 @@ namespace RSSMS.DataService.Services
             .ThenInclude(x => x.OrderDetails).ThenInclude(x => x.Order).FirstOrDefaultAsync();
                 if (space == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space id not found");
                 var result = _mapper.Map<SpaceViewModel>(space);
-                result.Floors = await _floorsService.GetFloorInSpace(id);
+                result.Floors = await _floorsService.GetFloorInSpace(id, null);
                 return result;
             }
             catch (ErrorResponse e)
@@ -184,7 +190,7 @@ namespace RSSMS.DataService.Services
             }
             
         }
-        public async Task<DynamicModelResponse<SpaceViewModel>> GetAll(SpaceViewModel model, string[] fields, int page, int size)
+        public async Task<DynamicModelResponse<SpaceViewModel>> GetAll(SpaceViewModel model, DateTime? date, string[] fields, int page, int size)
         {
             try
             {
@@ -199,7 +205,7 @@ namespace RSSMS.DataService.Services
                 if (result.Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space not found");
                 foreach (var space in result)
                 {
-                    space.Floors = await _floorsService.GetFloorInSpace((Guid)space.Id);
+                    space.Floors = await _floorsService.GetFloorInSpace((Guid)space.Id, date);
                 }
 
                 var rs = new DynamicModelResponse<SpaceViewModel>
@@ -225,7 +231,6 @@ namespace RSSMS.DataService.Services
             }
             
         }
-
 
 
         public bool CheckIsUsed(Guid id)
