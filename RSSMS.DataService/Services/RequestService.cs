@@ -357,6 +357,7 @@ namespace RSSMS.DataService.Services
                     decimal serviceMaxLength = 0;
                     
                     List<Cuboid> cuboids = new List<Cuboid>();
+                    List<Service> serviceList = new List<Service>();
                     // Lay kich thuoc cac service khach hang dat 
                     var services = model.RequestDetails.Select(requestDetail => new
                     {
@@ -372,7 +373,8 @@ namespace RSSMS.DataService.Services
                             if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
                             if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
                             if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
-                            cuboids.Add(new Cuboid(service.Width, service.Height, service.Length));
+                            cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0 , service.Id));
+                            serviceList.Add(service);
                         }
                             
                     }
@@ -418,8 +420,10 @@ namespace RSSMS.DataService.Services
                                     {
                                         foreach (var cuboid in result.BestResult.First())
                                         {
-                                            var orderDetail = orderDetailList.Where(orderDetail => orderDetail.Id == (Guid)cuboid.Tag).First();
-                                            orderDetailList.Remove(orderDetail);
+                                            var orderDetail = orderDetailList.Where(orderDetail => orderDetail.Id == (Guid)cuboid.Tag).FirstOrDefault();
+                                            if(orderDetail != null) orderDetailList.Remove(orderDetail);
+                                            var service = serviceList.Where(service => service.Id == (Guid)cuboid.Tag).FirstOrDefault();
+                                            if (service != null) serviceList.Remove(service);
                                         }
                                     }
                                 }
