@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using _3DBinPacking.Enum;
+using _3DBinPacking.Model;
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
@@ -44,6 +46,7 @@ namespace RSSMS.DataService.Services
 
         public async Task<AreaViewModel> Create(AreaCreateViewModel model)
         {
+            Area areaToCreate = null;
             try
             {
                 // Validate input
@@ -54,41 +57,69 @@ namespace RSSMS.DataService.Services
                 if (entity != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
 
                 // Create new Area
-                var areaToCreate = _mapper.Map<Area>(model);
+                areaToCreate = _mapper.Map<Area>(model);
                 await CreateAsync(areaToCreate);
 
 
-                var areaCreated = Get(area => area.Id == areaToCreate.Id).Include(area => area.Storage).ThenInclude(storage => storage.Areas).FirstOrDefault();
-                var areas = areaCreated.Storage.Areas.ToList();
-                decimal storageHeight = areaCreated.Storage.Height;
-                decimal storageWidth = areaCreated.Storage.Width;
-                decimal storageLength = areaCreated.Storage.Length;
-                double storageVolumne = (double)(storageHeight * storageWidth * storageLength);
+                // Check is Storage oversize
+                var area = Get(area => area.Id == areaToCreate.Id).Include(area => area.Storage)
+                    .ThenInclude(storage => storage.Areas).FirstOrDefault();
 
-                double areasVolumne = 0;
-                double areasUsed = 0;
-                double areasAvailable = 0;
-                for(int i =0; i <areas.Count; i++)
-                {
-                    areasUsed = 0;
-                    areasAvailable = 0;
-                    var area = await GetById(areas[i].Id);
-                    areasUsed += area.Used;
-                    areasAvailable += area.Available;
-                    areasVolumne += (areasUsed + areasAvailable);
-                }
+                var storage = area.Storage;
+                var areaList = storage.Areas.ToList();
 
-                if(storageHeight < model.Height || storageLength < model.Length || storageWidth < model.Width || storageVolumne < areasVolumne)
+                List<Cuboid> cuboids = new List<Cuboid>();
+                for (int i = 0; i < areaList.Count; i++)
+                    cuboids.Add(new Cuboid((decimal)areaList[i].Width, (decimal)areaList[i].Height, (decimal)areaList[i].Length));
+
+                var parameter = new BinPackParameter(storage.Width, storage.Height, storage.Length, cuboids);
+
+                var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                var result = binPacker.Pack(parameter);
+                if (result.BestResult.Count > 1)
                 {
-                    await DeleteAsync(areaCreated);
+                    await DeleteAsync(areaToCreate);
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
                 }
+
+
+
+                //var areaCreated = Get(area => area.Id == areaToCreate.Id).Include(area => area.Storage).ThenInclude(storage => storage.Areas).FirstOrDefault();
+                //var areas = areaCreated.Storage.Areas.ToList();
+                //decimal storageHeight = areaCreated.Storage.Height;
+                //decimal storageWidth = areaCreated.Storage.Width;
+                //decimal storageLength = areaCreated.Storage.Length;
+                //double storageVolumne = (double)(storageHeight * storageWidth * storageLength);
+
+                //double areasVolumne = 0;
+                //double areasUsed = 0;
+                //double areasAvailable = 0;
+                //for(int i =0; i <areas.Count; i++)
+                //{
+                //    areasUsed = 0;
+                //    areasAvailable = 0;
+                //    var area = await GetById(areas[i].Id);
+                //    areasUsed += area.Used;
+                //    areasAvailable += area.Available;
+                //    areasVolumne += (areasUsed + areasAvailable);
+                //}
+
+                //if(storageHeight < model.Height || storageLength < model.Length || storageWidth < model.Width || storageVolumne < areasVolumne)
+                //{
+                //    await DeleteAsync(areaCreated);
+                //    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
+                //}
 
                 return _mapper.Map<AreaViewModel>(areaToCreate);
             }
             catch (ErrorResponse e)
             {
                 throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch(InvalidOperationException)
+            {
+                if(areaToCreate != null )await DeleteAsync(areaToCreate);
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
             }
             catch (Exception ex)
             {
