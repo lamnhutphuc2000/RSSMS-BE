@@ -11,6 +11,9 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<RequestDetailCreateViewModel, RequestDetail>();
 
             mc.CreateMap<RequestDetail, RequestDetailViewModel>()
+                .ForMember(des => des.ServiceHeight, opt => opt.MapFrom(src => src.Service.Height))
+                .ForMember(des => des.ServiceWidth, opt => opt.MapFrom(src => src.Service.Width))
+                .ForMember(des => des.ServiceLength, opt => opt.MapFrom(src => src.Service.Length))
                 .ForMember(des => des.ServiceName, opt => opt.MapFrom(src => src.Service.Name))
                 .ForMember(des => des.ServiceType, opt => opt.MapFrom(src => src.Service.Type))
                 .ForMember(des => des.ServiceImageUrl, opt => opt.MapFrom(src => src.Service.ImageUrl));

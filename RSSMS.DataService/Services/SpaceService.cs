@@ -76,14 +76,15 @@ namespace RSSMS.DataService.Services
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space heigh is larger than area height.");
                 }
 
-                var spacesInArea = Get(space => space.AreaId == area.Id && space.IsActive).ToList();
+                var spacesInArea = Get(space => space.AreaId == area.Id && space.IsActive).Include(space => space.Floors).ToList();
 
 
 
                 List<Cuboid> cuboids = new List<Cuboid>();
                 for (int i = 0; i < spacesInArea.Count; i++)
                 {
-                    cuboids.Add(new Cuboid((decimal)spacesInArea[i].Floors.First().Width, (decimal)area.Height, (decimal)spacesInArea[i].Floors.First().Length));
+                    if(spacesInArea[i].Floors.Count > 0)
+                        cuboids.Add(new Cuboid((decimal)spacesInArea[i].Floors.First().Width, (decimal)area.Height, (decimal)spacesInArea[i].Floors.First().Length));
                 }
                 var parameter = new BinPackParameter((decimal)area.Width, (decimal)area.Height, (decimal)area.Length, cuboids);
 
@@ -205,11 +206,11 @@ namespace RSSMS.DataService.Services
                     if (model.NumberOfFloor * model.FloorHeight > area.Height)
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space heigh is larger than area height.");
 
-                    var spacesInArea = Get(space => space.AreaId == area.Id && space.IsActive).ToList();
+                    var spacesInArea = Get(space => space.AreaId == area.Id && space.IsActive).Include(space => space.Floors).ToList();
                     List<Cuboid> cuboids = new List<Cuboid>();
                     for (int i = 0; i < spacesInArea.Count; i++)
                     {
-                        if(spacesInArea[i].Id != id)
+                        if (spacesInArea[i].Id != id && spacesInArea[i].Floors.Count > 0)
                             cuboids.Add(new Cuboid((decimal)spacesInArea[i].Floors.First().Width, (decimal)area.Height, (decimal)spacesInArea[i].Floors.First().Length));
                         else
                             cuboids.Add(new Cuboid((decimal)model.FloorWidth, (decimal)area.Height, (decimal)model.FloorLength));

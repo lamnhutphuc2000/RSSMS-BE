@@ -415,7 +415,14 @@ namespace RSSMS.DataService.Services
 
                                     var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
                                     var result = binPacker.Pack(parameter);
-                                    if (result.BestResult.Count == 1) flag = true;
+                                    if (result.BestResult.Count == 1)
+                                    {
+                                        if (model.TypeOrder == (int)OrderType.Giu_do_thue && (bool)model.IsCustomerDelivery)
+                                        {
+                                            var deliveryStaffs = await _accountService.GetStaff(floorInStorage.Key, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, false);
+                                            if (deliveryStaffs.Count > 0) flag = true;
+                                        }
+                                    }
                                     else
                                     {
                                         foreach (var cuboid in result.BestResult.First())
