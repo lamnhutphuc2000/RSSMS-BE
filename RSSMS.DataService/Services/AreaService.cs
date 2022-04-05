@@ -262,8 +262,6 @@ namespace RSSMS.DataService.Services
                         else
                             cuboids.Add(new Cuboid((decimal)areaList[i].Width, (decimal)areaList[i].Height, (decimal)areaList[i].Length));
                     }
-                        
-
                     var parameter = new BinPackParameter(storage.Width, storage.Height, storage.Length, cuboids);
 
                     var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);

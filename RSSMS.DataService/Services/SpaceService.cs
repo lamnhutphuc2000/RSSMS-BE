@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using _3DBinPacking.Enum;
+using _3DBinPacking.Model;
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
@@ -39,6 +41,7 @@ namespace RSSMS.DataService.Services
 
         public async Task<SpaceViewModel> Create(SpaceCreateViewModel model, string accessToken)
         {
+            Space spaceToCreate = null;
             try
             {
                 var space = Get(x => x.Name == model.Name && x.AreaId == model.AreaId && x.IsActive == true).FirstOrDefault();
@@ -49,39 +52,60 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
 
-                var spaceToCreate = _mapper.Map<Space>(model);
+                spaceToCreate = _mapper.Map<Space>(model);
                 spaceToCreate.ModifiedBy = userId;
                 await CreateAsync(spaceToCreate);
 
                 await _floorsService.CreateNumberOfFloor(spaceToCreate.Id, model.NumberOfFloor, model.FloorHeight, model.FloorWidth, model.FloorLength, DateTime.Now);
 
-                double areaUsed = 0;
-                // Lay space va area cua space vua tao
-                var spaceCreated = Get(space => space.Id == spaceToCreate.Id).Include(space => space.Area).ThenInclude(area => area.Spaces).Include(space => space.Floors).First();
-                var area = spaceCreated.Area;
-                // lay size cua area
-                double areaSize = (double)(area.Length * area.Width * area.Height);
-                // lay het spaces cua area ra
-                var spacesInArea = area.Spaces.Where(space => space.IsActive).ToList();
-                // tinh tong used cua area hien tai
-                foreach(var spaceInArea in spacesInArea)
-                {
-                    var floorInSpace = await _floorsService.GetFloorInSpace(spaceInArea.Id, null);
-                    areaUsed += floorInSpace.Select(floor => floor.Used).Sum();
-                    areaUsed += floorInSpace.Select(floor => floor.Available).Sum();
-                }
 
-                if(areaUsed > areaSize || model.FloorLength > area.Length || model.FloorWidth > area.Width || (model.FloorHeight * model.NumberOfFloor) > area.Height)
+                // Check is Area oversize
+                // Lay space va area cua space vua tao
+                space = Get(space => space.Id == spaceToCreate.Id).Include(space => space.Area).ThenInclude(area => area.Spaces).Include(space => space.Floors).First();
+                var area = space.Area;
+                if(model.NumberOfFloor * model.FloorHeight > area.Height)
                 {
-                    var floors = spaceCreated.Floors.ToList();
+                    var floors = spaceToCreate.Floors.ToList();
                     for (int i = 0; i < floors.Count; i++)
                         await _floorsService.DeleteAsync(floors[i]);
-                    await DeleteAsync(spaceCreated);
-                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area size is overload");
+                    await DeleteAsync(spaceToCreate);
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space heigh is larger than area height.");
                 }
 
-                
+                var spacesInArea = area.Spaces.Where(space => space.IsActive).ToList();
+
+
+
+                List<Cuboid> cuboids = new List<Cuboid>();
+                for (int i = 0; i < spacesInArea.Count; i++)
+                {
+                    cuboids.Add(new Cuboid((decimal)spacesInArea[i].Floors.First().Width, (decimal)area.Height, (decimal)spacesInArea[i].Floors.First().Length));
+                }
+                var parameter = new BinPackParameter((decimal)area.Width, (decimal)area.Height, (decimal)area.Length, cuboids);
+
+                var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                var result = binPacker.Pack(parameter);
+                if (result.BestResult.Count > 1)
+                {
+                    var floors = spaceToCreate.Floors.ToList();
+                    for (int i = 0; i < floors.Count; i++)
+                        await _floorsService.DeleteAsync(floors[i]);
+                    await DeleteAsync(spaceToCreate);
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area size is overload");
+                }
+                    
                 return _mapper.Map<SpaceViewModel>(spaceToCreate);
+            }
+            catch(InvalidOperationException)
+            {
+                if(spaceToCreate != null)
+                {
+                    var floors = spaceToCreate.Floors.ToList();
+                    for (int i = 0; i < floors.Count; i++)
+                        await _floorsService.DeleteAsync(floors[i]);
+                    await DeleteAsync(spaceToCreate);
+                }
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area size is overload");
             }
             catch (ErrorResponse e)
             {
@@ -170,6 +194,31 @@ namespace RSSMS.DataService.Services
 
                 if (oldNumberOfFloor != model.NumberOfFloor || floor.Height != model.FloorHeight || floor.Width != model.FloorWidth || floor.Length != model.FloorLength)
                 {
+                    // Check is Area oversize
+                    // Lay space va area cua space vua tao
+                    space = Get(space => space.Id == spaceToUpdate.Id).Include(space => space.Area).ThenInclude(area => area.Spaces).Include(space => space.Floors).First();
+                    var area = space.Area;
+                    if (model.NumberOfFloor * model.FloorHeight > area.Height)
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space heigh is larger than area height.");
+
+                    var spacesInArea = area.Spaces.Where(space => space.IsActive).ToList();
+
+                    List<Cuboid> cuboids = new List<Cuboid>();
+                    for (int i = 0; i < spacesInArea.Count; i++)
+                    {
+                        if(spacesInArea[i].Id != id)
+                            cuboids.Add(new Cuboid((decimal)spacesInArea[i].Floors.First().Width, (decimal)area.Height, (decimal)spacesInArea[i].Floors.First().Length));
+                        else
+                            cuboids.Add(new Cuboid((decimal)model.FloorWidth, (decimal)area.Height, (decimal)model.FloorLength));
+                    }
+                    var parameter = new BinPackParameter((decimal)area.Width, (decimal)area.Height, (decimal)area.Length, cuboids);
+
+                    var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                    var result = binPacker.Pack(parameter);
+                    if (result.BestResult.Count > 1)
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area size is overload");
+
+
                     await _floorsService.RemoveFloors(id);
                     await _floorsService.CreateNumberOfFloor(id, model.NumberOfFloor, model.FloorHeight, model.FloorWidth, model.FloorLength, DateTime.Now);
                 }
