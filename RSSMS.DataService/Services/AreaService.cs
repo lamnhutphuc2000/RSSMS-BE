@@ -84,32 +84,6 @@ namespace RSSMS.DataService.Services
 
 
 
-                //var areaCreated = Get(area => area.Id == areaToCreate.Id).Include(area => area.Storage).ThenInclude(storage => storage.Areas).FirstOrDefault();
-                //var areas = areaCreated.Storage.Areas.ToList();
-                //decimal storageHeight = areaCreated.Storage.Height;
-                //decimal storageWidth = areaCreated.Storage.Width;
-                //decimal storageLength = areaCreated.Storage.Length;
-                //double storageVolumne = (double)(storageHeight * storageWidth * storageLength);
-
-                //double areasVolumne = 0;
-                //double areasUsed = 0;
-                //double areasAvailable = 0;
-                //for(int i =0; i <areas.Count; i++)
-                //{
-                //    areasUsed = 0;
-                //    areasAvailable = 0;
-                //    var area = await GetById(areas[i].Id);
-                //    areasUsed += area.Used;
-                //    areasAvailable += area.Available;
-                //    areasVolumne += (areasUsed + areasAvailable);
-                //}
-
-                //if(storageHeight < model.Height || storageLength < model.Length || storageWidth < model.Width || storageVolumne < areasVolumne)
-                //{
-                //    await DeleteAsync(areaCreated);
-                //    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
-                //}
-
                 return _mapper.Map<AreaViewModel>(areaToCreate);
             }
             catch (ErrorResponse e)
@@ -269,12 +243,36 @@ namespace RSSMS.DataService.Services
                 AreaDetailViewModel area = await GetById(id);
                 if(area.Used > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area is already in used");
 
+                // check area update size
                 if (entity.Height != model.Height || entity.Length != model.Length || entity.Width != model.Width)
                 {
-                    area = await GetById(id);
-                    double newAreaSize = (double)(model.Height * model.Width * model.Length);
-                    if(newAreaSize - area.Used < 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "New area size is smaller than the total service in area");
+                    // Check is Storage oversize
+                    entity = Get(area => area.Id == id).Include(area => area.Storage)
+                        .ThenInclude(storage => storage.Areas).FirstOrDefault();
+
+                    var storage = entity.Storage;
+                    var areaList = storage.Areas.ToList();
+
+                    List<Cuboid> cuboids = new List<Cuboid>();
+                    for (int i = 0; i < areaList.Count; i++)
+                    {
+                        // Check if the area is the area to updated
+                        if(areaList[i].Id == id)
+                            cuboids.Add(new Cuboid((decimal)model.Width, (decimal)model.Height, (decimal)model.Length));
+                        else
+                            cuboids.Add(new Cuboid((decimal)areaList[i].Width, (decimal)areaList[i].Height, (decimal)areaList[i].Length));
+                    }
+                        
+
+                    var parameter = new BinPackParameter(storage.Width, storage.Height, storage.Length, cuboids);
+
+                    var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                    var result = binPacker.Pack(parameter);
+                    if (result.BestResult.Count > 1)
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
                 }
+
+                
 
                 Area updateEntity = _mapper.Map(model, entity);
                 await UpdateAsync(updateEntity);
@@ -284,6 +282,10 @@ namespace RSSMS.DataService.Services
             catch (ErrorResponse e)
             {
                 throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (InvalidOperationException)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
             }
             catch (Exception ex)
             {

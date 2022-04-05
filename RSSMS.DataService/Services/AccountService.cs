@@ -496,7 +496,7 @@ namespace RSSMS.DataService.Services
 
             // Nhân viên không thuộc kho nào
             if (storageId == null && !getFromAllStorage)
-                staffs = staffs.Where(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() == 0).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                staffs = staffs.Where(account => (account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() == 0) || account.Role.Name == "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
 
             if(getFromAllStorage)
                 staffs = staffs.Where(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() > 0).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);

@@ -4,100 +4,446 @@
         <name>RSSMS.API</name>
     </assembly>
     <members>
-        <member name="M:RSSMS.API.Controllers.AreaController.GetAreaByStorageID(System.Int32,RSSMS.DataService.ViewModels.Areas.AreaViewModel,System.String[],System.Int32,System.Int32)">
-            <summary>
-            
-            </summary>
-            <param name="storageid"></param>
-            <param name="model"></param>
-            <param name="fields"></param>
-            <param name="page"></param>
-            <param name="size"></param>
-            <returns></returns>
-        </member>
-        <member name="M:RSSMS.API.Controllers.AreaController.Add(RSSMS.DataService.ViewModels.Areas.AreaCreateViewModel)">
-            <summary>
-            Create Area by Storage Id
-            </summary>
-            <param name="model"></param>
-            <returns></returns>
-        </member>
-        <member name="M:RSSMS.API.Controllers.AreaController.Delete(System.Int32)">
-            <summary>
-            Delete Area by ID
-            </summary>
-            <param name="id"></param>
-            <returns></returns>
-        </member>
-        <member name="M:RSSMS.API.Controllers.AreaController.Update(System.Int32,RSSMS.DataService.ViewModels.Areas.AreaUpdateViewModel)">
-            <summary>
-            Update name Area by ID
-            </summary>
-            <param name="id"></param>
-            <param name="model"></param>
-            <returns></returns>
-        </member>
-        <member name="M:RSSMS.API.Controllers.StaffManageStorageController.Assign(RSSMS.DataService.ViewModels.StaffManageUser.StaffAssignViewModel)">
-            <summary>
-            Assign staff to storage
-            </summary>
-            <param name="model"></param>
-            <returns></returns>
-        </member>
-        <member name="M:RSSMS.API.Controllers.StoragesController.Get(RSSMS.DataService.ViewModels.Storages.StorageViewModel,System.String[],System.Int32,System.Int32)">
-            <summary>
-            Get all Storage
-            </summary>
-            <param name="model"></param>
-            <param name="fields"></param>
-            <param name="page"></param>
-            <param name="size"></param>
-            <returns></returns>
-        </member>
-        <member name="M:RSSMS.API.Controllers.StoragesController.GetById(System.Int32)">
-            <summary>
-            Get Storage By ID
-            </summary>
-            <param name="id"></param>
-            <returns></returns>
-        </member>
-        <member name="M:RSSMS.API.Controllers.StoragesController.Add(RSSMS.DataService.ViewModels.Storages.StorageCreateViewModel)">
-            <summary>
-            Create Storage
-            </summary>
-            <param name="model"></param>
-            <returns></returns>
-        </member>
-        <member name="M:RSSMS.API.Controllers.StoragesController.Update(System.Int32,RSSMS.DataService.ViewModels.Storages.StorageUpdateViewModel)">
-            <summary>
-            Update Storage
-            </summary>
-            <param name="id"></param>
-            <param name="model"></param>
-            <returns></returns>
-        </member>
-        <member name="M:RSSMS.API.Controllers.StoragesController.Delete(System.Int32)">
-            <summary>
-              Delete Storage 
-            </summary>
-            <param name="id"></param>
-            <returns></returns>
-        </member>
-        <member name="M:RSSMS.API.Controllers.UsersController.Login(RSSMS.DataService.ViewModels.Users.UserLoginViewModel)">
+        <member name="M:RSSMS.API.Controllers.AccountController.Login(RSSMS.DataService.ViewModels.Accounts.AccountLoginViewModel)">
             <summary>
             Login by email and password
             </summary>
             <param name="model"></param>
             <returns></returns>
         </member>
-        <member name="M:RSSMS.API.Controllers.UsersController.Get(RSSMS.DataService.ViewModels.Users.UserViewModel,System.Nullable{System.Int32},System.String[],System.Int32,System.Int32)">
+        <member name="M:RSSMS.API.Controllers.AccountController.ChangePassword(RSSMS.DataService.ViewModels.Accounts.AccountChangePasswordViewModel)">
             <summary>
-            Get all users
+            Change password
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AccountController.Get(RSSMS.DataService.ViewModels.Accounts.AccountViewModel,System.Nullable{System.Guid},System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get account list
+            </summary>
+            <param name="model"></param>
+            <param name="storageId"></param>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AccountController.GetStaffs(System.Nullable{System.Guid},System.Collections.Generic.List{System.String},System.Nullable{System.DateTime},System.Collections.Generic.ICollection{System.String},System.Boolean)">
+            <summary>
+            Get staffs
+            </summary>
+            <param name="storageId"></param>
+            <param name="roleName"></param>
+            <param name="scheduleDay"></param>
+            <param name="deliveryTimes"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AccountController.GetById(System.Guid)">
+            <summary>
+            Get account by Id
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AccountController.GetByPhone(System.String)">
+            <summary>
+            Get account by phone number
+            </summary>
+            <param name="phone"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AccountController.Add(RSSMS.DataService.ViewModels.Accounts.AccountCreateViewModel)">
+            <summary>
+            Create new account
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AccountController.Update(System.Guid,RSSMS.DataService.ViewModels.Accounts.AccountUpdateViewModel)">
+            <summary>
+            Update account by Id
+            </summary>
+            <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AccountController.Delete(System.Guid)">
+            <summary>
+            Delete account by Id
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AreaController.GetAreaByStorageID(System.Guid,RSSMS.DataService.ViewModels.Areas.AreaViewModel,System.Collections.Generic.List{System.Int32},System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get list of area by storage Id
+            </summary>
+            <param name="storageid"></param>
+            <param name="model"></param>
+            <param name="types"></param>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AreaController.GetById(System.Guid)">
+            <summary>
+            Get area by Id
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AreaController.Add(RSSMS.DataService.ViewModels.Areas.AreaCreateViewModel)">
+            <summary>
+            Create new area
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AreaController.Delete(System.Guid)">
+            <summary>
+            Delete area by Id
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.AreaController.Update(System.Guid,RSSMS.DataService.ViewModels.Areas.AreaUpdateViewModel)">
+            <summary>
+            Update area by Id
+            </summary>
+            <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.FloorController.GetById(System.Guid)">
+            <summary>
+            Get floor by Id
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.NotificationController.Get(System.Guid,System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get notification by user id
+            </summary>
+            <param name="userId"></param>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.NotificationController.Update(RSSMS.DataService.ViewModels.Notifications.NotificationUpdateViewModel)">
+            <summary>
+            Update notification to readed by list of id
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.OrderController.GetAll(RSSMS.DataService.ViewModels.Orders.OrderViewModel,System.Collections.Generic.IList{System.Int32},System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get list orders
+            </summary>
+            <param name="model"></param>
+            <param name="OrderStatuses"></param>
+            <param name="dateFrom"></param>
+            <param name="dateTo"></param>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.OrderController.GetById(System.Guid,System.Collections.Generic.IList{System.Int32})">
+            <summary>
+            Get order by Id
+            </summary>
+            <param name="id"></param>
+            <param name="requestTypes"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.OrderController.Add(RSSMS.DataService.ViewModels.Orders.OrderCreateViewModel)">
+            <summary>
+            Create new order
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.OrderController.Update(System.Guid,RSSMS.DataService.ViewModels.Orders.OrderUpdateViewModel)">
+            <summary>
+            Update order by Id
+            </summary>
+            <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.OrderController.UpdateOrders(System.Collections.Generic.List{RSSMS.DataService.ViewModels.Orders.OrderUpdateStatusViewModel})">
+            <summary>
+            Update list orders status by id
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.OrderController.Done(RSSMS.DataService.ViewModels.Orders.OrderDoneViewModel)">
+            <summary>
+            Done the order by order Id and request id
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.OrderController.Cancel(System.Guid,RSSMS.DataService.ViewModels.Orders.OrderCancelViewModel)">
+            <summary>
+            Cancel order by Id
+            </summary>
+            <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.OrderController.AssignOrderToStorage(RSSMS.DataService.ViewModels.Orders.OrderAssignStorageViewModel)">
+            <summary>
+            Assign order to storage
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.OrderController.AssignOrderToFloor(RSSMS.DataService.ViewModels.Orders.OrderAssignFloorViewModel)">
+            <summary>
+            Assign order to floor
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.OrderController.AssignOrderToAnotherFloor(RSSMS.DataService.ViewModels.Orders.OrderAssignAnotherFloorViewModel)">
+            <summary>
+            Assign order to another floor
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.OrderTimelineController.GetAreaByStorageID(RSSMS.DataService.ViewModels.OrderTimelines.OrderTimelinesViewModel,System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get list of order timelines
             </summary>
             <param name="model"></param>
             <param name="fields"></param>
             <param name="page"></param>
             <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.RequestController.Get(RSSMS.DataService.ViewModels.Requests.RequestViewModel,System.Collections.Generic.IList{System.Int32},System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get list request
+            </summary>
+            <param name="model"></param>
+            <param name="RequestTypes"></param>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.RequestController.GetById(System.Guid)">
+            <summary>
+            Get request by Id
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.RequestController.Add(RSSMS.DataService.ViewModels.Requests.RequestCreateViewModel)">
+            <summary>
+            Create request
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.RequestController.Update(System.Guid,RSSMS.DataService.ViewModels.Requests.RequestUpdateViewModel)">
+            <summary>
+            Update request
+            </summary>
+            <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.RequestController.Delete(System.Guid)">
+            <summary>
+            Delete request
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.RequestController.AssignRequestToStorage(RSSMS.DataService.ViewModels.Requests.RequestAssignStorageViewModel)">
+            <summary>
+            Assign request to storage
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.RequestController.Cancel(System.Guid,RSSMS.DataService.ViewModels.Requests.RequestCancelViewModel)">
+            <summary>
+            Cancel request to create order
+            </summary>
+            <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.RequestController.DeliverRequest(System.Guid)">
+            <summary>
+            Delivery staff send noti to customer
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.RequestController.DeliverySendRequestNotification(System.Guid,System.String)">
+            <summary>
+            Delivery staff send noti to staff
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.RoleController.Get(System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get all roles
+            </summary>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.ScheduleController.Gets(RSSMS.DataService.ViewModels.Schedules.ScheduleSearchViewModel,System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get list schedules by date from and date to
+            </summary>
+            <param name="model"></param>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.ScheduleController.Add(RSSMS.DataService.ViewModels.Schedules.ScheduleCreateViewModel)">
+            <summary>
+            Create new schedule
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.ServiceController.Get(RSSMS.DataService.ViewModels.Services.ServicesViewModel)">
+            <summary>
+            Get all services
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.ServiceController.GetById(System.Guid)">
+            <summary>
+            Get service by Id
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.ServiceController.Add(RSSMS.DataService.ViewModels.Services.ServicesCreateViewModel)">
+            <summary>
+            Create new service
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.ServiceController.Update(System.Guid,RSSMS.DataService.ViewModels.Services.ServicesUpdateViewModel)">
+            <summary>
+            Update service by Id
+            </summary>
+            <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.ServiceController.Delete(System.Guid)">
+            <summary>
+            Delete service by Id
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.SpaceController.Get(RSSMS.DataService.ViewModels.Spaces.SpaceViewModel,System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get all spaces
+            </summary>
+            <param name="model"></param>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.SpaceController.GetById(System.Guid)">
+            <summary>
+            Get space by Id
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.SpaceController.Add(RSSMS.DataService.ViewModels.Spaces.SpaceCreateViewModel)">
+            <summary>
+            Create new space
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.SpaceController.Update(System.Guid,RSSMS.DataService.ViewModels.Spaces.SpaceUpdateViewModel)">
+            <summary>
+            Update space by Id
+            </summary>
+            <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.SpaceController.Delete(System.Guid)">
+            <summary>
+            Delete space by Id
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StaffAssignStorageController.Assign(RSSMS.DataService.ViewModels.StaffAssignStorage.StaffAssignInStorageViewModel)">
+            <summary>
+            Assign staff to storage
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StorageController.Get(RSSMS.DataService.ViewModels.Storages.StorageViewModel,System.Collections.Generic.List{System.Int32},System.String[],System.Int32,System.Int32)">
+            <summary>
+            Get all storages
+            </summary>
+            <param name="model"></param>
+            <param name="types"></param>
+            <param name="fields"></param>
+            <param name="page"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StorageController.GetById(System.Guid)">
+            <summary>
+            Get storage by Id
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StorageController.Add(RSSMS.DataService.ViewModels.Storages.StorageCreateViewModel)">
+            <summary>
+            Create new storage
+            </summary>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StorageController.Update(System.Guid,RSSMS.DataService.ViewModels.Storages.StorageUpdateViewModel)">
+            <summary>
+            Update storage by Id
+            </summary>
+            <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StorageController.Delete(System.Guid)">
+            <summary>
+            Delete storage by Id
+            </summary>
+            <param name="id"></param>
             <returns></returns>
         </member>
     </members>
