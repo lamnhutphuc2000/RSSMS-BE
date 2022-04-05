@@ -291,7 +291,7 @@ namespace RSSMS.DataService.Services
                 width = 0;
                 length = 0;
                 volumne = 0;
-                for (int i = 1; i <= orderDetails.Count; i++)
+                for (int i = 0; i < orderDetails.Count; i++)
                 {
                     height = 0;
                     width = 0;
