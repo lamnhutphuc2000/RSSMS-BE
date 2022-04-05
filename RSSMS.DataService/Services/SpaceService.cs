@@ -65,7 +65,7 @@ namespace RSSMS.DataService.Services
 
                 // Check is Area oversize
                 // Lay space va area cua space vua tao
-                space = Get(space => space.Id == spaceToCreate.Id).Include(space => space.Area).ThenInclude(area => area.Spaces).Include(space => space.Floors).First();
+                space = Get(space => space.Id == spaceToCreate.Id).Include(space => space.Area).First();
                 var area = space.Area;
                 if(model.NumberOfFloor * model.FloorHeight > area.Height)
                 {
@@ -76,7 +76,7 @@ namespace RSSMS.DataService.Services
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space heigh is larger than area height.");
                 }
 
-                var spacesInArea = area.Spaces.Where(space => space.IsActive).ToList();
+                var spacesInArea = Get(space => space.AreaId == area.Id && space.IsActive).ToList();
 
 
 
@@ -200,13 +200,12 @@ namespace RSSMS.DataService.Services
                 {
                     // Check is Area oversize
                     // Lay space va area cua space vua tao
-                    space = Get(space => space.Id == spaceToUpdate.Id).Include(space => space.Area).ThenInclude(area => area.Spaces).Include(space => space.Floors).First();
+                    space = Get(space => space.Id == id).Include(space => space.Area).First();
                     var area = space.Area;
                     if (model.NumberOfFloor * model.FloorHeight > area.Height)
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space heigh is larger than area height.");
 
-                    var spacesInArea = area.Spaces.Where(space => space.IsActive).ToList();
-
+                    var spacesInArea = Get(space => space.AreaId == area.Id && space.IsActive).ToList();
                     List<Cuboid> cuboids = new List<Cuboid>();
                     for (int i = 0; i < spacesInArea.Count; i++)
                     {

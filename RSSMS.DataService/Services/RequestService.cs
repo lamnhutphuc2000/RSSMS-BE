@@ -382,7 +382,7 @@ namespace RSSMS.DataService.Services
                     var floorInStorages = await _storageService.GetFloorWithStorage(null,spaceType,(DateTime)model.DeliveryDate);
 
                     bool flag = false;
-                    if (floorInStorages.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+                    if (floorInStorages == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
 
                     foreach (var floorInStorage in floorInStorages)
                     {

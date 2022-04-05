@@ -69,7 +69,7 @@ namespace RSSMS.DataService.Services
                     .ThenInclude(storage => storage.Areas).FirstOrDefault();
 
                 var storage = area.Storage;
-                var areaList = storage.Areas.ToList();
+                var areaList = storage.Areas.Where(area => area.IsActive).ToList();
 
                 List<Cuboid> cuboids = new List<Cuboid>();
                 for (int i = 0; i < areaList.Count; i++)
@@ -254,7 +254,7 @@ namespace RSSMS.DataService.Services
                         .ThenInclude(storage => storage.Areas).FirstOrDefault();
 
                     var storage = entity.Storage;
-                    var areaList = storage.Areas.ToList();
+                    var areaList = storage.Areas.Where(area => area.IsActive).ToList();
 
                     List<Cuboid> cuboids = new List<Cuboid>();
                     for (int i = 0; i < areaList.Count; i++)
