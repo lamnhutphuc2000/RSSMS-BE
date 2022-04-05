@@ -183,6 +183,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 var request = Get(request => request.Id == id && request.IsActive)
+                    .Include(request => request.Schedules)
                     .Include(request => request.Order)
                     .Include(request => request.Storage)
                     .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
@@ -196,7 +197,9 @@ namespace RSSMS.DataService.Services
                 if (role == "Delivery Staff")
                 {
                     var storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
-                    request = request.Where(request => request.StorageId == storageId && request.Schedules.Where(schedule => schedule.IsActive && schedule.UserId == userId).ToList().Count() > 0).Include(request => request.Order)
+                    request = request.Where(request => request.StorageId == storageId && request.Schedules.Where(schedule => schedule.IsActive && schedule.UserId == userId).Count() > 0)
+                                    .Include(request => request.Schedules)
+                                    .Include(request => request.Order)
                                     .Include(request => request.Storage)
                                     .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
                                     .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
