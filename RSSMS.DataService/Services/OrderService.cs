@@ -625,7 +625,7 @@ namespace RSSMS.DataService.Services
                 foreach (var orderDetail in orderDetails)
                     if (orderDetail.FloorId != null) orderDetail.FloorId = null;
 
-                order.Status = 6;
+                order.Status = model.Status;
                 order.OrderDetails = orderDetails;
                 order.ModifiedDate = DateTime.Now;
                 order.ModifiedBy = userId;
