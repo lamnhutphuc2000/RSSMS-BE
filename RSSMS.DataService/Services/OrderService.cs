@@ -284,59 +284,59 @@ namespace RSSMS.DataService.Services
                     if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
 
                 }
-                // check xem còn kho nào còn trống không
-                var storages = await _storageService.GetStorageWithUsage(storageId);
-                orderDetails = model.OrderDetails.ToList();
-                height = 0;
-                width = 0;
-                length = 0;
-                volumne = 0;
-                for (int i = 0; i < orderDetails.Count; i++)
-                {
-                    height = 0;
-                    width = 0;
-                    length = 0;
-                    height += Decimal.ToDouble((decimal)orderDetails[i].Height);
-                    width += Decimal.ToDouble((decimal)orderDetails[i].Width);
-                    length += Decimal.ToDouble((decimal)orderDetails[i].Length);
-                    volumne +=  height * width * length;
-                }
+                //// check xem còn kho nào còn trống không
+                //var storages = await _storageService.GetStorageWithUsage(storageId);
+                //orderDetails = model.OrderDetails.ToList();
+                //height = 0;
+                //width = 0;
+                //length = 0;
+                //volumne = 0;
+                //for (int i = 0; i < orderDetails.Count; i++)
+                //{
+                //    height = 0;
+                //    width = 0;
+                //    length = 0;
+                //    height += Decimal.ToDouble((decimal)orderDetails[i].Height);
+                //    width += Decimal.ToDouble((decimal)orderDetails[i].Width);
+                //    length += Decimal.ToDouble((decimal)orderDetails[i].Length);
+                //    volumne +=  height * width * length;
+                //}
 
-                bool flag = false;
-                if (model.Type == 1)
-                {
-                    int i = 0;
-                    do
-                    {
-                        var areas = storages[i].Areas.Where(area => area.Type == 1).ToList();
-                        if (areas.Select(area => area.Available).Sum() >= volumne) flag = true;
-                        if (areas.Count == 0) flag = false;
-                        i++;
-                    } while (!flag && i < storages.Count);
-                }
-                if (model.Type == 0)
-                {
-                    int i = 0;
-                    do
-                    {
-                        var areas = storages[i].Areas.Where(area => area.Type == 0).ToList();
-                        foreach (var area in areas)
-                        {
-                            var spaces = area.SpacesInArea;
-                            if (!flag)
-                                foreach (var space in spaces)
-                                {
-                                    if (space.Floors.Count > 0)
-                                        if (space.Floors.Select(floor => floor.Available).Sum() >= volumne) flag = true;
-                                }
+                //bool flag = false;
+                //if (model.Type == 1)
+                //{
+                //    int i = 0;
+                //    do
+                //    {
+                //        var areas = storages[i].Areas.Where(area => area.Type == 1).ToList();
+                //        if (areas.Select(area => area.Available).Sum() >= volumne) flag = true;
+                //        if (areas.Count == 0) flag = false;
+                //        i++;
+                //    } while (!flag && i < storages.Count);
+                //}
+                //if (model.Type == 0)
+                //{
+                //    int i = 0;
+                //    do
+                //    {
+                //        var areas = storages[i].Areas.Where(area => area.Type == 0).ToList();
+                //        foreach (var area in areas)
+                //        {
+                //            var spaces = area.SpacesInArea;
+                //            if (!flag)
+                //                foreach (var space in spaces)
+                //                {
+                //                    if (space.Floors.Count > 0)
+                //                        if (space.Floors.Select(floor => floor.Available).Sum() >= volumne) flag = true;
+                //                }
 
 
-                        }
-                        i++;
-                    } while (!flag && i < storages.Count);
-                }
+                //        }
+                //        i++;
+                //    } while (!flag && i < storages.Count);
+                //}
 
-                if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+                //if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
 
 
                 order.Status = 1;

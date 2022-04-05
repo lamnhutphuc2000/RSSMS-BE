@@ -9,6 +9,8 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
+using RSSMS.DataService.ViewModels.Floors;
+using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Spaces;
 using System;
 using System.Collections.Generic;
@@ -27,6 +29,8 @@ namespace RSSMS.DataService.Services
         Task<SpaceViewModel> Delete(Guid id);
         Task<SpaceViewModel> Update(Guid id, SpaceUpdateViewModel model, string accessToken);
         bool CheckIsUsed(Guid id);
+
+        Task<List<FloorGetByIdViewModel>> GetFloorOfSpace(Guid areaId, int spaceType, DateTime date);
 
     }
     public class SpaceService : BaseService<Space>, ISpaceService
@@ -300,6 +304,21 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
+        }
+
+        public async Task<List<FloorGetByIdViewModel>> GetFloorOfSpace(Guid areaId, int spaceType, DateTime date)
+        {
+            List<FloorGetByIdViewModel> result = new List<FloorGetByIdViewModel>();
+            var spaces = Get(space => space.AreaId == areaId && space.Type == spaceType && space.IsActive).ToList();
+            if(spaceType == 2) spaces = Get(space => space.AreaId == areaId && space.Type == 0 && space.IsActive && space.Floors.Count == 1).ToList();
+            if (spaces.Count == 0) return null;
+            foreach(var space in spaces)
+            {
+                var floor = await _floorsService.GetBySpaceId(space.Id, date);
+                if(floor != null) result.Add(floor);
+            }
+            if (result.Count == 0) return null;
+            return result;
         }
     }
 }

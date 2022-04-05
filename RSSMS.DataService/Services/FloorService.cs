@@ -19,6 +19,7 @@ namespace RSSMS.DataService.Services
         Task<bool> RemoveFloors(Guid spaceId);
         Task<List<FloorInSpaceViewModel>> GetFloorInSpace(Guid spaceId, DateTime? date);
         Task<FloorGetByIdViewModel> GetById(Guid id);
+        Task<FloorGetByIdViewModel> GetBySpaceId(Guid spaceId, DateTime date);
     }
     public class FloorService : BaseService<Floor>, IFloorService
 
@@ -187,6 +188,36 @@ namespace RSSMS.DataService.Services
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, "" + ex.Message);
             }
             
+        }
+        public async Task<FloorGetByIdViewModel> GetBySpaceId(Guid spaceId, DateTime date)
+        {
+            try
+            {
+                var floor = await Get(floor => floor.SpaceId == spaceId && floor.IsActive)
+                .Include(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
+                .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
+                .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer)
+                .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                .FirstOrDefaultAsync();
+                if (floor == null) return null;
+
+                var orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.Order.DeliveryDate <= date && orderDetail.Order.ReturnDate >= date).ToList();
+
+                floor.OrderDetails = orderDetails;
+
+                var result = _mapper.Map<FloorGetByIdViewModel>(floor);
+                
+                return result;
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, "" + ex.Message);
+            }
+
         }
     }
 }

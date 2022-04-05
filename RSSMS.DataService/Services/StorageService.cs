@@ -8,6 +8,8 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Areas;
+using RSSMS.DataService.ViewModels.Floors;
+using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Storages;
 using System;
 using System.Collections.Generic;
@@ -24,7 +26,7 @@ namespace RSSMS.DataService.Services
         Task<StorageViewModel> Create(StorageCreateViewModel model);
         Task<StorageUpdateViewModel> Update(Guid id, StorageUpdateViewModel model);
         Task<StorageViewModel> Delete(Guid id);
-        Task<List<StorageViewModel>> GetStorageWithUsage(Guid? storageId);
+        Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -226,24 +228,21 @@ namespace RSSMS.DataService.Services
         }
 
 
-        public async Task<List<StorageViewModel>> GetStorageWithUsage(Guid? storageId)
+        public async Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date)
         {
-            List<StorageViewModel> result = new List<StorageViewModel>();
-            IQueryable<Storage> storages = Get(storage => storage.IsActive).Include(storage => storage.Areas);
-            if (storageId != null) storages = storages.Where(storage => storage.Id == storageId).Include(storage => storage.Areas);
+            // storage Id
+            IDictionary<Guid, List<FloorGetByIdViewModel>> result = new Dictionary<Guid, List<FloorGetByIdViewModel>>();
+            IQueryable<Storage> storages = Get(storage => storage.IsActive).Include(storage => storage.Areas.Where(area => area.IsActive));
+            if (storageId != null) storages = storages.Where(storage => storage.Id == storageId).Include(storage => storage.Areas.Where(area => area.IsActive));
             if (storages.ToList().Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough storage");
             var storageList = storages.ToList();
-            result = storages.ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).ToList();
             for (int i = 0; i <storageList.Count; i++)
             {
-                List<AreaDetailViewModel> areasInStorage = new List<AreaDetailViewModel>();
-                var areas = storageList[i].Areas.Where(area => area.IsActive).ToList();
-                for(int j = 0; j < areas.Count; j ++)
-                {
-                    areasInStorage.Add(await _areaService.GetById(areas[j].Id));
-                }
-                result[i].Areas = areasInStorage;
+                var area = await _areaService.GetFloorOfArea(storageList[i].Id, spaceType, date);
+                // Add result vào
+                if(area != null) result.Add(storageList[i].Id, area);
             }
+            if (result.Count == 0) return null;
             return result;
         }
     }

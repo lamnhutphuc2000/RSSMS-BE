@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using _3DBinPacking.Enum;
+using _3DBinPacking.Model;
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
@@ -8,6 +10,8 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
+using RSSMS.DataService.ViewModels.Floors;
+using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Requests;
 using System;
 using System.Collections.Generic;
@@ -43,6 +47,7 @@ namespace RSSMS.DataService.Services
         private readonly IAccountService _accountService;
         private readonly IStorageService _storageService;
         private readonly IServiceService _serviceService;
+        private readonly IFloorService _floorService;
         public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper
             , IScheduleService scheduleService
             , IFirebaseService firebaseService, IStaffAssignStorageService staffAssignStoragesService
@@ -51,6 +56,7 @@ namespace RSSMS.DataService.Services
             , IAccountService accountService
             , IStorageService storageService
             , IServiceService serviceService
+            , IFloorService floorService
             ) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -62,6 +68,7 @@ namespace RSSMS.DataService.Services
             _accountService = accountService;
             _storageService = storageService;
             _serviceService = serviceService;
+            _floorService = floorService;
         }
 
         public async Task<RequestViewModel> Delete(Guid id)
@@ -330,72 +337,101 @@ namespace RSSMS.DataService.Services
                 }
                 if (model.Type == (int)RequestType.Create_Order) // customer tao yeu cau tao don
                 {
-                    // check xem còn nhân viên trong storage nào không 
+                    
+                    int spaceType = 0;
+                    if (model.TypeOrder == (int)OrderType.Kho_tu_quan) spaceType = 1;
+                    if (model.TypeOrder == (int)OrderType.Giu_do_thue) spaceType = 0;
 
-                    if(model.TypeOrder == 1 && (bool)model.IsCustomerDelivery)
+
+                    // check xem còn nhân viên trong storage nào không 
+                    if (model.TypeOrder == (int)OrderType.Giu_do_thue && (bool)model.IsCustomerDelivery)
                     {
                         var deliveryStaffs = await _accountService.GetStaff(null, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, true);
                         if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
 
                     }
 
-                    // check xem còn kho nào còn trống không
-                    var storages = await _storageService.GetStorageWithUsage(null);
-                    var services = model.RequestDetails.Select(requestDetail => new { 
+                    decimal serviceMaxHeight = 0;
+                    decimal serviceMaxWidth = 0;
+                    decimal serviceMaxLength = 0;
+                    
+                    List<Cuboid> cuboids = new List<Cuboid>();
+                    // Lay kich thuoc cac service khach hang dat 
+                    var services = model.RequestDetails.Select(requestDetail => new
+                    {
                         ServiceId = requestDetail.ServiceId,
                         Amount = requestDetail.Amount
                     }).ToList();
-                    double height = 0;
-                    double width = 0;
-                    double length = 0;
-                    double volumne = 0;
-                    for (int i =1; i<= services.Count; i ++)
+                    for (int i = 1; i <= services.Count; i++)
                     {
-                        height = 0;
-                        width = 0;
-                        length = 0;
-                        var service = _serviceService.Get(service => service.Id == services[i-1].ServiceId).FirstOrDefault();
-                        height += Decimal.ToDouble(service.Height);
-                        width += Decimal.ToDouble(service.Width);
-                        length += Decimal.ToDouble(service.Length);
-                        volumne += services[i-1].Amount * height * width * length;
+                        var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
+                        if(service.Type != (int)ServiceType.Phu_kien)
+                        {
+                            if (service.Type == (int)ServiceType.Gui_theo_dien_tich) spaceType = 2;
+                            if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
+                            if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
+                            if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
+                            cuboids.Add(new Cuboid(service.Width, service.Height, service.Length));
+                        }
+                            
                     }
+
+
+                    
+                    // Check xem storage còn đủ chỗ không
+                    var floorInStorages = await _storageService.GetFloorWithStorage(null,spaceType,(DateTime)model.DeliveryDate);
 
                     bool flag = false;
-                    if(model.TypeOrder == 1)
+                    if (floorInStorages.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+
+                    foreach (var floorInStorage in floorInStorages)
                     {
-                        int i = 0;
-                        do
+                        if(!flag)
                         {
-                            var areas = storages[i].Areas.Where(area => area.Type == 1).ToList();
-                            if (areas.Select(area => area.Available).Sum() >= volumne) flag = true;
-                            if (areas.Count == 0) flag = false;
-                            i++;
-                        } while (!flag && i < storages.Count);
-                    }
-                    if(model.TypeOrder == 0)
-                    {
-                        int i = 0;
-                        do
-                        {
-                            var areas = storages[i].Areas.Where(area => area.Type == 0).ToList();
-                            foreach(var area in areas)
+                            var floors = floorInStorage.Value.ToList();
+                            List<OrderDetailInFloorViewModel> orderDetailList = new List<OrderDetailInFloorViewModel>();
+                            List<FloorGetByIdViewModel> floorList = new List<FloorGetByIdViewModel>();
+                            foreach (var floor in floors)
                             {
-                                var spaces = area.SpacesInArea;
-                                if(!flag) 
-                                    foreach(var space in spaces)
-                                    {
-                                        if(space.Floors.Count > 0)
-                                            if (space.Floors.Select(floor => floor.Available).Sum() >= volumne) flag = true;
-                                    }
-                                        
-
+                                if (floor.Height >= serviceMaxHeight && floor.Width >= serviceMaxWidth && floor.Length >= serviceMaxLength)
+                                {
+                                    floorList.Add(floor);
+                                    orderDetailList.AddRange(floor.OrderDetails);
+                                }
                             }
-                            i++;
-                        } while (!flag && i < storages.Count);
+                            foreach (var floorInList in floorList)
+                            {
+                                if(!flag)
+                                {
+                                    List<Cuboid> cuboidTmps = new List<Cuboid>();
+                                    cuboidTmps.AddRange(cuboids);
+                                    foreach (var orderDetail in orderDetailList)
+                                        cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length,0,orderDetail.Id));
+
+                                    var parameter = new BinPackParameter(floorInList.Width, floorInList.Height, floorInList.Length, cuboids);
+
+                                    var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                                    var result = binPacker.Pack(parameter);
+                                    if (result.BestResult.Count == 1) flag = true;
+                                    else
+                                    {
+                                        foreach (var cuboid in result.BestResult.First())
+                                        {
+                                            var orderDetail = orderDetailList.Where(orderDetail => orderDetail.Id == (Guid)cuboid.Tag).First();
+                                            orderDetailList.Remove(orderDetail);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+                    
+                    if(!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+
+                    
+
+
                     request = _mapper.Map<Request>(model);
                     request.CreatedBy = userId;
                     if (role == "Customer") request.CustomerId = userId;
@@ -533,62 +569,62 @@ namespace RSSMS.DataService.Services
 
                 }
                 // check xem còn kho nào còn trống không
-                var storages = await _storageService.GetStorageWithUsage(model.StorageId);
-                var services = request.RequestDetails.Select(requestDetail => new {
-                    ServiceId = requestDetail.ServiceId,
-                    Amount = requestDetail.Amount
-                }).ToList();
-                double height = 0;
-                double width = 0;
-                double length = 0;
-                double volumne = 0;
-                for (int i = 1; i <= services.Count; i++)
-                {
-                    height = 0;
-                    width = 0;
-                    length = 0;
-                    var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
-                    height += Decimal.ToDouble(service.Height);
-                    width += Decimal.ToDouble(service.Width);
-                    length += Decimal.ToDouble(service.Length);
-                    volumne += (int)services[i-1].Amount * height * width * length;
-                }
+                //var storages = await _storageService.GetStorageWithUsage(model.StorageId);
+                //var services = request.RequestDetails.Select(requestDetail => new {
+                //    ServiceId = requestDetail.ServiceId,
+                //    Amount = requestDetail.Amount
+                //}).ToList();
+                //double height = 0;
+                //double width = 0;
+                //double length = 0;
+                //double volumne = 0;
+                //for (int i = 1; i <= services.Count; i++)
+                //{
+                //    height = 0;
+                //    width = 0;
+                //    length = 0;
+                //    var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
+                //    height += Decimal.ToDouble(service.Height);
+                //    width += Decimal.ToDouble(service.Width);
+                //    length += Decimal.ToDouble(service.Length);
+                //    volumne += (int)services[i-1].Amount * height * width * length;
+                //}
 
-                bool flag = false;
-                if (request.TypeOrder == 1)
-                {
-                    int i = 0;
-                    do
-                    {
-                        var areas = storages[i].Areas.Where(area => area.Type == 1).ToList();
-                        if (areas.Select(area => area.Available).Sum() >= volumne) flag = true;
-                        if (areas.Count == 0) flag = false;
-                        i++;
-                    } while (!flag && i < storages.Count);
-                }
-                if (request.TypeOrder == 0)
-                {
-                    int i = 0;
-                    do
-                    {
-                        var areas = storages[i].Areas.Where(area => area.Type == 0).ToList();
-                        foreach (var area in areas)
-                        {
-                            var spaces = area.SpacesInArea;
-                            if (!flag)
-                                foreach (var space in spaces)
-                                {
-                                    if (space.Floors.Count > 0)
-                                        if (space.Floors.Select(floor => floor.Available).Sum() >= volumne) flag = true;
-                                }
+                //bool flag = false;
+                //if (request.TypeOrder == 1)
+                //{
+                //    int i = 0;
+                //    do
+                //    {
+                //        var areas = storages[i].Areas.Where(area => area.Type == 1).ToList();
+                //        if (areas.Select(area => area.Available).Sum() >= volumne) flag = true;
+                //        if (areas.Count == 0) flag = false;
+                //        i++;
+                //    } while (!flag && i < storages.Count);
+                //}
+                //if (request.TypeOrder == 0)
+                //{
+                //    int i = 0;
+                //    do
+                //    {
+                //        var areas = storages[i].Areas.Where(area => area.Type == 0).ToList();
+                //        foreach (var area in areas)
+                //        {
+                //            var spaces = area.SpacesInArea;
+                //            if (!flag)
+                //                foreach (var space in spaces)
+                //                {
+                //                    if (space.Floors.Count > 0)
+                //                        if (space.Floors.Select(floor => floor.Available).Sum() >= volumne) flag = true;
+                //                }
 
 
-                        }
-                        i++;
-                    } while (!flag && i < storages.Count);
-                }
+                //        }
+                //        i++;
+                //    } while (!flag && i < storages.Count);
+                //}
 
-                if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+                //if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
 
 
 
