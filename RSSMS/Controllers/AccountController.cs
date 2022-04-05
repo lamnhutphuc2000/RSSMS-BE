@@ -70,7 +70,7 @@ namespace RSSMS.API.Controllers
         /// <returns></returns>
         [HttpGet]
         [MapToApiVersion("1")]
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(DynamicModelResponse<AccountViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
@@ -106,7 +106,7 @@ namespace RSSMS.API.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
+        [Authorize(Roles = "Admin")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(AccountViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
@@ -122,7 +122,7 @@ namespace RSSMS.API.Controllers
         /// <param name="phone"></param>
         /// <returns></returns>
         [HttpGet("account/{phone}")]
-        [Authorize(Roles = "Admin,Manager,Office Staff")]
+        [Authorize(Roles = "Admin")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(AccountViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
