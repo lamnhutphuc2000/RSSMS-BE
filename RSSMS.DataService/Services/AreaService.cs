@@ -158,21 +158,23 @@ namespace RSSMS.DataService.Services
                 double usage = 0;
                 double used = 0;
                 double available = 0;
+                double total = 0;
                 foreach (var space in spaces)
                 {
                     var spaceById = await _spaceService.GetById(space.Id);
+                    total += spaceById.Floors.Select(floor => floor.Used).Sum();
+                    total += spaceById.Floors.Select(floor => floor.Available).Sum();
                     usage += spaceById.Floors.Select(floor => floor.Usage).Sum();
+                    used += spaceById.Floors.Select(floor => floor.Used).Sum();
                     spacesInArea.Add(spaceById);
                 }
 
                 // Calculate area used, available and total size
-                double total = (double)(area.Height * area.Width * area.Length);
-                used = usage * total / 100;
                 available = total - used;
 
-                result.Usage = usage;
-                result.Used = used;
-                result.Available = available;
+                result.Usage = Math.Round(usage, 4);
+                result.Used = Math.Round(used, 4);
+                result.Available = Math.Round(available, 4);
                 result.SpacesInArea = spacesInArea;
                 return result;
             }
