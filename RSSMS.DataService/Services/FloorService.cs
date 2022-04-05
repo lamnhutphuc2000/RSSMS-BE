@@ -19,7 +19,7 @@ namespace RSSMS.DataService.Services
         Task<bool> RemoveFloors(Guid spaceId);
         Task<List<FloorInSpaceViewModel>> GetFloorInSpace(Guid spaceId, DateTime? date);
         Task<FloorGetByIdViewModel> GetById(Guid id);
-        Task<FloorGetByIdViewModel> GetBySpaceId(Guid spaceId, DateTime date);
+        Task<FloorGetByIdViewModel> GetBySpaceId(Guid spaceId, DateTime date, bool isMany);
     }
     public class FloorService : BaseService<Floor>, IFloorService
 
@@ -189,7 +189,7 @@ namespace RSSMS.DataService.Services
             }
             
         }
-        public async Task<FloorGetByIdViewModel> GetBySpaceId(Guid spaceId, DateTime date)
+        public async Task<FloorGetByIdViewModel> GetBySpaceId(Guid spaceId, DateTime date, bool isMany)
         {
             try
             {
@@ -199,6 +199,15 @@ namespace RSSMS.DataService.Services
                 .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer)
                 .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
                 .FirstOrDefaultAsync();
+                if(isMany)
+                {
+                    floor = await Get(floor => floor.SpaceId == spaceId && floor.IsActive && floor.Name == "Tầng trệt")
+                        .Include(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
+                        .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
+                        .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer)
+                        .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                        .FirstOrDefaultAsync();
+                }
                 if (floor == null) return null;
 
                 var orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.Order.DeliveryDate <= date && orderDetail.Order.ReturnDate >= date).ToList();

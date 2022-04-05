@@ -26,7 +26,7 @@ namespace RSSMS.DataService.Services
         Task<StorageViewModel> Create(StorageCreateViewModel model);
         Task<StorageUpdateViewModel> Update(Guid id, StorageUpdateViewModel model);
         Task<StorageViewModel> Delete(Guid id);
-        Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date);
+        Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date, bool isMany);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -228,7 +228,7 @@ namespace RSSMS.DataService.Services
         }
 
 
-        public async Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date)
+        public async Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date, bool isMany)
         {
             // storage Id
             IDictionary<Guid, List<FloorGetByIdViewModel>> result = new Dictionary<Guid, List<FloorGetByIdViewModel>>();
@@ -238,7 +238,7 @@ namespace RSSMS.DataService.Services
             var storageList = storages.ToList();
             for (int i = 0; i <storageList.Count; i++)
             {
-                var area = await _areaService.GetFloorOfArea(storageList[i].Id, spaceType, date);
+                var area = await _areaService.GetFloorOfArea(storageList[i].Id, spaceType, date, isMany);
                 // Add result vào
                 if(area != null) result.Add(storageList[i].Id, area);
             }

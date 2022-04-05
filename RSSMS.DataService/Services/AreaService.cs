@@ -30,7 +30,7 @@ namespace RSSMS.DataService.Services
         Task<AreaViewModel> Update(Guid id, AreaUpdateViewModel model);
         Task<AreaDetailViewModel> GetById(Guid id);
         bool CheckIsUsed(Guid id);
-        Task<List<FloorGetByIdViewModel>> GetFloorOfArea(Guid storageId, int spaceType, DateTime date);
+        Task<List<FloorGetByIdViewModel>> GetFloorOfArea(Guid storageId, int spaceType, DateTime date, bool isMany);
     }
     public class AreaService : BaseService<Area>, IAreaService
 
@@ -316,13 +316,13 @@ namespace RSSMS.DataService.Services
             
         }
 
-        public async Task<List<FloorGetByIdViewModel>> GetFloorOfArea(Guid storageId, int spaceType, DateTime date)
+        public async Task<List<FloorGetByIdViewModel>> GetFloorOfArea(Guid storageId, int spaceType, DateTime date, bool isMany)
         {
             List<FloorGetByIdViewModel> result = new List<FloorGetByIdViewModel>();
             var areas = await Get(area => area.IsActive && area.StorageId == storageId).ToListAsync();
             foreach (var area in areas)
             {
-                var space = await _spaceService.GetFloorOfSpace(area.Id, spaceType, date);
+                var space = await _spaceService.GetFloorOfSpace(area.Id, spaceType, date, isMany);
                 if (space != null) result.AddRange(space);
             }
             if (result.Count == 0) return null;

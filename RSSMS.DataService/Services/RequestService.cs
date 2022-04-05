@@ -339,6 +339,7 @@ namespace RSSMS.DataService.Services
                 {
                     
                     int spaceType = 0;
+                    bool isMany = false;
                     if (model.TypeOrder == (int)OrderType.Kho_tu_quan) spaceType = 1;
                     if (model.TypeOrder == (int)OrderType.Giu_do_thue) spaceType = 0;
 
@@ -367,7 +368,7 @@ namespace RSSMS.DataService.Services
                         var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
                         if(service.Type != (int)ServiceType.Phu_kien)
                         {
-                            if (service.Type == (int)ServiceType.Gui_theo_dien_tich) spaceType = 2;
+                            if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
                             if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
                             if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
                             if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
@@ -379,7 +380,7 @@ namespace RSSMS.DataService.Services
 
                     
                     // Check xem storage còn đủ chỗ không
-                    var floorInStorages = await _storageService.GetFloorWithStorage(null,spaceType,(DateTime)model.DeliveryDate);
+                    var floorInStorages = await _storageService.GetFloorWithStorage(null,spaceType,(DateTime)model.DeliveryDate, isMany);
 
                     bool flag = false;
                     if (floorInStorages == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
