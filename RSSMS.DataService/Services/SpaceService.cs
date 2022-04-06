@@ -311,9 +311,11 @@ namespace RSSMS.DataService.Services
             List<FloorGetByIdViewModel> result = new List<FloorGetByIdViewModel>();
             var spaces = Get(space => space.AreaId == areaId && space.Type == spaceType && space.IsActive).ToList();
             if (spaces.Count == 0) return null;
+            bool isSelfStorage = false;
+            if (spaceType == 1) isSelfStorage = true;
             foreach(var space in spaces)
             {
-                var floor = await _floorsService.GetBySpaceId(space.Id, date, isMany);
+                var floor = await _floorsService.GetBySpaceId(space.Id, date, isMany, isSelfStorage);
                 if(floor != null) result.Add(floor);
             }
             if (result.Count == 0) return null;

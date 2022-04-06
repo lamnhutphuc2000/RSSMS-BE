@@ -363,17 +363,19 @@ namespace RSSMS.DataService.Services
                     }).ToList();
                     for (int i = 1; i <= services.Count; i++)
                     {
-                        var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
-                        if(service.Type != (int)ServiceType.Phu_kien)
+                        for(int j = 0; j < services[i-1].Amount; j++)
                         {
-                            if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
-                            if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
-                            if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
-                            if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
-                            cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0 , service.Id));
-                            serviceList.Add(service);
-                        }
-                            
+                            var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
+                            if (service.Type != (int)ServiceType.Phu_kien)
+                            {
+                                if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+                                if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
+                                if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
+                                if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
+                                cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                serviceList.Add(service);
+                            }
+                        }    
                     }
 
 
@@ -426,16 +428,18 @@ namespace RSSMS.DataService.Services
                                         }).ToList();
                                         for (int i = 1; i <= services.Count; i++)
                                         {
-                                            var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
-                                            if (service.Type != (int)ServiceType.Phu_kien)
+                                            for (int j = 0; j < services[i-1].Amount; j++)
                                             {
-                                                if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
-                                                if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
-                                                if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
-                                                if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
-                                                cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                                var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
+                                                if (service.Type != (int)ServiceType.Phu_kien)
+                                                {
+                                                    if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+                                                    if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
+                                                    if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
+                                                    if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
+                                                    cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                                }
                                             }
-
                                         }
                                     }
                                     

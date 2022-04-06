@@ -170,7 +170,8 @@ namespace RSSMS.DataService.Services
 
                 // Calculate area used, available and total size
                 available = total - used;
-                usage = used * 100 / total;
+                if (total != 0) usage = used * 100 / total;
+                else usage = 0;
                 result.Usage = Math.Round(usage, 4);
                 result.Used = Math.Round(used, 4);
                 result.Available = Math.Round(available, 4);
