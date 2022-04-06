@@ -232,7 +232,7 @@ namespace RSSMS.DataService.Services
                 foreach(var floor in floors)
                 {
                     var orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.Order.DeliveryDate <= date && orderDetail.Order.ReturnDate >= date).ToList();
-
+                    if (isSelfStorage && orderDetails.Count == 1) return null;
                     floor.OrderDetails = orderDetails;
                 }
 

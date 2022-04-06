@@ -406,19 +406,11 @@ namespace RSSMS.DataService.Services
                             {
                                 if(!flag)
                                 {
-                                    // get request return order
-                                    // nhớ check lại status
-                                    var requestsReturnOrder = await Get(request => request.IsActive && request.StorageId == floorInStorage.Key && request.Type == (int)RequestType.Return_Order && request.Status == 2).Include(request => request.Order).ThenInclude(order => order.OrderDetails).ToListAsync();
-                                    var ordersReturn = requestsReturnOrder.Select(request => request.Order).ToList();
-                                    foreach(var orderReturn in ordersReturn)
-                                    {
-                                        var ordersTmp = orderDetailList.Where(orderDetail => orderReturn.OrderDetails.Any(o => o.Id == orderDetail.Id));
-                                        foreach(var orderTmp in ordersTmp)
-                                            orderDetailList.Remove(orderTmp);
-                                    }
 
                                     // get request đã được assign vào storage
-                                    var requestsAssignStorage = await Get(request => request.IsActive && request.StorageId == floorInStorage.Key && request.Type == (int)RequestType.Create_Order && request.Status == 2).Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
+                                    var requestsAssignStorage = await Get(request => request.IsActive && request.StorageId == floorInStorage.Key && request.Type == (int)RequestType.Create_Order && request.Status == 2 && request.Order.DeliveryDate <= model.DeliveryDate && request.Order.ReturnDate >= model.DeliveryDate && (model.DeliveryDate <= request.Order.DeliveryDate &&  model.ReturnDate >= request.Order.DeliveryDate))
+                                        .Include(request => request.Order)
+                                        .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
                                     foreach(var requestAssignStorage in requestsAssignStorage)
                                     {
                                         var servicesInRequestDetail = requestAssignStorage.RequestDetails.Select(requestDetail => new
