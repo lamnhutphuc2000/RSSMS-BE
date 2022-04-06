@@ -53,8 +53,9 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidateString(model.Image.File, " ảnh kho");
                 _utilService.ValidateString(model.Name, " tên kho");
                 _utilService.ValidateString(model.Address, " địa chỉ kho");
-                _utilService.ValidateString(model.Image.File, " ảnh kho");
-
+                _utilService.ValidateDecimal(model.Width, " chiều rộng kho");
+                _utilService.ValidateDecimal(model.Height, " chiều cao kho");
+                _utilService.ValidateDecimal(model.Length, " chiều dài kho");
 
                 var storage = _mapper.Map<Storage>(model);
                 var image = model.Image;
@@ -202,6 +203,12 @@ namespace RSSMS.DataService.Services
         {
             try
             {
+                _utilService.ValidateString(model.Name, " tên kho");
+                _utilService.ValidateString(model.Address, " địa chỉ kho");
+                _utilService.ValidateDecimal(model.Width, " chiều rộng kho");
+                _utilService.ValidateDecimal(model.Height, " chiều cao kho");
+                _utilService.ValidateDecimal(model.Length, " chiều dài kho");
+
                 if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage Id not matched");
 
                 var entity = await Get(storage => storage.Id == id && storage.IsActive).Include(a => a.Areas).FirstOrDefaultAsync();

@@ -408,28 +408,47 @@ namespace RSSMS.DataService.Services
                                 {
 
                                     // get request đã được assign vào storage
-                                    var requestsAssignStorage = await Get(request => request.IsActive && request.StorageId == floorInStorage.Key && request.Type == (int)RequestType.Create_Order && request.Status == 2 && request.Order.DeliveryDate <= model.DeliveryDate && request.Order.ReturnDate >= model.DeliveryDate && (model.DeliveryDate <= request.Order.DeliveryDate &&  model.ReturnDate >= request.Order.DeliveryDate))
-                                        .Include(request => request.Order)
+                                    var requestsAssignStorage = await Get(request => request.IsActive && request.TypeOrder == model.TypeOrder && request.Type == (int)RequestType.Create_Order && request.StorageId == floorInStorage.Key && request.Type == (int)RequestType.Create_Order && (request.Status == 2 || request.Status ==3 ) && request.Order.DeliveryDate <= model.DeliveryDate && request.Order.ReturnDate >= model.DeliveryDate && (model.DeliveryDate <= request.Order.DeliveryDate &&  model.ReturnDate >= request.Order.DeliveryDate))
+                                        .Include(request => request.Order).ThenInclude(order => order.OrderDetails)
                                         .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
                                     foreach(var requestAssignStorage in requestsAssignStorage)
                                     {
                                         var servicesInRequestDetail = requestAssignStorage.RequestDetails.Select(requestDetail => new
                                         {
-                                            ServiceId = requestDetail.ServiceId,
-                                            Amount = requestDetail.Amount
+                                            ServiceId = (Guid)requestDetail.ServiceId,
+                                            Height = (decimal?)null,
+                                            Width = (decimal?)null,
+                                            Length = (decimal?)null,
+                                            Amount = (int)requestDetail.Amount
                                         }).ToList();
-                                        for (int i = 1; i <= services.Count; i++)
-                                        {
-                                            for (int j = 0; j < services[i-1].Amount; j++)
+                                        if(requestAssignStorage.Order != null)
+                                            servicesInRequestDetail = requestAssignStorage.Order.OrderDetails.Select(orderDetail => new
                                             {
-                                                var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
-                                                if (service.Type != (int)ServiceType.Phu_kien)
+                                                ServiceId = orderDetail.Id,
+                                                Height = orderDetail.Height,
+                                                Width = orderDetail.Width,
+                                                Length = orderDetail.Length,
+                                                Amount = 0
+                                            }).ToList();
+                                        for (int i = 1; i <= servicesInRequestDetail.Count; i++)
+                                        {
+                                            for (int j = 0; j < servicesInRequestDetail[i-1].Amount; j++)
+                                            {
+                                                if(servicesInRequestDetail[i-1].Amount != 0)
                                                 {
-                                                    if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
-                                                    if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
-                                                    if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
-                                                    if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
-                                                    cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                                    var service = _serviceService.Get(service => service.Id == servicesInRequestDetail[i - 1].ServiceId).FirstOrDefault();
+                                                    if (service.Type != (int)ServiceType.Phu_kien)
+                                                    {
+                                                        if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+                                                        if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
+                                                        if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
+                                                        if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
+                                                        cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i-1].Width, (decimal)servicesInRequestDetail[i - 1].Height, (decimal)servicesInRequestDetail[i - 1].Length));
                                                 }
                                             }
                                         }

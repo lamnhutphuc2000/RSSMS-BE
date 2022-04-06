@@ -17,6 +17,7 @@ namespace RSSMS.DataService.Services
         bool ValidateString(string input, string name);
         bool ValidateBirthDate(DateTime? date);
         bool ValidateDecimal(Decimal? number, string name);
+        bool ValidateInt(int? number, string name);
     }
     public class UtilService : IUtilService
     {
@@ -83,6 +84,12 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập đúng email");
             }
+        }
+
+        public bool ValidateInt(int? number, string name)
+        {
+            if (number == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập " + name);
+            return true;
         }
 
         public bool ValidatePassword(string password)

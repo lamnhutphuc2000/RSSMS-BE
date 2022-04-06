@@ -53,7 +53,12 @@ namespace RSSMS.DataService.Services
             try
             {
                 // Validate input
-                _utilService.ValidateString(model.Name,"Area name");
+                _utilService.ValidateString(model.Name,"tên khu vực");
+                _utilService.ValidateString(model.Description, "giới thiệu khu vực");
+                _utilService.ValidateDecimal(model.Width, " chiều rộng khu vực");
+                _utilService.ValidateDecimal(model.Height, " chiều cao khu vực");
+                _utilService.ValidateDecimal(model.Length, " chiều dài khu vực");
+                _utilService.ValidateInt(model.Type, " loại khu vực");
 
                 // Check area name is existed
                 var entity = Get(area => area.StorageId == model.StorageId && area.Name == model.Name && area.IsActive).FirstOrDefault();
@@ -235,7 +240,11 @@ namespace RSSMS.DataService.Services
             try
             {
                 // Validate input
-                _utilService.ValidateString(model.Name, "Area name");
+                _utilService.ValidateString(model.Name, "tên khu vực");
+                _utilService.ValidateString(model.Description, "giới thiệu khu vực");
+                _utilService.ValidateDecimal(model.Width, " chiều rộng khu vực");
+                _utilService.ValidateDecimal(model.Height, " chiều cao khu vực");
+                _utilService.ValidateDecimal(model.Length, " chiều dài khu vực");
 
                 if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area Id not matched");
 
