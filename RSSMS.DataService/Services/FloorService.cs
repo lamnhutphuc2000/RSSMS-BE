@@ -208,15 +208,6 @@ namespace RSSMS.DataService.Services
                         .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer)
                         .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
                         .ToListAsync();
-                    //var tmp = floors.Where(floor => floor.OrderDetails.Count == 0).ToList();
-                    //var floorList = floors.Where(floor => floor.OrderDetails.Count > 0);
-                    //floors = tmp;
-                    //foreach(var floor in floorList)
-                    //{
-                    //    var orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.Order.DeliveryDate <= date && orderDetail.Order.ReturnDate >= date).ToList();
-
-                    //    floors.Add(floor);
-                    //}
                 }
                 if(isMany)
                 {
@@ -232,7 +223,7 @@ namespace RSSMS.DataService.Services
                 foreach(var floor in floors)
                 {
                     var orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.Order.DeliveryDate <= date && orderDetail.Order.ReturnDate >= date).ToList();
-                    if (isSelfStorage && orderDetails.Count == 1) return null;
+                    if (isSelfStorage && orderDetails.Count > 0) return null;
                     floor.OrderDetails = orderDetails;
                 }
 

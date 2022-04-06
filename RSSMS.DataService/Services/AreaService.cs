@@ -245,6 +245,7 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidateDecimal(model.Width, " chiều rộng khu vực");
                 _utilService.ValidateDecimal(model.Height, " chiều cao khu vực");
                 _utilService.ValidateDecimal(model.Length, " chiều dài khu vực");
+                _utilService.ValidateInt(model.Type, " loại khu vực");
 
                 if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area Id not matched");
 
