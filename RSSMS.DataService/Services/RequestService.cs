@@ -47,7 +47,6 @@ namespace RSSMS.DataService.Services
         private readonly IAccountService _accountService;
         private readonly IStorageService _storageService;
         private readonly IServiceService _serviceService;
-        private readonly IFloorService _floorService;
         public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper
             , IScheduleService scheduleService
             , IFirebaseService firebaseService, IStaffAssignStorageService staffAssignStoragesService
@@ -56,7 +55,6 @@ namespace RSSMS.DataService.Services
             , IAccountService accountService
             , IStorageService storageService
             , IServiceService serviceService
-            , IFloorService floorService
             ) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -68,7 +66,6 @@ namespace RSSMS.DataService.Services
             _accountService = accountService;
             _storageService = storageService;
             _serviceService = serviceService;
-            _floorService = floorService;
         }
 
         public async Task<RequestViewModel> Delete(Guid id)
@@ -345,7 +342,7 @@ namespace RSSMS.DataService.Services
 
 
                     // check xem còn nhân viên trong storage nào không 
-                    if (model.TypeOrder == (int)OrderType.Giu_do_thue && (bool)model.IsCustomerDelivery)
+                    if (model.TypeOrder == (int)OrderType.Giu_do_thue && !(bool)model.IsCustomerDelivery)
                     {
                         var deliveryStaffs = await _accountService.GetStaff(null, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, true);
                         if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
@@ -385,6 +382,7 @@ namespace RSSMS.DataService.Services
                     var floorInStorages = await _storageService.GetFloorWithStorage(null,spaceType,(DateTime)model.DeliveryDate, isMany);
 
                     bool flag = false;
+                    bool deliFlag = true;
                     if (floorInStorages == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
 
                     foreach (var floorInStorage in floorInStorages)
@@ -417,10 +415,11 @@ namespace RSSMS.DataService.Services
                                     var result = binPacker.Pack(parameter);
                                     if (result.BestResult.Count == 1)
                                     {
-                                        if (model.TypeOrder == (int)OrderType.Giu_do_thue && (bool)model.IsCustomerDelivery)
+                                        flag = true;
+                                        if (model.TypeOrder == (int)OrderType.Giu_do_thue && !(bool)model.IsCustomerDelivery)
                                         {
                                             var deliveryStaffs = await _accountService.GetStaff(floorInStorage.Key, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, false);
-                                            if (deliveryStaffs.Count > 0) flag = true;
+                                            if (deliveryStaffs.Count <= 0) deliFlag = false;
                                         }
                                     }
                                     else
@@ -438,8 +437,8 @@ namespace RSSMS.DataService.Services
                         }
                     }
 
-                    
-                    if(!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+                    if(!deliFlag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+                    if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
 
                     
 
