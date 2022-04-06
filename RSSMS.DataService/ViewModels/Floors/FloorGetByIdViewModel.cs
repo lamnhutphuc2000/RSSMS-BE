@@ -8,6 +8,7 @@ namespace RSSMS.DataService.ViewModels.Floors
     {
         public Guid Id { get; set; }
         public Guid SpaceId { get; set; }
+        public int SpaceType { get; set; }
         public string Name { get; set; }
         public double Usage { get; set; }
         public double Used { get; set; }

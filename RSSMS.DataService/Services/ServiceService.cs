@@ -27,16 +27,29 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IFirebaseService _firebaseService;
-        public ServiceService(IUnitOfWork unitOfWork, IServiceRepository repository, IMapper mapper, IFirebaseService firebaseService) : base(unitOfWork, repository)
+        private readonly IUtilService _utilService;
+        public ServiceService(IUnitOfWork unitOfWork, IServiceRepository repository, IMapper mapper, IFirebaseService firebaseService,
+            IUtilService utilService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _firebaseService = firebaseService;
+            _utilService = utilService;
         }
 
         public async Task<ServicesViewModel> Create(ServicesCreateViewModel model)
         {
             try
             {
+                _utilService.ValidateString(model.Image.File, " ảnh dịch vụ");
+                _utilService.ValidateString(model.Name, " tên dịch vụ");
+                _utilService.ValidateDecimal(model.Height, " chiều cao");
+                _utilService.ValidateDecimal(model.Width, " chiều rộng");
+                _utilService.ValidateDecimal(model.Length, " chiều dài");
+                _utilService.ValidateString(model.Description, " mô tả");
+                _utilService.ValidateString(model.Tooltip, " chú thích");
+                _utilService.ValidateDecimal(model.Price, "giá tiền");
+                _utilService.ValidateString(model.Unit, "đơn vị");
+
                 var service = _mapper.Map<Service>(model);
                 await CreateAsync(service);
                 var image = model.Image;
@@ -140,6 +153,14 @@ namespace RSSMS.DataService.Services
         {
             try
             {
+                _utilService.ValidateString(model.Name, " tên dịch vụ");
+                _utilService.ValidateDecimal(model.Width, " chiều rộng");
+                _utilService.ValidateDecimal(model.Length, " chiều dài");
+                _utilService.ValidateDecimal(model.Height, " chiều cao");
+                _utilService.ValidateString(model.Description, " mô tả");
+                _utilService.ValidateString(model.Tooltip, " chú thích");
+                _utilService.ValidateDecimal(model.Price, "giá tiền");
+                _utilService.ValidateString(model.Unit, "đơn vị");
 
                 if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Service Id not matched");
 

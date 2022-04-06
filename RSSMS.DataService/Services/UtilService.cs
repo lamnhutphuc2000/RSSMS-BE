@@ -16,6 +16,7 @@ namespace RSSMS.DataService.Services
         bool ValidatePhonenumber(string phonenumber);
         bool ValidateString(string input, string name);
         bool ValidateBirthDate(DateTime? date);
+        bool ValidateDecimal(Decimal? number, string name);
     }
     public class UtilService : IUtilService
     {
@@ -30,6 +31,13 @@ namespace RSSMS.DataService.Services
             DateTime zeroTime = new DateTime(1, 1, 1);
             int years = (zeroTime + span).Year - 1;
             if (years <= 17 || years >= 99) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập ngày sinh đúng");
+            return true;
+        }
+
+        public bool ValidateDecimal(decimal? number, string name)
+        {
+            if (number == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập " + name);
+            if(number < 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập " + name + " đúng");
             return true;
         }
 
@@ -98,7 +106,7 @@ namespace RSSMS.DataService.Services
         public bool ValidateString(string input, string name)
         {
             if (string.IsNullOrWhiteSpace(input)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập " + name);
-
+            
             return true;
         }
 
