@@ -404,6 +404,44 @@ namespace RSSMS.DataService.Services
                             {
                                 if(!flag)
                                 {
+                                    // get request return order
+                                    // nhớ check lại status
+                                    var requestsReturnOrder = await Get(request => request.IsActive && request.StorageId == floorInStorage.Key && request.Type == (int)RequestType.Return_Order && request.Status == 2).Include(request => request.Order).ThenInclude(order => order.OrderDetails).ToListAsync();
+                                    var ordersReturn = requestsReturnOrder.Select(request => request.Order).ToList();
+                                    foreach(var orderReturn in ordersReturn)
+                                    {
+                                        var ordersTmp = orderDetailList.Where(orderDetail => orderReturn.OrderDetails.Any(o => o.Id == orderDetail.Id));
+                                        foreach(var orderTmp in ordersTmp)
+                                            orderDetailList.Remove(orderTmp);
+                                    }
+
+                                    // get request đã được assign vào storage
+                                    var requestsAssignStorage = await Get(request => request.IsActive && request.StorageId == floorInStorage.Key && request.Type == (int)RequestType.Create_Order && request.Status == 2).Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
+                                    foreach(var requestAssignStorage in requestsAssignStorage)
+                                    {
+                                        var servicesInRequestDetail = requestAssignStorage.RequestDetails.Select(requestDetail => new
+                                        {
+                                            ServiceId = requestDetail.ServiceId,
+                                            Amount = requestDetail.Amount
+                                        }).ToList();
+                                        for (int i = 1; i <= services.Count; i++)
+                                        {
+                                            var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
+                                            if (service.Type != (int)ServiceType.Phu_kien)
+                                            {
+                                                if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+                                                if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
+                                                if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
+                                                if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
+                                                cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                            }
+
+                                        }
+                                    }
+                                    
+
+
+
                                     List<Cuboid> cuboidTmps = new List<Cuboid>();
                                     cuboidTmps.AddRange(cuboids);
                                     foreach (var orderDetail in orderDetailList)
