@@ -34,18 +34,28 @@ namespace RSSMS.DataService.Services
         private readonly IStaffAssignStorageService _staffAssignStoragesService;
         private readonly IAreaService _areaService;
         private readonly IFirebaseService _firebaseService;
-        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper, IStaffAssignStorageService staffAssignStoragesService, IAreaService areaService, IFirebaseService firebaseService) : base(unitOfWork, repository)
+        private readonly IUtilService _utilService;
+        public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper
+            , IStaffAssignStorageService staffAssignStoragesService, IAreaService areaService
+            , IFirebaseService firebaseService, IUtilService utilService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _staffAssignStoragesService = staffAssignStoragesService;
             _areaService = areaService;
             _firebaseService = firebaseService;
+            _utilService = utilService;
         }
 
         public async Task<StorageViewModel> Create(StorageCreateViewModel model)
         {
             try
             {
+                _utilService.ValidateString(model.Image.File, " ảnh kho");
+                _utilService.ValidateString(model.Name, " tên kho");
+                _utilService.ValidateString(model.Address, " địa chỉ kho");
+                _utilService.ValidateString(model.Image.File, " ảnh kho");
+
+
                 var storage = _mapper.Map<Storage>(model);
                 var image = model.Image;
                 await CreateAsync(storage);

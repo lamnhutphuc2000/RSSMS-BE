@@ -316,7 +316,7 @@ namespace RSSMS.DataService.Services
             foreach(var space in spaces)
             {
                 var floor = await _floorsService.GetBySpaceId(space.Id, date, isMany, isSelfStorage);
-                if(floor != null) result.Add(floor);
+                if(floor != null) result.AddRange(floor);
             }
             if (result.Count == 0) return null;
             return result;
