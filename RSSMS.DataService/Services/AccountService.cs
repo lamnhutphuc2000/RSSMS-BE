@@ -192,7 +192,7 @@ namespace RSSMS.DataService.Services
 
                 var result = accounts.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model).PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-                if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+                if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy");
                 var rs = new DynamicModelResponse<AccountViewModel>
                 {
                     Metadata = new PagingMetaData
@@ -267,7 +267,7 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidateString(model.Address, "Address");
 
                 Role role = _roleService.Get(role => role.Id == model.RoleId && role.IsActive).First();
-                if(role == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Role not found");
+                if(role == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập chức vụ");
 
                 // Create user to firebase
                 var autho = new FirebaseAuthProvider(new FirebaseConfig(FirebaseKeyConstant.apiKEY));
@@ -283,7 +283,7 @@ namespace RSSMS.DataService.Services
                 }
 
                 var account = await Get(account => account.Email == model.Email && account.IsActive).FirstOrDefaultAsync();
-                if (account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email existed");
+                if (account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email đã tồn tại");
 
                 // Create user to database
                 
