@@ -224,6 +224,7 @@ namespace RSSMS.DataService.Services
                 double serviceVolumne = 0;
 
                 int typeService = 1;
+                // check order detail customer order
                 foreach (var orderDetail in orderDetails)
                 {
                     height = Decimal.ToDouble((decimal)orderDetail.Height);
@@ -283,139 +284,175 @@ namespace RSSMS.DataService.Services
                     order.CustomerId = userId;
 
 
-                //int spaceType = 0;
-                //bool isMany = false;
-                //if (model.Type == (int)OrderType.Kho_tu_quan) spaceType = 1;
-                //if (model.Type == (int)OrderType.Giu_do_thue) spaceType = 0;
 
 
 
-                //decimal serviceMaxHeight = 0;
-                //decimal serviceMaxWidth = 0;
-                //decimal serviceMaxLength = 0;
-
-                //List<Cuboid> cuboids = new List<Cuboid>();
-                //// Lay kich thuoc cac service khach hang dat 
-                //var services = model.OrderDetails.Select(orderDetail => new
-                //{
-                //    Height = (decimal)orderDetail.Height,
-                //    Width = (decimal)orderDetail.Width,
-                //    Length = (decimal)orderDetail.Length
-                //}).ToList();
-                //for (int i = 1; i <= services.Count; i++)
-                //{
-                //    if (typeService == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
-                //    if (serviceMaxHeight < services[i].Height) serviceMaxHeight = services[i].Height;
-                //    if (serviceMaxWidth < services[i].Width) serviceMaxWidth = services[i].Width;
-                //    if (serviceMaxLength < services[i].Length) serviceMaxLength = services[i].Length;
-                //    cuboids.Add(new Cuboid(services[i].Width, services[i].Height, services[i].Length));
-                //}
+                int spaceType = 0;
+                bool isMany = false;
+                if (model.Type == (int)OrderType.Kho_tu_quan) spaceType = 1;
+                if (model.Type == (int)OrderType.Giu_do_thue) spaceType = 0;
 
 
+                // check xem còn nhân viên trong storage nào không 
+                if (model.Type == (int)OrderType.Giu_do_thue && !(bool)model.IsUserDelivery)
+                {
+                    var deliveryStaffs = await _accountService.GetStaff(storageId, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, false);
+                    if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
 
-                //// Check xem storage còn đủ chỗ không
-                //var floorInStorages = await _storageService.GetFloorWithStorage(storageId, spaceType, (DateTime)model.DeliveryDate, isMany);
+                }
 
-                //bool flag = false;
-                //bool deliFlag = true;
-                //if (floorInStorages == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+                decimal serviceMaxHeight = 0;
+                decimal serviceMaxWidth = 0;
+                decimal serviceMaxLength = 0;
 
-                //foreach (var floorInStorage in floorInStorages)
-                //{
-                //    if (!flag)
-                //    {
-                //        var floors = floorInStorage.Value.ToList();
-                //        List<OrderDetailInFloorViewModel> orderDetailList = new List<OrderDetailInFloorViewModel>();
-                //        List<FloorGetByIdViewModel> floorList = new List<FloorGetByIdViewModel>();
-                //        foreach (var floor in floors)
-                //        {
-                //            if (floor.Height >= serviceMaxHeight && floor.Width >= serviceMaxWidth && floor.Length >= serviceMaxLength)
-                //            {
-                //                floorList.Add(floor);
-                //                orderDetailList.AddRange(floor.OrderDetails);
-                //            }
-                //        }
-                //        foreach (var floorInList in floorList)
-                //        {
-                //            if (!flag)
-                //            {
-                //                // get request đã được assign vào storage
-                //                var requestsAssignStorage = await _requestService.Get(request => request.IsActive && request.TypeOrder == request.TypeOrder && request.Type == (int)RequestType.Create_Order && request.StorageId == floorInStorage.Key && request.Type == (int)RequestType.Create_Order && (request.Status == 2 || request.Status == 3))
-                //                    .Include(request => request.Order).ThenInclude(order => order.OrderDetails)
-                //                    .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
-                //                requestsAssignStorage = requestsAssignStorage.Where(request => (request.DeliveryDate <= request.DeliveryDate && request.ReturnDate >= request.DeliveryDate) || (request.DeliveryDate <= request.DeliveryDate && request.ReturnDate >= request.DeliveryDate)).ToList();
-                //                foreach (var requestAssignStorage in requestsAssignStorage)
-                //                {
-                //                    var servicesInRequestDetail = requestAssignStorage.RequestDetails.Select(requestDetail => new
-                //                    {
-                //                        ServiceId = (Guid)requestDetail.ServiceId,
-                //                        Height = (decimal?)null,
-                //                        Width = (decimal?)null,
-                //                        Length = (decimal?)null,
-                //                        Amount = (int)requestDetail.Amount
-                //                    }).ToList();
-                //                    if (requestAssignStorage.Order != null)
-                //                        servicesInRequestDetail = requestAssignStorage.Order.OrderDetails.Select(orderDetail => new
-                //                        {
-                //                            ServiceId = orderDetail.Id,
-                //                            Height = orderDetail.Height,
-                //                            Width = orderDetail.Width,
-                //                            Length = orderDetail.Length,
-                //                            Amount = 0
-                //                        }).ToList();
-                //                    for (int i = 1; i <= servicesInRequestDetail.Count; i++)
-                //                    {
-                //                        for (int j = 0; j < servicesInRequestDetail[i - 1].Amount; j++)
-                //                        {
-                //                            if (servicesInRequestDetail[i - 1].Amount != 0)
-                //                            {
-                //                                var service = _serviceService.Get(service => service.Id == servicesInRequestDetail[i - 1].ServiceId).FirstOrDefault();
-                //                                if (service.Type != (int)ServiceType.Phu_kien)
-                //                                {
-                //                                    if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
-                //                                    if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
-                //                                    if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
-                //                                    if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
-                //                                    cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
-                //                                }
-                //                            }
-                //                            else
-                //                            {
-                //                                cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, (decimal)servicesInRequestDetail[i - 1].Height, (decimal)servicesInRequestDetail[i - 1].Length));
-                //                            }
-                //                        }
-                //                    }
-                //                }
+                List<Cuboid> cuboids = new List<Cuboid>();
+                List<Guid> serviceList = new List<Guid>();
 
 
 
+                // Check xem storage còn đủ chỗ không
+                var floorInStorages = await _storageService.GetFloorWithStorage(storageId, spaceType, (DateTime)model.DeliveryDate, isMany);
 
-                //                List<Cuboid> cuboidTmps = new List<Cuboid>();
-                //                cuboidTmps.AddRange(cuboids);
-                //                foreach (var orderDetail in orderDetailList)
-                //                    cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, orderDetail.Id));
+                bool flag = false;
+                bool deliFlag = true;
+                if (floorInStorages == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
 
-                //                var parameter = new BinPackParameter(floorInList.Width, floorInList.Height, floorInList.Length, cuboids);
+                foreach (var floorInStorage in floorInStorages)
+                {
+                    int serviceNum = 0;
+                    if (!flag)
+                    {
+                        // Lay kich thuoc cac service khach hang dat 
+                        var orderDetailListTmp = model.OrderDetails.Select(orderDetail => new
+                        {
+                            OrderDetailId = Guid.NewGuid(),
+                            Height = (decimal)orderDetail.Height,
+                            Width = (decimal)orderDetail.Width,
+                            Length = (decimal)orderDetail.Length,
+                        }).ToList();
+                        for (int i = 1; i <= orderDetailListTmp.Count; i++)
+                        {
+                            if (typeService == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+                            if (serviceMaxHeight < orderDetailListTmp[i-1].Height) serviceMaxHeight = orderDetailListTmp[i - 1].Height;
+                            if (serviceMaxWidth < orderDetailListTmp[i - 1].Width) serviceMaxWidth = orderDetailListTmp[i - 1].Width;
+                            if (serviceMaxLength < orderDetailListTmp[i - 1].Length) serviceMaxLength = orderDetailListTmp[i - 1].Length;
+                            cuboids.Add(new Cuboid(orderDetailListTmp[i - 1].Width, orderDetailListTmp[i - 1].Height, orderDetailListTmp[i - 1].Length, 0, orderDetailListTmp[i-1].OrderDetailId));
+                            serviceList.Add(orderDetailListTmp[i-1].OrderDetailId);
+                            serviceNum++;
+                        }
 
-                //                var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
-                //                var result = binPacker.Pack(parameter);
-                //                if (result.BestResult.Count == 1)
-                //                    flag = true;
-                //                else
-                //                {
-                //                    foreach (var cuboid in result.BestResult.First())
-                //                    {
-                //                        var orderDetail = orderDetailList.Where(orderDetail => orderDetail.Id == (Guid)cuboid.Tag).FirstOrDefault();
-                //                        if (orderDetail != null) orderDetailList.Remove(orderDetail);
-                //                    }
-                //                }
-                //            }
-                //        }
-                //    }
-                //}
 
-                //if (!deliFlag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
-                //if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+
+                        var floors = floorInStorage.Value.ToList();
+                        List<OrderDetailInFloorViewModel> orderDetailList = new List<OrderDetailInFloorViewModel>();
+                        List<FloorGetByIdViewModel> floorList = new List<FloorGetByIdViewModel>();
+                        foreach (var floor in floors)
+                        {
+                            if (floor.Height >= serviceMaxHeight && floor.Width >= serviceMaxWidth && floor.Length >= serviceMaxLength)
+                            {
+                                floorList.Add(floor);
+                                orderDetailList.AddRange(floor.OrderDetails);
+                            }
+                        }
+                        if (floorList.Count < serviceNum && model.Type == (int)OrderType.Kho_tu_quan)
+                        {
+                            foreach (var floorInList in floorList)
+                            {
+                                if (!flag)
+                                {
+                                    // get request đã được assign vào storage
+                                    var requestsAssignStorage = await _requestService.Get(requests => requests.IsActive && requests.TypeOrder == model.Type && requests.Type == (int)RequestType.Create_Order && requests.StorageId == floorInStorage.Key && requests.Type == (int)RequestType.Create_Order && (requests.Status == 2 || requests.Status == 3))
+                                           .Include(requests => requests.Order).ThenInclude(order => order.OrderDetails)
+                                           .Include(requests => requests.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
+                                    requestsAssignStorage = requestsAssignStorage.Where(requests => (requests.DeliveryDate <= model.DeliveryDate && requests.ReturnDate >= model.DeliveryDate) || (model.DeliveryDate <= requests.DeliveryDate && model.ReturnDate >= requests.DeliveryDate)).ToList();
+                                    if (floorList.Count <= requestsAssignStorage.Count && model.Type == (int)OrderType.Kho_tu_quan)
+                                    {
+                                        foreach (var requestAssignStorage in requestsAssignStorage)
+                                        {
+                                            var servicesInRequestDetail = requestAssignStorage.RequestDetails.Select(requestDetail => new
+                                            {
+                                                ServiceId = (Guid)requestDetail.ServiceId,
+                                                Height = (decimal?)null,
+                                                Width = (decimal?)null,
+                                                Length = (decimal?)null,
+                                                Amount = (int)requestDetail.Amount
+                                            }).ToList();
+                                            if (requestAssignStorage.Order != null)
+                                                servicesInRequestDetail = requestAssignStorage.Order.OrderDetails.Select(orderDetail => new
+                                                {
+                                                    ServiceId = orderDetail.Id,
+                                                    Height = orderDetail.Height,
+                                                    Width = orderDetail.Width,
+                                                    Length = orderDetail.Length,
+                                                    Amount = 0
+                                                }).ToList();
+                                            for (int i = 1; i <= servicesInRequestDetail.Count; i++)
+                                            {
+                                                for (int j = 0; j < servicesInRequestDetail[i - 1].Amount; j++)
+                                                {
+                                                    if (servicesInRequestDetail[i - 1].Amount != 0)
+                                                    {
+                                                        var service = _serviceService.Get(service => service.Id == servicesInRequestDetail[i - 1].ServiceId).FirstOrDefault();
+                                                        if (service.Type != (int)ServiceType.Phu_kien)
+                                                        {
+                                                            if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+                                                            if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
+                                                            if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
+                                                            if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
+                                                            cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, (decimal)servicesInRequestDetail[i - 1].Height, (decimal)servicesInRequestDetail[i - 1].Length));
+                                                    }
+                                                }
+                                            }
+                                        }
+
+
+
+
+                                        List<Cuboid> cuboidTmps = new List<Cuboid>();
+                                        cuboidTmps.AddRange(cuboids);
+                                        foreach (var orderDetail in orderDetailList)
+                                            cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, orderDetail.Id));
+
+                                        var parameter = new BinPackParameter(floorInList.Width, floorInList.Height, floorInList.Length, cuboids);
+
+                                        var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                                        var result = binPacker.Pack(parameter);
+                                        if (result.BestResult.Count == 1)
+                                        {
+                                            flag = true;
+                                            if (model.Type == (int)OrderType.Giu_do_thue && !(bool)model.IsUserDelivery)
+                                            {
+                                                var deliveryStaffs = await _accountService.GetStaff(storageId, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, false);
+                                                if (deliveryStaffs.Count <= 0) deliFlag = false;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            foreach (var cuboid in result.BestResult.First())
+                                            {
+                                                var orderDetail = orderDetailList.Where(orderDetail => orderDetail.Id == (Guid)cuboid.Tag).FirstOrDefault();
+                                                if (orderDetail != null) orderDetailList.Remove(orderDetail);
+                                                var service = serviceList.Where(service => service == (Guid)cuboid.Tag).FirstOrDefault();
+                                                if (service != null) serviceList.Remove(service);
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+
+                    }
+                }
+
+                if (!deliFlag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+                if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+
 
 
 
