@@ -935,7 +935,7 @@ namespace RSSMS.DataService.Services
                 var customer = request.Customer;
                 if (customer == null) customer = request.CreatedByNavigation;
 
-                await _firebaseService.SendNoti("Nhân viên đang di chuyển đến để " + notiName, userId, customer.DeviceTokenId, request.Id, new
+                await _firebaseService.SendNoti("Nhân viên đang di chuyển đến để " + notiName, customer.Id, customer.DeviceTokenId, request.Id, new
                 {
                     Content = "Nhân viên đang di chuyển đến để " + notiName,
                     request.OrderId,
