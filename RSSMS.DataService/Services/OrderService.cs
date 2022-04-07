@@ -429,9 +429,11 @@ namespace RSSMS.DataService.Services
                                             if (typeService == (int)ServiceType.Gui_theo_dien_tich) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, orderDetail.Id));
                                             if (typeService != (int)ServiceType.Gui_theo_dien_tich) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, orderDetail.Id));
                                         }
-                                            
 
-                                        var parameter = new BinPackParameter(floorInList.Width, floorInList.Height, floorInList.Length, cuboids);
+
+                                        BinPackParameter parameter = null;
+                                        if (isMany) parameter = new BinPackParameter(floorInList.Width, 1, floorInList.Length, cuboids);
+                                        else parameter = new BinPackParameter(floorInList.Width, floorInList.Height, floorInList.Length, cuboids);
 
                                         var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
                                         var result = binPacker.Pack(parameter);
@@ -538,6 +540,10 @@ namespace RSSMS.DataService.Services
                 await _firebaseService.PushOrderNoti("New order arrive!", order.Id, null);
 
                 return model;
+            }
+            catch (InvalidOperationException)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order heigh, width, length overload");
             }
             catch (ErrorResponse e)
             {
@@ -855,6 +861,11 @@ namespace RSSMS.DataService.Services
                 var order = orders.First();
 
                 var orderDetails = order.OrderDetails;
+                bool isMany = false;
+                foreach(var orderDetailAssign in model.OrderDetailAssignFloor)
+                    if (orderDetailAssign.ServiceType == (int)ServiceType.Gui_theo_dien_tich)
+                        isMany = true;
+                var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Create_Order && request.Status == 3).First();
                 var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
@@ -865,11 +876,28 @@ namespace RSSMS.DataService.Services
                     if (orderDetail.Width > floor.Width) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
                     if (orderDetail.Length > floor.Length) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
                     var oldOrderDetail = _orderDetailService.Get(orderDetail => orderDetail.FloorId == floor.Id).ToList();
+
+                    // Check kho tự quản
+                    if (request.TypeOrder == (int)OrderType.Kho_tu_quan)
+                        if(oldOrderDetail.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor đã được xài");
+
                     List<Cuboid> cuboids = new List<Cuboid>();
                     for (int i = 0; i < oldOrderDetail.Count; i++)
-                        cuboids.Add(new Cuboid((decimal)oldOrderDetail[i].Width, (decimal)oldOrderDetail[i].Height, (decimal)oldOrderDetail[i].Length));
-                    cuboids.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length));
-                    var parameter = new BinPackParameter(floor.Width, floor.Height, floor.Length, cuboids);
+                    {
+                        if(isMany) cuboids.Add(new Cuboid((decimal)oldOrderDetail[i].Width, 1, (decimal)oldOrderDetail[i].Length));
+                        else cuboids.Add(new Cuboid((decimal)oldOrderDetail[i].Width, (decimal)oldOrderDetail[i].Height, (decimal)oldOrderDetail[i].Length));
+                    }
+                    BinPackParameter parameter = null;
+                    if(isMany)
+                    {
+                        cuboids.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length));
+                        parameter = new BinPackParameter(floor.Width, 1, floor.Length, cuboids);
+                    }
+                    else
+                    {
+                        cuboids.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length));
+                        parameter = new BinPackParameter(floor.Width, floor.Height, floor.Length, cuboids);
+                    }
 
                     var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
                     var result = binPacker.Pack(parameter);
@@ -894,7 +922,6 @@ namespace RSSMS.DataService.Services
                 order.OrderDetails = orderDetails;
                 order.Status = 2;
                 await UpdateAsync(order);
-                var request = order.Requests.Where(request => request.Type == (int)RequestType.Create_Order).First();
                 await _orderTimelineService.CreateAsync(new OrderTimeline
                 {
                     RequestId = request.Id,
@@ -906,6 +933,10 @@ namespace RSSMS.DataService.Services
 
 
                 return _mapper.Map<OrderViewModel>(order);
+            }
+            catch(InvalidOperationException)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order heigh, width, length overload");
             }
             catch (ErrorResponse e)
             {

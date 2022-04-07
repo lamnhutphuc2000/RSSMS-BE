@@ -6,5 +6,6 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
     {
         public Guid OrderDetailId { get; set; }
         public Guid FloorId { get; set; }
+        public int ServiceType { get; set; }
     }
 }

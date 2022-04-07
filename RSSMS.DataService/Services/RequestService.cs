@@ -798,9 +798,10 @@ namespace RSSMS.DataService.Services
                                             if(isMany) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, orderDetail.Id));
                                             else cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, orderDetail.Id));
                                         }
-                                            
 
-                                        var parameter = new BinPackParameter(floorInList.Width, floorInList.Height, floorInList.Length, cuboids);
+                                        BinPackParameter parameter = null;
+                                        if (isMany) parameter = new BinPackParameter(floorInList.Width, 1, floorInList.Length, cuboids);
+                                        else parameter = new BinPackParameter(floorInList.Width, floorInList.Height, floorInList.Length, cuboids);
 
                                         var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
                                         var result = binPacker.Pack(parameter);
