@@ -271,6 +271,10 @@ namespace RSSMS.DataService.Services
                     request.CreatedBy = userId;
 
                     await CreateAsync(request);
+                    var requestCreated = Get(x => x.Id == request.Id).Include(x => x.Order).FirstOrDefault();
+                    var requestList = Get(x => x.DeliveryDate == requestCreated.DeliveryDate && x.DeliveryTime == requestCreated.DeliveryTime && x.Status == 2).ToList();
+                    var deliveryStaffs = await _accountService.GetStaff(requestCreated.Order.StorageId, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, false);
+                    if (deliveryStaffs.Count - requestList.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
 
                     OrderHistoryExtension orderExtend = _mapper.Map<OrderHistoryExtension>(model);
                     orderExtend.ModifiedBy = userId;
@@ -305,6 +309,7 @@ namespace RSSMS.DataService.Services
                     request.CreatedBy = userId;
                     request.Status = 1;
                     await CreateAsync(request);
+                    var requestCreated = Get(x => x.Id == request.Id).Include(request => request.Order).FirstOrDefault();
 
                     await _orderTimelineService.CreateAsync(new OrderTimeline
                     {
@@ -314,6 +319,13 @@ namespace RSSMS.DataService.Services
                         Datetime = DateTime.Now,
                         Name = "Yêu cầu rút đồ về chờ xác nhận"
                     });
+
+                    var requestList = Get(x => x.DeliveryTime == requestCreated.DeliveryTime && x.DeliveryDate == requestCreated.DeliveryDate && request.Status == 2).ToList();
+                    // check xem còn nhân viên trong storage nào không 
+                    var deliveryStaffs = await _accountService.GetStaff(requestCreated.Order.StorageId, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, false);
+                    if (deliveryStaffs.Count - requestList.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+
+
 
                     newRequest = Get(x => x.Id == request.Id && x.IsActive == true).Include(request => request.Order)
                         .ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).ThenInclude(taffAssignStorage => taffAssignStorage.Staff).FirstOrDefault();
@@ -342,10 +354,11 @@ namespace RSSMS.DataService.Services
 
 
                     // check xem còn nhân viên trong storage nào không 
+                    var requestList = Get(x => x.DeliveryDate == model.DeliveryDate && x.DeliveryTime == model.DeliveryTime && x.Status == 2).ToList();
                     if (model.TypeOrder == (int)OrderType.Giu_do_thue && !(bool)model.IsCustomerDelivery)
                     {
                         var deliveryStaffs = await _accountService.GetStaff(null, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, true);
-                        if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+                        if (deliveryStaffs.Count - requestList.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
 
                     }
 
@@ -485,8 +498,9 @@ namespace RSSMS.DataService.Services
                                                 flag = true;
                                                 if (model.TypeOrder == (int)OrderType.Giu_do_thue && !(bool)model.IsCustomerDelivery)
                                                 {
+                                                    requestList = Get(x => x.DeliveryDate == model.DeliveryDate && x.DeliveryTime == model.DeliveryTime && x.Status == 2 && x.StorageId == floorInStorage.Key).ToList();
                                                     var deliveryStaffs = await _accountService.GetStaff(floorInStorage.Key, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, false);
-                                                    if (deliveryStaffs.Count <= 0) deliFlag = false;
+                                                    if (deliveryStaffs.Count - requestList.Count <= 0) deliFlag = false;
                                                 }
                                             }
                                             else
@@ -660,10 +674,11 @@ namespace RSSMS.DataService.Services
 
 
                 // check xem còn nhân viên trong storage nào không 
+                var requestList = Get(x => x.DeliveryDate == request.DeliveryDate && x.DeliveryTime == request.DeliveryTime && x.Status == 2).ToList();
                 if (request.TypeOrder == (int)OrderType.Giu_do_thue && !(bool)request.IsCustomerDelivery)
                 {
                     var deliveryStaffs = await _accountService.GetStaff(model.StorageId, accessToken, new List<string> { "Delivery Staff" }, request.DeliveryDate, new List<string> { request.DeliveryTime }, false);
-                    if (deliveryStaffs.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+                    if (deliveryStaffs.Count - requestList.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
 
                 }
 
@@ -810,8 +825,9 @@ namespace RSSMS.DataService.Services
                                             flag = true;
                                             if (request.TypeOrder == (int)OrderType.Giu_do_thue && !(bool)request.IsCustomerDelivery)
                                             {
+                                                requestList = Get(x => x.DeliveryDate == request.DeliveryDate && x.DeliveryTime == request.DeliveryTime && x.Status == 2 && x.StorageId == model.StorageId).ToList();
                                                 var deliveryStaffs = await _accountService.GetStaff(floorInStorage.Key, accessToken, new List<string> { "Delivery Staff" }, request.DeliveryDate, new List<string> { request.DeliveryTime }, false);
-                                                if (deliveryStaffs.Count <= 0) deliFlag = false;
+                                                if (deliveryStaffs.Count - requestList.Count <= 0) deliFlag = false;
                                             }
                                         }
                                         else
