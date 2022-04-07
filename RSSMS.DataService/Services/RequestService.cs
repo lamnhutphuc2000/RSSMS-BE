@@ -192,7 +192,7 @@ namespace RSSMS.DataService.Services
                     .Include(request => request.Storage)
                     .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
                     .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
-                    
+
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
@@ -224,7 +224,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
         public async Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken)
@@ -281,7 +281,7 @@ namespace RSSMS.DataService.Services
                     if (request.Order.Type == (int)OrderType.Kho_tu_quan) spaceType = 1;
                     if (request.Order.Type == (int)OrderType.Giu_do_thue) spaceType = 0;
                     var orderDetails = request.Order.OrderDetails;
-                    foreach(var orderDetail in orderDetails)
+                    foreach (var orderDetail in orderDetails)
                     {
                         var servicesIds = orderDetail.OrderDetailServiceMaps.Select(service => new { ServiceId = service.ServiceId, Amount = service.Amount });
 
@@ -303,7 +303,7 @@ namespace RSSMS.DataService.Services
 
 
                     // Check xem storage còn đủ chỗ không
-                    var floorInStorages = await _storageService.GetFloorWithStorage(request.Order.StorageId, spaceType, (DateTime)model.DeliveryDate, isMany);
+                    var floorInStorages = await _storageService.GetFloorWithStorage(request.Order.StorageId, spaceType, (DateTime)model.ReturnDate, isMany);
 
                     bool flag = false;
                     if (floorInStorages == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
@@ -468,9 +468,10 @@ namespace RSSMS.DataService.Services
                         Name = "Yêu cầu gia hạn đơn chờ xác nhận"
                     });
 
-                    var staffAssignInStorage = _orderHistoryExtensionService.Get(x => x.OrderId == model.OrderId).Include(x => x.Order).ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).ThenInclude(staffAssignInStorage => staffAssignInStorage.Staff).Select(x => x.Order.Storage.StaffAssignStorages.FirstOrDefault()).FirstOrDefault();
+                    var requestTmp = Get(x => x.Id == request.Id).Include(x => x.Order).ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staff => staff.RoleName == "Manager" && staff.IsActive == true)).ThenInclude(staffAssignInStorage => staffAssignInStorage.Staff).Select(x => x.Order.Storage.StaffAssignStorages.FirstOrDefault()).FirstOrDefault();
 
-                    await _firebaseService.SendNoti("Customer " + userId + " expand the order: " + model.OrderId, userId, staffAssignInStorage.Staff.DeviceTokenId, request.Id, new
+
+                    await _firebaseService.SendNoti("Customer " + userId + " expand the order: " + model.OrderId, userId, requestTmp.Staff.DeviceTokenId, request.Id, new
                     {
                         Content = "Customer " + userId + " expand the order: " + model.OrderId,
                         model.OrderId,
@@ -523,7 +524,7 @@ namespace RSSMS.DataService.Services
                 }
                 if (model.Type == (int)RequestType.Create_Order) // customer tao yeu cau tao don
                 {
-                    
+
                     int spaceType = 0;
                     bool isMany = false;
                     if (model.TypeOrder == (int)OrderType.Kho_tu_quan) spaceType = 1;
@@ -542,7 +543,7 @@ namespace RSSMS.DataService.Services
                     decimal serviceMaxHeight = 0;
                     decimal serviceMaxWidth = 0;
                     decimal serviceMaxLength = 0;
-                    
+
                     List<Cuboid> cuboids = new List<Cuboid>();
                     List<Service> serviceList = new List<Service>();
 
@@ -562,7 +563,7 @@ namespace RSSMS.DataService.Services
                     }
 
                     // Check xem storage còn đủ chỗ không
-                    var floorInStorages = await _storageService.GetFloorWithStorage(null,spaceType,(DateTime)model.DeliveryDate, isMany);
+                    var floorInStorages = await _storageService.GetFloorWithStorage(null, spaceType, (DateTime)model.DeliveryDate, isMany);
 
                     bool flag = false;
                     bool deliFlag = true;
@@ -590,7 +591,7 @@ namespace RSSMS.DataService.Services
                                         if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
                                         if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
                                         if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
-                                        if(service.Type == (int)ServiceType.Gui_theo_dien_tich) cuboids.Add(new Cuboid(service.Width, 1, service.Length, 0, service.Id));
+                                        if (service.Type == (int)ServiceType.Gui_theo_dien_tich) cuboids.Add(new Cuboid(service.Width, 1, service.Length, 0, service.Id));
                                         if (service.Type != (int)ServiceType.Gui_theo_dien_tich) cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
                                         serviceList.Add(service);
                                         serviceNum++;
@@ -609,7 +610,7 @@ namespace RSSMS.DataService.Services
                                     orderDetailList.AddRange(floor.OrderDetails);
                                 }
                             }
-                            if(!(floorList.Count < serviceNum && model.TypeOrder == (int) OrderType.Kho_tu_quan))
+                            if (!(floorList.Count < serviceNum && model.TypeOrder == (int)OrderType.Kho_tu_quan))
                             {
                                 foreach (var floorInList in floorList)
                                 {
@@ -654,14 +655,14 @@ namespace RSSMS.DataService.Services
                                                                 if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
                                                                 if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
                                                                 if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
-                                                                
-                                                                if(isMany) cuboids.Add(new Cuboid(service.Width, 1, service.Length, 0, service.Id));
+
+                                                                if (isMany) cuboids.Add(new Cuboid(service.Width, 1, service.Length, 0, service.Id));
                                                                 else cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
                                                             }
                                                         }
                                                         else
                                                         {
-                                                            if(isMany) cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, 1, (decimal)servicesInRequestDetail[i - 1].Length));
+                                                            if (isMany) cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, 1, (decimal)servicesInRequestDetail[i - 1].Length));
                                                             else cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, (decimal)servicesInRequestDetail[i - 1].Height, (decimal)servicesInRequestDetail[i - 1].Length));
 
                                                         }
@@ -676,12 +677,12 @@ namespace RSSMS.DataService.Services
                                             cuboidTmps.AddRange(cuboids);
                                             foreach (var orderDetail in orderDetailList)
                                             {
-                                                if(isMany) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, orderDetail.Id));
+                                                if (isMany) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, orderDetail.Id));
                                                 else cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, orderDetail.Id));
                                             }
 
                                             BinPackParameter parameter = null;
-                                            if(isMany) parameter = new BinPackParameter(floorInList.Width, 1, floorInList.Length, cuboids);
+                                            if (isMany) parameter = new BinPackParameter(floorInList.Width, 1, floorInList.Length, cuboids);
                                             else parameter = new BinPackParameter(floorInList.Width, floorInList.Height, floorInList.Length, cuboids);
                                             var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
                                             var result = binPacker.Pack(parameter);
@@ -706,18 +707,18 @@ namespace RSSMS.DataService.Services
                                                 }
                                             }
                                         }
-                                        
+
                                     }
                                 }
                             }
-                            
+
                         }
                     }
 
-                    if(!deliFlag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
+                    if (!deliFlag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
                     if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
 
-                    
+
 
 
                     request = _mapper.Map<Request>(model);
@@ -791,8 +792,10 @@ namespace RSSMS.DataService.Services
 
                 request.Status = model.Status;
 
-                if(request.Type == (int) RequestType.Extend_Order)
+                if (request.Type == (int)RequestType.Extend_Order)
                 {
+
+
                     OrderHistoryExtension orderExtend = _mapper.Map<OrderHistoryExtension>(model);
                     orderExtend.ModifiedBy = userId;
                     orderExtend.RequestId = request.Id;
@@ -801,9 +804,9 @@ namespace RSSMS.DataService.Services
 
                     List<OrderHistoryExtensionServiceMap> orderExtendService = new List<OrderHistoryExtensionServiceMap>();
                     var orderDetails = request.Order.OrderDetails.ToList();
-                    foreach(var orderDetail in orderDetails)
+                    foreach (var orderDetail in orderDetails)
                     {
-                        foreach(var service in orderDetail.OrderDetailServiceMaps.ToList())
+                        foreach (var service in orderDetail.OrderDetailServiceMaps.ToList())
                         {
                             var serviceExtend = new OrderHistoryExtensionServiceMap()
                             {
@@ -815,14 +818,17 @@ namespace RSSMS.DataService.Services
                             orderExtendService.Add(serviceExtend);
                         }
                     }
-                    if(orderExtendService.Count > 0)
+                    if (orderExtendService.Count > 0)
                     {
                         orderExtend.OrderHistoryExtensionServiceMaps = orderExtendService;
+                        var order = orderExtend.Order;
+                        order.ReturnDate = orderExtend.ReturnDate;
+                        orderExtend.Order = order;
                         await _orderHistoryExtensionService.UpdateAsync(orderExtend);
                     }
                 }
 
-                
+
 
                 if (model.IsPaid == null)
                 {
@@ -873,7 +879,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
         public async Task<RequestByIdViewModel> AssignStorage(RequestAssignStorageViewModel model, string accessToken)
@@ -913,7 +919,7 @@ namespace RSSMS.DataService.Services
                 decimal serviceMaxHeight = 0;
                 decimal serviceMaxWidth = 0;
                 decimal serviceMaxLength = 0;
-                
+
                 List<Cuboid> cuboids = new List<Cuboid>();
                 List<Service> serviceList = new List<Service>();
 
@@ -1031,8 +1037,8 @@ namespace RSSMS.DataService.Services
                                                             if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
                                                             if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
                                                             if (isMany) cuboids.Add(new Cuboid(service.Width, 1, service.Length, 0, service.Id));
-                                                            if(!isMany) cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
-                                                            
+                                                            if (!isMany) cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+
                                                         }
                                                     }
                                                     else
@@ -1053,7 +1059,7 @@ namespace RSSMS.DataService.Services
                                         cuboidTmps.AddRange(cuboids);
                                         foreach (var orderDetail in orderDetailList)
                                         {
-                                            if(isMany) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, orderDetail.Id));
+                                            if (isMany) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, orderDetail.Id));
                                             else cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, orderDetail.Id));
                                         }
 
@@ -1084,11 +1090,11 @@ namespace RSSMS.DataService.Services
                                             }
                                         }
                                     }
-                                    
+
                                 }
                             }
                         }
-                        
+
                     }
                 }
 
@@ -1159,7 +1165,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
         public async Task<RequestByIdViewModel> DeliverRequest(Guid id, string accessToken)
@@ -1211,7 +1217,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
         public async Task<RequestByIdViewModel> DeliverySendRequestNotification(Guid id, string message, string accessToken)
@@ -1257,7 +1263,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
     }
 }
