@@ -67,6 +67,8 @@ namespace RSSMS.DataService.ViewModels.Requests
         public int? DurationDays { get; set; }
         [JsonProperty("durationMonths")]
         public int? DurationMonths { get; set; }
+        [JsonProperty("oldReturnDate")]
+        public DateTime? OldReturnDate { get; set; }
         [JsonProperty("dequestDetails")]
         public virtual ICollection<RequestDetailViewModel> RequestDetails { get; set; }
         //[BindNever]
