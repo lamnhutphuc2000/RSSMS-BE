@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.OrderAdditionalFees;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.OrderHistoryExtension;

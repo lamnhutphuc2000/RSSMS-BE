@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RSSMS.DataService.ViewModels.OrderAdditionalFees
+﻿namespace RSSMS.DataService.ViewModels.OrderAdditionalFees
 {
     public class OrderAdditionalFeeCreateViewModel
     {

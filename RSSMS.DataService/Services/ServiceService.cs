@@ -71,7 +71,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
         public async Task<ServicesViewModel> Delete(Guid id)
@@ -92,7 +92,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
         public async Task<Dictionary<string, List<ServicesViewModel>>> GetAll(ServicesViewModel model)
@@ -124,7 +124,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
         public async Task<ServicesViewModel> GetById(Guid id)

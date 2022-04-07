@@ -135,6 +135,19 @@ namespace RSSMS.DataService.Services
                         .Include(request => request.Storage)
                         .Include(request => request.Order).ThenInclude(order => order.Storage);
                 }
+                if (role == "Office Staff")
+                {
+                    if (secureToken.Claims.First(claim => claim.Type == "storage_id").Value != null)
+                    {
+                        var storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
+                        requests = requests.Where(request => request.StorageId == storageId || request.Order.StorageId == storageId || request.StorageId == null)
+                                    .Include(request => request.Customer)
+                                    .Include(request => request.Schedules)
+                                    .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
+                                    .Include(request => request.Storage)
+                                    .Include(request => request.Order).ThenInclude(order => order.Storage);
+                    }
+                }
 
                 if (role == "Delivery Staff")
                 {
@@ -213,7 +226,7 @@ namespace RSSMS.DataService.Services
                 if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
                 if (result.Type != 2) return result;
                 var orderHistoryExtension = _orderHistoryExtensionService.Get(orderHistory => orderHistory.RequestId == result.Id).FirstOrDefault();
-                if(orderHistoryExtension != null)result.TotalPrice = orderHistoryExtension.TotalPrice;
+                if (orderHistoryExtension != null) result.TotalPrice = orderHistoryExtension.TotalPrice;
                 return result;
             }
             catch (ErrorResponse e)
@@ -311,7 +324,7 @@ namespace RSSMS.DataService.Services
                         Delete(request);
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
                     }
-                        
+
 
                     foreach (var floorInStorage in floorInStorages)
                     {
@@ -463,7 +476,7 @@ namespace RSSMS.DataService.Services
                         Delete(request);
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
                     }
-                        
+
 
 
 
@@ -806,10 +819,14 @@ namespace RSSMS.DataService.Services
                 {
 
 
-                    OrderHistoryExtension orderExtend = _mapper.Map<OrderHistoryExtension>(model);
+                    OrderHistoryExtension orderExtend = new OrderHistoryExtension();
+                    orderExtend.OldReturnDate = (DateTime)request.Order.ReturnDate;
+                    orderExtend.PaidDate = DateTime.Now;
+                    orderExtend.TotalPrice = (decimal)request.TotalPrice;
                     orderExtend.ModifiedBy = userId;
                     orderExtend.RequestId = request.Id;
                     orderExtend.OrderId = (Guid)request.OrderId;
+                    orderExtend.ReturnDate = (DateTime)request.ReturnDate;
                     await _orderHistoryExtensionService.CreateAsync(orderExtend);
 
                     List<OrderHistoryExtensionServiceMap> orderExtendService = new List<OrderHistoryExtensionServiceMap>();

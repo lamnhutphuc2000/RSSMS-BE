@@ -1,5 +1,4 @@
-﻿using RSSMS.DataService.Models;
-using RSSMS.DataService.ViewModels.OrderAdditionalFees;
+﻿using RSSMS.DataService.ViewModels.OrderAdditionalFees;
 using System;
 using System.Collections.Generic;
 

@@ -56,7 +56,7 @@ namespace RSSMS.API.Controllers
         public async Task<IActionResult> GetById(Guid id)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            return Ok(await _requestService.GetById(id,accessToken));
+            return Ok(await _requestService.GetById(id, accessToken));
         }
         /// <summary>
         /// Create request

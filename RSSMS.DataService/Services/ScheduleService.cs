@@ -86,7 +86,7 @@ namespace RSSMS.DataService.Services
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
 
-            
+
         }
 
         public async Task<DynamicModelResponse<ScheduleViewModel>> Get(ScheduleSearchViewModel model, string[] fields, int page, int size, string accessToken)
@@ -186,7 +186,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
     }
 }

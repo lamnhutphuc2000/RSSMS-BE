@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
@@ -60,7 +59,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, "" + ex.Message);
             }
-            
+
         }
 
         public async Task<NotificationUpdateViewModel> Update(NotificationUpdateViewModel model, string accessToken)
@@ -94,7 +93,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, "" + ex.Message);
             }
-            
+
         }
     }
 }

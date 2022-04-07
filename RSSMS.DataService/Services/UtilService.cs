@@ -1,15 +1,13 @@
 ﻿using RSSMS.DataService.Responses;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace RSSMS.DataService.Services
 {
-    public interface IUtilService 
+    public interface IUtilService
     {
         bool ValidateEmail(string email);
         bool ValidatePassword(string password);
@@ -38,7 +36,7 @@ namespace RSSMS.DataService.Services
         public bool ValidateDecimal(decimal? number, string name)
         {
             if (number == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập " + name);
-            if(number < 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập " + name + " đúng");
+            if (number < 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập " + name + " đúng");
             return true;
         }
 
@@ -46,7 +44,7 @@ namespace RSSMS.DataService.Services
         {
             if (string.IsNullOrWhiteSpace(email)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tài khoản / mật khẩu không đúng");
             string[] list = new[] { "~", "`", "!", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "\"" };
-            if(list.Any(email.Contains)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email contains special character");
+            if (list.Any(email.Contains)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email contains special character");
             try
             {
                 // Normalize the domain
@@ -95,15 +93,15 @@ namespace RSSMS.DataService.Services
         public bool ValidatePassword(string password)
         {
             if (string.IsNullOrWhiteSpace(password)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tài khoản / mật khẩu không đúng");
-            if(password.Length <= 5) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập mật khẩu hơn 6 ký tự");
+            if (password.Length <= 5) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập mật khẩu hơn 6 ký tự");
             return true;
         }
 
         public bool ValidatePhonenumber(string phonenumber)
         {
             if (string.IsNullOrWhiteSpace(phonenumber)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại");
-            if(phonenumber.Length != 10) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại đúng");
-            if(!phonenumber.First().Equals('0')) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại đúng");
+            if (phonenumber.Length != 10) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại đúng");
+            if (!phonenumber.First().Equals('0')) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại đúng");
             var regexItem = new Regex("^[0-9 ]*$");
 
             if (!regexItem.IsMatch(phonenumber)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại đúng");
@@ -113,7 +111,7 @@ namespace RSSMS.DataService.Services
         public bool ValidateString(string input, string name)
         {
             if (string.IsNullOrWhiteSpace(input)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập " + name);
-            
+
             return true;
         }
 

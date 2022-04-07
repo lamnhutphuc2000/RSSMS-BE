@@ -100,7 +100,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
         public async Task<StaffAssignStorageCreateViewModel> Create(StaffAssignStorageCreateViewModel model)
@@ -121,7 +121,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-           
+
         }
     }
 }

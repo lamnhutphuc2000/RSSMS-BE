@@ -65,7 +65,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
     }

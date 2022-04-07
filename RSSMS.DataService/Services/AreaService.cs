@@ -11,7 +11,6 @@ using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Areas;
 using RSSMS.DataService.ViewModels.Floors;
-using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Spaces;
 using System;
 using System.Collections.Generic;
@@ -53,7 +52,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 // Validate input
-                _utilService.ValidateString(model.Name,"tên khu vực");
+                _utilService.ValidateString(model.Name, "tên khu vực");
                 _utilService.ValidateString(model.Description, "giới thiệu khu vực");
                 _utilService.ValidateDecimal(model.Width, " chiều rộng khu vực");
                 _utilService.ValidateDecimal(model.Height, " chiều cao khu vực");
@@ -98,9 +97,9 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
             }
-            catch(InvalidOperationException)
+            catch (InvalidOperationException)
             {
-                if(areaToCreate != null )await DeleteAsync(areaToCreate);
+                if (areaToCreate != null) await DeleteAsync(areaToCreate);
                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
             }
             catch (Exception ex)
@@ -157,7 +156,7 @@ namespace RSSMS.DataService.Services
                     result.Available = (double)(area.Height * area.Width * area.Length);
                 }
 
-                if(area.Height == null || area.Width == null || area.Length == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area height, width, length can not be null");
+                if (area.Height == null || area.Width == null || area.Length == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area height, width, length can not be null");
 
                 // Get usage inside of each space in space list
                 double usage = 0;
@@ -191,7 +190,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
         public async Task<DynamicModelResponse<AreaViewModel>> GetByStorageId(Guid id, AreaViewModel model, List<int> types, string[] fields, int page, int size)
@@ -256,14 +255,15 @@ namespace RSSMS.DataService.Services
                 if (anotherArea != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
 
                 AreaDetailViewModel area = await GetById(id);
-                if(area.Used > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area is already in used");
+                if (area.Used > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area is already in used");
 
                 // check area update size
                 if (entity.Height != model.Height || entity.Length != model.Length || entity.Width != model.Width)
                 {
                     // Check is Storage oversize
                     entity = Get(area => area.Id == id).Include(area => area.Storage)
-                        .ThenInclude(storage => storage.Areas).FirstOrDefault();
+                        .ThenInclude(storage => storage.Areas)
+                        .FirstOrDefault();
 
                     var storage = entity.Storage;
                     var areaList = storage.Areas.Where(area => area.IsActive).ToList();
@@ -272,7 +272,7 @@ namespace RSSMS.DataService.Services
                     for (int i = 0; i < areaList.Count; i++)
                     {
                         // Check if the area is the area to updated
-                        if(areaList[i].Id == id)
+                        if (areaList[i].Id == id)
                             cuboids.Add(new Cuboid((decimal)model.Width, (decimal)model.Height, (decimal)model.Length));
                         else
                             cuboids.Add(new Cuboid((decimal)areaList[i].Width, (decimal)areaList[i].Height, (decimal)areaList[i].Length));
@@ -282,10 +282,36 @@ namespace RSSMS.DataService.Services
                     var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
                     var result = binPacker.Pack(parameter);
                     if (result.BestResult.Count > 1)
-                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích thước khu vực vượt quá kích thước kho");
+
+
+                    cuboids = new List<Cuboid>();
+                    cuboids.Add(new Cuboid((decimal)model.Width, (decimal)model.Height, (decimal)model.Length));
+                    var floorsInSpaces = area.SpacesInArea.Select(x => x.Floors.ToList()).ToList();
+                    foreach (var space in floorsInSpaces)
+                    {
+                        foreach (var floor in space)
+                        {
+                            cuboids.Add(new Cuboid((decimal)floor.Width, (decimal)floor.Height, (decimal)floor.Length));
+                        }
+                    }
+
+                    parameter = new BinPackParameter(storage.Width, storage.Height, storage.Length, cuboids);
+
+                    binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                    try
+                    {
+                        result = binPacker.Pack(parameter);
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích thước khu vực quá nhỏ so với không gian bên trong đã được tạo");
+                    }
+                    if (result.BestResult.Count > 1)
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích thước khu vực quá nhỏ so với không gian bên trong đã được tạo");
                 }
 
-                
+
 
                 Area updateEntity = _mapper.Map(model, entity);
                 await UpdateAsync(updateEntity);
@@ -325,7 +351,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
         public async Task<List<FloorGetByIdViewModel>> GetFloorOfArea(Guid storageId, int spaceType, DateTime date, bool isMany)

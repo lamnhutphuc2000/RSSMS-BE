@@ -65,7 +65,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 List<Floor> floors = Get(floor => floor.SpaceId == spaceId && floor.IsActive).ToList();
-                if(floors.Any(floor => floor.OrderDetails.Count > 0)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor is in used");
+                if (floors.Any(floor => floor.OrderDetails.Count > 0)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor is in used");
                 foreach (var floor in floors)
                 {
                     floor.IsActive = false;
@@ -104,7 +104,7 @@ namespace RSSMS.DataService.Services
                         floorToResult.Used = floorUsage[1];
                         floorToResult.Available = floorUsage[2];
                     }
-                        
+
                     result.Add(floorToResult);
                 }
                 result.Sort();
@@ -149,7 +149,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, "" + ex.Message);
             }
-            
+
         }
 
         public async Task<List<double>> GetFloorUsage(Guid floorId, DateTime? date)
@@ -174,21 +174,21 @@ namespace RSSMS.DataService.Services
                     floorUsage.Add(floorVolume);
                 }
                 double totalVolume = 0;
-                foreach(var orderDetail in orderDetails)
+                foreach (var orderDetail in orderDetails)
                     totalVolume += (double)(orderDetail.Height * orderDetail.Width * orderDetail.Length);
 
-                
+
                 double usage = totalVolume * 100 / floorVolume;
                 floorUsage.Add(usage);
                 floorUsage.Add(totalVolume);
                 floorUsage.Add(floorVolume - totalVolume);
                 return floorUsage;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, "" + ex.Message);
             }
-            
+
         }
         public async Task<List<FloorGetByIdViewModel>> GetBySpaceId(Guid spaceId, DateTime date, bool isMany, bool isSelfStorage)
         {
@@ -200,7 +200,7 @@ namespace RSSMS.DataService.Services
                 .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer)
                 .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
                 .ToListAsync();
-                if(isSelfStorage)
+                if (isSelfStorage)
                 {
                     floors = await Get(floor => floor.SpaceId == spaceId && floor.IsActive && floor.Name == "Tầng trệt")
                         .Include(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
@@ -209,7 +209,7 @@ namespace RSSMS.DataService.Services
                         .Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
                         .ToListAsync();
                 }
-                if(isMany)
+                if (isMany)
                 {
                     floors = await Get(floor => floor.SpaceId == spaceId && floor.IsActive && floor.Name == "Tầng trệt")
                         .Include(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
@@ -220,7 +220,7 @@ namespace RSSMS.DataService.Services
                 }
                 if (floors == null) return null;
 
-                foreach(var floor in floors)
+                foreach (var floor in floors)
                 {
                     var orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.Order.DeliveryDate <= date && orderDetail.Order.ReturnDate >= date).ToList();
                     if (isSelfStorage && orderDetails.Count > 0) return null;
@@ -229,7 +229,7 @@ namespace RSSMS.DataService.Services
 
 
                 var result = floors.AsQueryable().ProjectTo<FloorGetByIdViewModel>(_mapper.ConfigurationProvider).ToList();
-                
+
                 return result;
             }
             catch (ErrorResponse e)

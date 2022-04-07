@@ -37,7 +37,7 @@ namespace RSSMS.DataService.AutoMapper
             //.ForMember(des => des.Price, opt => opt.MapFrom(src => src.Service.Price));
             mc.CreateMap<OrderDetailByIdViewModel, OrderDetail>();
 
-            
+
             mc.CreateMap<OrderDetail, OrderDetailInFloorViewModel>()
                 .ForMember(des => des.OrderStatus, opt => opt.MapFrom(src => (src.Order.ReturnDate - DateTime.Now).Value.Days > 0 ? (int?)(src.Order.ReturnDate - DateTime.Now).Value.Days <= 3 ? 3 : src.Order.Status : 4))
                 .ForMember(des => des.FloorName, opt => opt.MapFrom(src => src.Floor.Name))

@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
-using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.OrderAdditionalFees;
 using RSSMS.DataService.ViewModels.OrderHistoryExtension;
 using System;

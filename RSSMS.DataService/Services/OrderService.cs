@@ -11,14 +11,11 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Floors;
-using RSSMS.DataService.ViewModels.Images;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Orders;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -81,7 +78,7 @@ namespace RSSMS.DataService.Services
                 .FirstOrDefaultAsync();
                 if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
                 var request = result.Requests;
-                if (requestTypes.Count > 0) return result;
+                if (requestTypes.Count == 0) return result;
 
                 request = request.Where(request => requestTypes.Contains((int)request.Type)).ToList();
                 result.Requests = request;
@@ -151,16 +148,16 @@ namespace RSSMS.DataService.Services
                 if (role == "Office Staff")
                 {
                     Guid? storageId = null;
-                    if(secureToken.Claims.First(claim => claim.Type == "storage_id").Value != null) 
+                    if (secureToken.Claims.First(claim => claim.Type == "storage_id").Value != null)
                         storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
-                    if(storageId != null)
-                    order = order.Where(order => order.StorageId == storageId || order.StorageId == null)
-                        .Include(order => order.OrderHistoryExtensions)
-                        .Include(order => order.Storage)
-                        .Include(order => order.Requests).ThenInclude(request => request.Schedules)
-                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
-                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
-                        .Include(order => order.OrderAdditionalFees);
+                    if (storageId != null)
+                        order = order.Where(order => order.StorageId == storageId || order.StorageId == null)
+                            .Include(order => order.OrderHistoryExtensions)
+                            .Include(order => order.Storage)
+                            .Include(order => order.Requests).ThenInclude(request => request.Schedules)
+                            .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                            .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                            .Include(order => order.OrderAdditionalFees);
                 }
 
                 if (role == "Customer")
@@ -203,7 +200,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
         public async Task<OrderCreateViewModel> Create(OrderCreateViewModel model, string accessToken)
@@ -241,10 +238,10 @@ namespace RSSMS.DataService.Services
                         serviceWidth += Decimal.ToDouble((decimal)service.Width);
                         serviceLength += Decimal.ToDouble((decimal)service.Length);
                         serviceVolumne = (int)serviceId.Amount * serviceHeight * serviceLength * serviceWidth;
-                        
+
                     }
 
-                    if(serviceHeight < height || serviceLength < length || serviceWidth < width || serviceVolumne < volumne)
+                    if (serviceHeight < height || serviceLength < length || serviceWidth < width || serviceVolumne < volumne)
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail is bigger than service");
                 }
 
@@ -327,7 +324,7 @@ namespace RSSMS.DataService.Services
                         }).ToList();
                         for (int i = 1; i <= orderDetailListTmp.Count; i++)
                         {
-                            if(orderDetailListTmp[i-1].Width == 0 && orderDetailListTmp[i-1].Height == 0 && orderDetailListTmp[i-1].Length == 0 )
+                            if (orderDetailListTmp[i - 1].Width == 0 && orderDetailListTmp[i - 1].Height == 0 && orderDetailListTmp[i - 1].Length == 0)
                             {
                                 if (typeService == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
                                 if (serviceMaxHeight < orderDetailListTmp[i - 1].Height) serviceMaxHeight = orderDetailListTmp[i - 1].Height;
@@ -340,7 +337,7 @@ namespace RSSMS.DataService.Services
                                 serviceList.Add(orderDetailListTmp[i - 1].OrderDetailId);
                                 serviceNum++;
                             }
-                            
+
                         }
 
 
@@ -409,8 +406,8 @@ namespace RSSMS.DataService.Services
                                                     }
                                                     else
                                                     {
-                                                        if (typeService == (int)ServiceType.Gui_theo_dien_tich) 
-                                                        cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, 1, (decimal)servicesInRequestDetail[i - 1].Length));
+                                                        if (typeService == (int)ServiceType.Gui_theo_dien_tich)
+                                                            cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, 1, (decimal)servicesInRequestDetail[i - 1].Length));
                                                         if (typeService != (int)ServiceType.Gui_theo_dien_tich)
                                                             cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, (decimal)servicesInRequestDetail[i - 1].Height, (decimal)servicesInRequestDetail[i - 1].Length));
                                                     }
@@ -465,12 +462,12 @@ namespace RSSMS.DataService.Services
 
 
                 order.Status = 1;
-                
+
                 // Random Order name
                 Random random = new Random();
                 order.Name = now.Day + now.Month + now.Year + now.Minute + now.Hour + new string(Enumerable.Repeat(chars, 5).Select(s => s[random.Next(s.Length)]).ToArray());
 
-                
+
                 // Get list order detail images
                 var orderDetailImagesList = model.OrderDetails.Select(orderDetail => orderDetail.OrderDetailImages.ToList()).ToList();
                 order.CreatedBy = userId;
@@ -508,10 +505,10 @@ namespace RSSMS.DataService.Services
                     orderDetailToUpdate.Add(orderDetailToAddImg);
                     index++;
                 }
-                
+
                 // Add order detail back to order and update order
                 order.OrderDetails = orderDetailToUpdate;
-                
+
                 await UpdateAsync(order);
 
                 //
@@ -546,7 +543,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
         public async Task<OrderUpdateViewModel> Update(Guid id, OrderUpdateViewModel model)
@@ -578,7 +575,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
         public async Task<OrderViewModel> Cancel(Guid id, OrderCancelViewModel model, string accessToken)
@@ -605,7 +602,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
 
@@ -769,7 +766,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
         public async Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model)
@@ -797,7 +794,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
         public async Task<OrderViewModel> AssignStorage(OrderAssignStorageViewModel model, string accessToken)
@@ -835,7 +832,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
-            
+
         }
 
         public async Task<OrderViewModel> AssignFloor(OrderAssignFloorViewModel model, string accessToken)
@@ -855,7 +852,7 @@ namespace RSSMS.DataService.Services
 
                 var orderDetails = order.OrderDetails;
                 bool isMany = false;
-                foreach(var orderDetailAssign in model.OrderDetailAssignFloor)
+                foreach (var orderDetailAssign in model.OrderDetailAssignFloor)
                     if (orderDetailAssign.ServiceType == (int)ServiceType.Gui_theo_dien_tich)
                         isMany = true;
                 var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Create_Order && request.Status == 3).First();
@@ -865,12 +862,12 @@ namespace RSSMS.DataService.Services
                     var floor = await _floorService.GetById(orderDetailToAssignFloor.FloorId);
                     var orderDetail = orderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssignFloor.OrderDetailId).First();
                     var orderDetailSize = (double)(orderDetail.Height * orderDetail.Width * orderDetail.Length);
-                    if(orderDetail.Height > floor.Height) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
+                    if (orderDetail.Height > floor.Height) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
                     if (orderDetail.Width > floor.Width) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
                     if (orderDetail.Length > floor.Length) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
                     var oldOrderDetail = _orderDetailService.Get(orderDetail => orderDetail.FloorId == floor.Id).ToList();
 
-                    if(orderDetail.Height != 0 && orderDetail.Length != 0 && orderDetail.Width != 0)
+                    if (orderDetail.Height != 0 && orderDetail.Length != 0 && orderDetail.Width != 0)
                     {
                         // Check kho tự quản
                         if (request.TypeOrder == (int)OrderType.Kho_tu_quan)
@@ -930,7 +927,7 @@ namespace RSSMS.DataService.Services
 
                 return _mapper.Map<OrderViewModel>(order);
             }
-            catch(InvalidOperationException)
+            catch (InvalidOperationException)
             {
                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order heigh, width, length overload");
             }

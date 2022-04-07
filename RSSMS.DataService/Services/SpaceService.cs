@@ -10,7 +10,6 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Floors;
-using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Spaces;
 using System;
 using System.Collections.Generic;
@@ -67,7 +66,7 @@ namespace RSSMS.DataService.Services
                 // Lay space va area cua space vua tao
                 space = Get(space => space.Id == spaceToCreate.Id).Include(space => space.Area).First();
                 var area = space.Area;
-                if(model.NumberOfFloor * model.FloorHeight > area.Height)
+                if (model.NumberOfFloor * model.FloorHeight > area.Height)
                 {
                     var floors = spaceToCreate.Floors.ToList();
                     for (int i = 0; i < floors.Count; i++)
@@ -83,7 +82,7 @@ namespace RSSMS.DataService.Services
                 List<Cuboid> cuboids = new List<Cuboid>();
                 for (int i = 0; i < spacesInArea.Count; i++)
                 {
-                    if(spacesInArea[i].Floors.Count > 0)
+                    if (spacesInArea[i].Floors.Count > 0)
                         cuboids.Add(new Cuboid((decimal)spacesInArea[i].Floors.First().Width, (decimal)area.Height, (decimal)spacesInArea[i].Floors.First().Length));
                 }
                 var parameter = new BinPackParameter((decimal)area.Width, (decimal)area.Height, (decimal)area.Length, cuboids);
@@ -98,12 +97,12 @@ namespace RSSMS.DataService.Services
                     await DeleteAsync(spaceToCreate);
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area size is overload");
                 }
-                    
+
                 return _mapper.Map<SpaceViewModel>(spaceToCreate);
             }
-            catch(InvalidOperationException)
+            catch (InvalidOperationException)
             {
-                if(spaceToCreate != null)
+                if (spaceToCreate != null)
                 {
                     var floors = spaceToCreate.Floors.ToList();
                     for (int i = 0; i < floors.Count; i++)
@@ -120,7 +119,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
         public async Task<SpaceViewModel> Delete(Guid id)
@@ -167,7 +166,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
         public async Task<SpaceViewModel> Update(Guid id, SpaceUpdateViewModel model, string accessToken)
@@ -187,7 +186,7 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
                 Space spaceToUpdate = null;
-                var floor = entity.Floors.FirstOrDefault();
+                var floor = entity.Floors.Where(floor => floor.IsActive).FirstOrDefault();
                 if (floor == null)
                 {
                     spaceToUpdate = _mapper.Map(model, entity);
@@ -195,7 +194,7 @@ namespace RSSMS.DataService.Services
                     return _mapper.Map<SpaceViewModel>(spaceToUpdate);
                 }
 
-                var oldNumberOfFloor = entity.Floors.Where(floor => floor.IsActive == true).Count();
+                var oldNumberOfFloor = entity.Floors.Where(floor => floor.IsActive).Count();
 
                 if (oldNumberOfFloor != model.NumberOfFloor || floor.Height != model.FloorHeight || floor.Width != model.FloorWidth || floor.Length != model.FloorLength)
                 {
@@ -241,7 +240,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
         public async Task<DynamicModelResponse<SpaceViewModel>> GetAll(SpaceViewModel model, DateTime? date, string[] fields, int page, int size)
         {
@@ -282,7 +281,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
 
@@ -313,10 +312,10 @@ namespace RSSMS.DataService.Services
             if (spaces.Count == 0) return null;
             bool isSelfStorage = false;
             if (spaceType == 1) isSelfStorage = true;
-            foreach(var space in spaces)
+            foreach (var space in spaces)
             {
                 var floor = await _floorsService.GetBySpaceId(space.Id, date, isMany, isSelfStorage);
-                if(floor != null) result.AddRange(floor);
+                if (floor != null) result.AddRange(floor);
             }
             if (result.Count == 0) return null;
             return result;

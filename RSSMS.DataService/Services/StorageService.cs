@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using _3DBinPacking.Enum;
+using _3DBinPacking.Model;
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
@@ -7,9 +9,7 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
-using RSSMS.DataService.ViewModels.Areas;
 using RSSMS.DataService.ViewModels.Floors;
-using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Storages;
 using System;
 using System.Collections.Generic;
@@ -83,7 +83,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
 
         }
 
@@ -91,11 +91,21 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                var entity = await Get(x => x.Id == id && x.IsActive).Include(a => a.Areas.Where(area => area.IsActive)).FirstOrDefaultAsync();
+                var entity = await Get(x => x.Id == id && x.IsActive).Include(a => a.Areas.Where(area => area.IsActive))
+                    .Include(storage => storage.Requests)
+                    .Include(storage => storage.StaffAssignStorages)
+                    .Include(storage => storage.Orders)
+                    .FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
                 var areas = entity.Areas;
                 foreach (var area in areas)
                     if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage is in used");
+                if (entity.Orders.Where(order => !order.IsActive || order.Status != 0 || order.Status != 6 || order.Status != 7).Count() > 0)
+                    throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn đơn đang được gán vào");
+                if (entity.Requests.Where(request => !request.IsActive || request.Status != 0 || request.Status != 3 || request.Status != 4 || request.Status != 5).Count() > 0)
+                    throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn đơn yêu cầu đang được gán vào");
+                if (entity.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.RoleName != "Manager").Count() > 0)
+                    throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn nhân viên đang được gán vào");
                 entity.IsActive = false;
                 await UpdateAsync(entity);
                 return _mapper.Map<StorageViewModel>(entity);
@@ -108,7 +118,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
         public async Task<DynamicModelResponse<StorageViewModel>> GetAll(StorageViewModel model, List<int> types, string[] fields, int page, int size, string accessToken)
@@ -158,7 +168,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
         public async Task<StorageDetailViewModel> GetById(Guid id, string accessToken)
@@ -196,7 +206,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
         public async Task<StorageUpdateViewModel> Update(Guid id, StorageUpdateViewModel model)
@@ -214,9 +224,21 @@ namespace RSSMS.DataService.Services
                 var entity = await Get(storage => storage.Id == id && storage.IsActive).Include(a => a.Areas).FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
 
-                var areas = entity.Areas.Where(area => area.IsActive);
+                var areas = entity.Areas.Where(area => area.IsActive).ToList();
                 foreach (var area in areas)
                     if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
+
+                //Check kích thước kho sau khi update
+                List<Cuboid> cuboids = new List<Cuboid>();
+                for (int i = 0; i < areas.Count; i++)
+                    cuboids.Add(new Cuboid((decimal)areas[i].Width, (decimal)areas[i].Height, (decimal)areas[i].Length));
+
+                var parameter = new BinPackParameter((decimal)model.Width, (decimal)model.Height, (decimal)model.Length, cuboids);
+
+                var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                var result = binPacker.Pack(parameter);
+                if (result.BestResult.Count > 1)
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích thước kho quá nhỏ so với kích thước khu vực đang tồn tại");
 
                 var updateEntity = _mapper.Map(model, entity);
 
@@ -233,6 +255,10 @@ namespace RSSMS.DataService.Services
 
                 return _mapper.Map<StorageUpdateViewModel>(updateEntity);
             }
+            catch (InvalidOperationException)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích thước kho quá nhỏ so với kích thước khu vực đang tồn tại");
+            }
             catch (ErrorResponse e)
             {
                 throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
@@ -241,7 +267,7 @@ namespace RSSMS.DataService.Services
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
-            
+
         }
 
 
@@ -253,11 +279,11 @@ namespace RSSMS.DataService.Services
             if (storageId != null) storages = storages.Where(storage => storage.Id == storageId).Include(storage => storage.Areas.Where(area => area.IsActive));
             if (storages.ToList().Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough storage");
             var storageList = storages.ToList();
-            for (int i = 0; i <storageList.Count; i++)
+            for (int i = 0; i < storageList.Count; i++)
             {
                 var area = await _areaService.GetFloorOfArea(storageList[i].Id, spaceType, date, isMany);
                 // Add result vào
-                if(area != null) result.Add(storageList[i].Id, area);
+                if (area != null) result.Add(storageList[i].Id, area);
             }
             if (result.Count == 0) return null;
             return result;
