@@ -298,8 +298,14 @@ namespace RSSMS.DataService.Services
                 List<Cuboid> cuboids = new List<Cuboid>();
                 List<Guid> serviceList = new List<Guid>();
 
-
-
+                var orderDetailListTmp = model.OrderDetails.Select(orderDetail => new
+                {
+                    OrderDetailId = Guid.NewGuid(),
+                    Height = (decimal)orderDetail.Height,
+                    Width = (decimal)orderDetail.Width,
+                    Length = (decimal)orderDetail.Length,
+                }).ToList();
+                if (typeService == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
                 // Check xem storage còn đủ chỗ không
                 var floorInStorages = await _storageService.GetFloorWithStorage(storageId, spaceType, (DateTime)model.DeliveryDate, isMany);
 
@@ -312,7 +318,7 @@ namespace RSSMS.DataService.Services
                     if (!flag)
                     {
                         // Lay kich thuoc cac service khach hang dat 
-                        var orderDetailListTmp = model.OrderDetails.Select(orderDetail => new
+                        orderDetailListTmp = model.OrderDetails.Select(orderDetail => new
                         {
                             OrderDetailId = Guid.NewGuid(),
                             Height = (decimal)orderDetail.Height,

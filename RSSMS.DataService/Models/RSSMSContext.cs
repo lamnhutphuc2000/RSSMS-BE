@@ -357,6 +357,11 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.OrderTimelines)
                     .HasForeignKey(d => d.OrderId)
                     .HasConstraintName("FK_OrderTimeline_Order");
+
+                entity.HasOne(d => d.Request)
+                    .WithMany(p => p.OrderTimelines)
+                    .HasForeignKey(d => d.RequestId)
+                    .HasConstraintName("FK_OrderTimeline_Request");
             });
 
             modelBuilder.Entity<Request>(entity =>

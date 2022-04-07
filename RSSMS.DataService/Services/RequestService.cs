@@ -545,7 +545,22 @@ namespace RSSMS.DataService.Services
                     
                     List<Cuboid> cuboids = new List<Cuboid>();
                     List<Service> serviceList = new List<Service>();
-                    
+
+                    var services = model.RequestDetails.Select(requestDetail => new
+                    {
+                        ServiceId = requestDetail.ServiceId,
+                        Amount = requestDetail.Amount
+                    }).ToList();
+                    for (int i = 1; i <= services.Count; i++)
+                    {
+                        for (int j = 0; j < services[i - 1].Amount; j++)
+                        {
+                            var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
+                            if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+
+                        }
+                    }
+
                     // Check xem storage còn đủ chỗ không
                     var floorInStorages = await _storageService.GetFloorWithStorage(null,spaceType,(DateTime)model.DeliveryDate, isMany);
 
@@ -559,7 +574,7 @@ namespace RSSMS.DataService.Services
                         if (!flag)
                         {
                             // Lay kich thuoc cac service khach hang dat 
-                            var services = model.RequestDetails.Select(requestDetail => new
+                            services = model.RequestDetails.Select(requestDetail => new
                             {
                                 ServiceId = requestDetail.ServiceId,
                                 Amount = requestDetail.Amount
@@ -901,9 +916,24 @@ namespace RSSMS.DataService.Services
                 
                 List<Cuboid> cuboids = new List<Cuboid>();
                 List<Service> serviceList = new List<Service>();
-                
 
 
+                var services = request.RequestDetails.Select(requestDetail => new
+                {
+                    ServiceId = requestDetail.ServiceId,
+                    Amount = requestDetail.Amount
+                }).ToList();
+                for (int i = 1; i <= services.Count; i++)
+                {
+                    for (int j = 0; j < services[i - 1].Amount; j++)
+                    {
+                        var service = _serviceService.Get(service => service.Id == services[i - 1].ServiceId).FirstOrDefault();
+                        if (service.Type != (int)ServiceType.Phu_kien)
+                        {
+                            if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+                        }
+                    }
+                }
                 // Check xem storage còn đủ chỗ không
                 var floorInStorages = await _storageService.GetFloorWithStorage(model.StorageId, spaceType, (DateTime)request.DeliveryDate, isMany);
 
@@ -917,7 +947,7 @@ namespace RSSMS.DataService.Services
                     if (!flag)
                     {
                         // Lay kich thuoc cac service khach hang dat 
-                        var services = request.RequestDetails.Select(requestDetail => new
+                        services = request.RequestDetails.Select(requestDetail => new
                         {
                             ServiceId = requestDetail.ServiceId,
                             Amount = requestDetail.Amount
