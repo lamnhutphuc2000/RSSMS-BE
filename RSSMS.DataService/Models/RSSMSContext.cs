@@ -326,7 +326,7 @@ namespace RSSMS.DataService.Models
             {
                 entity.ToTable("OrderHistoryExtensionServiceMap");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.HasOne(d => d.OrderHistoryExtension)
                     .WithMany(p => p.OrderHistoryExtensionServiceMaps)
