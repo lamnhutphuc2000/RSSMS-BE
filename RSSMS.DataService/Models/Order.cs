@@ -12,6 +12,7 @@ namespace RSSMS.DataService.Models
             OrderAdditionalFees = new HashSet<OrderAdditionalFee>();
             OrderDetails = new HashSet<OrderDetail>();
             OrderHistoryExtensions = new HashSet<OrderHistoryExtension>();
+            OrderTimelines = new HashSet<OrderTimeline>();
             Requests = new HashSet<Request>();
         }
 
@@ -33,20 +34,21 @@ namespace RSSMS.DataService.Models
         public string DeliveryTime { get; set; }
         public DateTime? ReturnDate { get; set; }
         public string ReturnTime { get; set; }
-        public decimal? CompensationFee { get; set; }
-        public string CompensationDescription { get; set; }
         public int? Status { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedDate { get; set; }
         public Guid? CreatedBy { get; set; }
         public Guid? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
+        public decimal? CompensationFee { get; set; }
+        public string CompensationDescription { get; set; }
 
         public virtual Account Customer { get; set; }
         public virtual Storage Storage { get; set; }
         public virtual ICollection<OrderAdditionalFee> OrderAdditionalFees { get; set; }
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
         public virtual ICollection<OrderHistoryExtension> OrderHistoryExtensions { get; set; }
+        public virtual ICollection<OrderTimeline> OrderTimelines { get; set; }
         public virtual ICollection<Request> Requests { get; set; }
     }
 }

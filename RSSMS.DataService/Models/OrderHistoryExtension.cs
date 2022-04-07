@@ -7,6 +7,11 @@ namespace RSSMS.DataService.Models
 {
     public partial class OrderHistoryExtension
     {
+        public OrderHistoryExtension()
+        {
+            OrderHistoryExtensionServiceMaps = new HashSet<OrderHistoryExtensionServiceMap>();
+        }
+
         public Guid Id { get; set; }
         public Guid OrderId { get; set; }
         public Guid? RequestId { get; set; }
@@ -19,5 +24,6 @@ namespace RSSMS.DataService.Models
         public Guid? ModifiedBy { get; set; }
 
         public virtual Order Order { get; set; }
+        public virtual ICollection<OrderHistoryExtensionServiceMap> OrderHistoryExtensionServiceMaps { get; set; }
     }
 }

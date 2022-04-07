@@ -271,16 +271,193 @@ namespace RSSMS.DataService.Services
                     request.CreatedBy = userId;
 
                     await CreateAsync(request);
-                    var requestCreated = Get(x => x.Id == request.Id).Include(x => x.Order).FirstOrDefault();
-                    var requestList = Get(x => x.DeliveryDate == requestCreated.DeliveryDate && x.DeliveryTime == requestCreated.DeliveryTime && x.Status == 2).ToList();
-                    var deliveryStaffs = await _accountService.GetStaff(requestCreated.Order.StorageId, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, false);
-                    if (deliveryStaffs.Count - requestList.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
 
-                    OrderHistoryExtension orderExtend = _mapper.Map<OrderHistoryExtension>(model);
-                    orderExtend.ModifiedBy = userId;
-                    orderExtend.RequestId = request.Id;
-                    orderExtend.OrderId = (Guid)model.OrderId;
-                    await _orderHistoryExtensionService.CreateAsync(orderExtend);
+                    request = Get(x => x.Id == request.Id).Include(x => x.Order).ThenInclude(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).FirstOrDefault();
+
+
+
+                    int spaceType = 0;
+                    bool isMany = false;
+                    if (request.Order.Type == (int)OrderType.Kho_tu_quan) spaceType = 1;
+                    if (request.Order.Type == (int)OrderType.Giu_do_thue) spaceType = 0;
+                    var orderDetails = request.Order.OrderDetails;
+                    foreach(var orderDetail in orderDetails)
+                    {
+                        var servicesIds = orderDetail.OrderDetailServiceMaps.Select(service => new { ServiceId = service.ServiceId, Amount = service.Amount });
+
+                        foreach (var serviceId in servicesIds)
+                        {
+                            var service = await _serviceService.GetById((Guid)serviceId.ServiceId);
+                            if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+                        }
+                    }
+
+
+                    decimal serviceMaxHeight = 0;
+                    decimal serviceMaxWidth = 0;
+                    decimal serviceMaxLength = 0;
+
+                    List<Cuboid> cuboids = new List<Cuboid>();
+                    List<Guid> serviceList = new List<Guid>();
+
+
+
+                    // Check xem storage còn đủ chỗ không
+                    var floorInStorages = await _storageService.GetFloorWithStorage(request.Order.StorageId, spaceType, (DateTime)model.DeliveryDate, isMany);
+
+                    bool flag = false;
+                    if (floorInStorages == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+
+                    foreach (var floorInStorage in floorInStorages)
+                    {
+                        int serviceNum = 0;
+                        if (!flag)
+                        {
+                            // Lay kich thuoc cac service khach hang dat 
+                            var orderDetailListTmp = request.Order.OrderDetails.Select(orderDetail => new
+                            {
+                                OrderDetailId = Guid.NewGuid(),
+                                Height = (decimal)orderDetail.Height,
+                                Width = (decimal)orderDetail.Width,
+                                Length = (decimal)orderDetail.Length,
+                            }).ToList();
+                            for (int i = 1; i <= orderDetailListTmp.Count; i++)
+                            {
+                                if (orderDetailListTmp[i - 1].Width == 0 && orderDetailListTmp[i - 1].Height == 0 && orderDetailListTmp[i - 1].Length == 0)
+                                {
+                                    if (serviceMaxHeight < orderDetailListTmp[i - 1].Height) serviceMaxHeight = orderDetailListTmp[i - 1].Height;
+                                    if (serviceMaxWidth < orderDetailListTmp[i - 1].Width) serviceMaxWidth = orderDetailListTmp[i - 1].Width;
+                                    if (serviceMaxLength < orderDetailListTmp[i - 1].Length) serviceMaxLength = orderDetailListTmp[i - 1].Length;
+                                    if (isMany) cuboids.Add(new Cuboid(orderDetailListTmp[i - 1].Width, 1, orderDetailListTmp[i - 1].Length, 0, orderDetailListTmp[i - 1].OrderDetailId));
+                                    if (!isMany) cuboids.Add(new Cuboid(orderDetailListTmp[i - 1].Width, orderDetailListTmp[i - 1].Height, orderDetailListTmp[i - 1].Length, 0, orderDetailListTmp[i - 1].OrderDetailId));
+
+
+                                    serviceList.Add(orderDetailListTmp[i - 1].OrderDetailId);
+                                    serviceNum++;
+                                }
+
+                            }
+
+
+
+                            var floors = floorInStorage.Value.ToList();
+                            List<OrderDetailInFloorViewModel> orderDetailList = new List<OrderDetailInFloorViewModel>();
+                            List<FloorGetByIdViewModel> floorList = new List<FloorGetByIdViewModel>();
+                            foreach (var floor in floors)
+                            {
+                                if (floor.Height >= serviceMaxHeight && floor.Width >= serviceMaxWidth && floor.Length >= serviceMaxLength)
+                                {
+                                    floorList.Add(floor);
+                                    orderDetailList.AddRange(floor.OrderDetails);
+                                }
+                            }
+                            if (!(floorList.Count < serviceNum && model.Type == (int)OrderType.Kho_tu_quan))
+                            {
+                                foreach (var floorInList in floorList)
+                                {
+                                    if (!flag)
+                                    {
+                                        // get request đã được assign vào storage
+                                        var requestsAssignStorage = await Get(requests => requests.IsActive && requests.TypeOrder == request.Type && requests.Type == (int)RequestType.Create_Order && requests.StorageId == floorInStorage.Key && requests.Type == (int)RequestType.Create_Order && (requests.Status == 2 || requests.Status == 3) && requests.Id != request.Id)
+                                               .Include(requests => requests.Order).ThenInclude(order => order.OrderDetails)
+                                               .Include(requests => requests.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
+                                        requestsAssignStorage = requestsAssignStorage.Where(requests => (requests.DeliveryDate <= model.DeliveryDate && requests.ReturnDate >= model.DeliveryDate) || (model.DeliveryDate <= requests.DeliveryDate && model.ReturnDate >= requests.DeliveryDate)).ToList();
+                                        if (!(floorList.Count <= requestsAssignStorage.Count && model.Type == (int)OrderType.Kho_tu_quan))
+                                        {
+                                            foreach (var requestAssignStorage in requestsAssignStorage)
+                                            {
+                                                var servicesInRequestDetail = requestAssignStorage.RequestDetails.Select(requestDetail => new
+                                                {
+                                                    ServiceId = (Guid)requestDetail.ServiceId,
+                                                    Height = (decimal?)null,
+                                                    Width = (decimal?)null,
+                                                    Length = (decimal?)null,
+                                                    Amount = (int)requestDetail.Amount
+                                                }).ToList();
+                                                if (requestAssignStorage.Order != null)
+                                                    servicesInRequestDetail = requestAssignStorage.Order.OrderDetails.Select(orderDetail => new
+                                                    {
+                                                        ServiceId = orderDetail.Id,
+                                                        Height = orderDetail.Height,
+                                                        Width = orderDetail.Width,
+                                                        Length = orderDetail.Length,
+                                                        Amount = 0
+                                                    }).ToList();
+                                                for (int i = 1; i <= servicesInRequestDetail.Count; i++)
+                                                {
+                                                    for (int j = 0; j < servicesInRequestDetail[i - 1].Amount; j++)
+                                                    {
+                                                        if (servicesInRequestDetail[i - 1].Amount != 0)
+                                                        {
+                                                            var service = _serviceService.Get(service => service.Id == servicesInRequestDetail[i - 1].ServiceId).FirstOrDefault();
+                                                            if (service.Type != (int)ServiceType.Phu_kien)
+                                                            {
+                                                                if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
+                                                                if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
+                                                                if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
+                                                                if (isMany)
+                                                                    cuboids.Add(new Cuboid(service.Width, 1, service.Length, 0, service.Id));
+                                                                if (!isMany)
+                                                                    cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            if (isMany)
+                                                                cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, 1, (decimal)servicesInRequestDetail[i - 1].Length));
+                                                            if (!isMany)
+                                                                cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, (decimal)servicesInRequestDetail[i - 1].Height, (decimal)servicesInRequestDetail[i - 1].Length));
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+
+
+
+                                            List<Cuboid> cuboidTmps = new List<Cuboid>();
+                                            cuboidTmps.AddRange(cuboids);
+                                            foreach (var orderDetail in orderDetailList)
+                                            {
+                                                if (isMany) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, orderDetail.Id));
+                                                if (!isMany) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, orderDetail.Id));
+                                            }
+
+
+                                            BinPackParameter parameter = null;
+                                            if (isMany) parameter = new BinPackParameter(floorInList.Width, 1, floorInList.Length, cuboids);
+                                            else parameter = new BinPackParameter(floorInList.Width, floorInList.Height, floorInList.Length, cuboids);
+
+                                            var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                                            var result = binPacker.Pack(parameter);
+                                            if (result.BestResult.Count == 1)
+                                            {
+                                                flag = true;
+                                            }
+                                            else
+                                            {
+                                                foreach (var cuboid in result.BestResult.First())
+                                                {
+                                                    var orderDetail = orderDetailList.Where(orderDetail => orderDetail.Id == (Guid)cuboid.Tag).FirstOrDefault();
+                                                    if (orderDetail != null) orderDetailList.Remove(orderDetail);
+                                                    var service = serviceList.Where(service => service == (Guid)cuboid.Tag).FirstOrDefault();
+                                                    if (service != null) serviceList.Remove(service);
+                                                }
+                                            }
+                                        }
+
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+
+                    if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+
+
+
+
 
                     await _orderTimelineService.CreateAsync(new OrderTimeline
                     {
@@ -592,10 +769,46 @@ namespace RSSMS.DataService.Services
 
                 if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request Id not matched");
 
-                var request = await Get(x => x.Id == id && x.IsActive == true).Include(x => x.Order).ThenInclude(order => order.OrderHistoryExtensions).FirstOrDefaultAsync();
+                var request = await Get(x => x.Id == id && x.IsActive == true)
+                    .Include(x => x.Order).ThenInclude(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                    .Include(x => x.Order).ThenInclude(order => order.OrderHistoryExtensions).FirstOrDefaultAsync();
                 if (request == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
 
                 request.Status = model.Status;
+
+                if(request.Type == (int) RequestType.Extend_Order)
+                {
+                    OrderHistoryExtension orderExtend = _mapper.Map<OrderHistoryExtension>(model);
+                    orderExtend.ModifiedBy = userId;
+                    orderExtend.RequestId = request.Id;
+                    orderExtend.OrderId = (Guid)request.OrderId;
+                    await _orderHistoryExtensionService.CreateAsync(orderExtend);
+
+                    List<OrderHistoryExtensionServiceMap> orderExtendService = new List<OrderHistoryExtensionServiceMap>();
+                    var orderDetails = request.Order.OrderDetails.ToList();
+                    foreach(var orderDetail in orderDetails)
+                    {
+                        foreach(var service in orderDetail.OrderDetailServiceMaps.ToList())
+                        {
+                            var serviceExtend = new OrderHistoryExtensionServiceMap()
+                            {
+                                Amount = service.Amount,
+                                Price = (double)service.TotalPrice,
+                                Serviceid = service.ServiceId,
+                                OrderHistoryExtensionId = orderExtend.Id
+                            };
+                            orderExtendService.Add(serviceExtend);
+                        }
+                    }
+                    if(orderExtendService.Count > 0)
+                    {
+                        orderExtend.OrderHistoryExtensionServiceMaps = orderExtendService;
+                        await _orderHistoryExtensionService.UpdateAsync(orderExtend);
+                    }
+                }
+
+                
+
                 if (model.IsPaid == null)
                 {
                     await UpdateAsync(request);

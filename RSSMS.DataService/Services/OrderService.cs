@@ -48,7 +48,6 @@ namespace RSSMS.DataService.Services
         private readonly IOrderTimelineService _orderTimelineService;
         private readonly IOrderDetailService _orderDetailService;
         private readonly IFloorService _floorService;
-        private readonly IAccountService _accountService;
         private readonly IServiceService _serviceService;
         public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository
             , IFirebaseService firebaseService,
@@ -56,7 +55,6 @@ namespace RSSMS.DataService.Services
             IOrderTimelineService orderTimelineService,
             IOrderDetailService orderDetailService,
             IFloorService floorService,
-            IAccountService accountService,
             IServiceService serviceService,
             IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {
@@ -67,7 +65,6 @@ namespace RSSMS.DataService.Services
             _orderTimelineService = orderTimelineService;
             _orderDetailService = orderDetailService;
             _floorService = floorService;
-            _accountService = accountService;
             _serviceService = serviceService;
         }
         public async Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes)

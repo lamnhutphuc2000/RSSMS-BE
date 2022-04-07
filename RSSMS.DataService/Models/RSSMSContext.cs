@@ -27,6 +27,7 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<OrderDetail> OrderDetails { get; set; }
         public virtual DbSet<OrderDetailServiceMap> OrderDetailServiceMaps { get; set; }
         public virtual DbSet<OrderHistoryExtension> OrderHistoryExtensions { get; set; }
+        public virtual DbSet<OrderHistoryExtensionServiceMap> OrderHistoryExtensionServiceMaps { get; set; }
         public virtual DbSet<OrderTimeline> OrderTimelines { get; set; }
         public virtual DbSet<Request> Requests { get; set; }
         public virtual DbSet<RequestDetail> RequestDetails { get; set; }
@@ -78,7 +79,7 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Password)
                     .IsRequired()
-                    .HasMaxLength(64)
+                    .HasMaxLength(32)
                     .IsFixedLength(true);
 
                 entity.Property(e => e.Phone)
@@ -139,7 +140,7 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.Floors)
                     .HasForeignKey(d => d.SpaceId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Floor_Space");
+                    .HasConstraintName("FK_Floor_Shelf");
             });
 
             modelBuilder.Entity<Image>(entity =>
@@ -321,6 +322,23 @@ namespace RSSMS.DataService.Models
                     .HasConstraintName("FK_OrderHistoryExtension_Order");
             });
 
+            modelBuilder.Entity<OrderHistoryExtensionServiceMap>(entity =>
+            {
+                entity.ToTable("OrderHistoryExtensionServiceMap");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.HasOne(d => d.OrderHistoryExtension)
+                    .WithMany(p => p.OrderHistoryExtensionServiceMaps)
+                    .HasForeignKey(d => d.OrderHistoryExtensionId)
+                    .HasConstraintName("FK_OrderHistoryExtensionServicceMap_OrderHistoryExtension");
+
+                entity.HasOne(d => d.Service)
+                    .WithMany(p => p.OrderHistoryExtensionServiceMaps)
+                    .HasForeignKey(d => d.Serviceid)
+                    .HasConstraintName("FK_OrderHistoryExtensionServicceMap_Service");
+            });
+
             modelBuilder.Entity<OrderTimeline>(entity =>
             {
                 entity.ToTable("OrderTimeline");
@@ -335,10 +353,10 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Name).HasMaxLength(50);
 
-                entity.HasOne(d => d.Request)
+                entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderTimelines)
-                    .HasForeignKey(d => d.RequestId)
-                    .HasConstraintName("FK_OrderTimeline_Request");
+                    .HasForeignKey(d => d.OrderId)
+                    .HasConstraintName("FK_OrderTimeline_Order");
             });
 
             modelBuilder.Entity<Request>(entity =>
