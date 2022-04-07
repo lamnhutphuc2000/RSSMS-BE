@@ -336,7 +336,10 @@ namespace RSSMS.DataService.Services
                             if (serviceMaxHeight < orderDetailListTmp[i-1].Height) serviceMaxHeight = orderDetailListTmp[i - 1].Height;
                             if (serviceMaxWidth < orderDetailListTmp[i - 1].Width) serviceMaxWidth = orderDetailListTmp[i - 1].Width;
                             if (serviceMaxLength < orderDetailListTmp[i - 1].Length) serviceMaxLength = orderDetailListTmp[i - 1].Length;
-                            cuboids.Add(new Cuboid(orderDetailListTmp[i - 1].Width, orderDetailListTmp[i - 1].Height, orderDetailListTmp[i - 1].Length, 0, orderDetailListTmp[i-1].OrderDetailId));
+                            if(typeService == (int)ServiceType.Gui_theo_dien_tich) cuboids.Add(new Cuboid(orderDetailListTmp[i - 1].Width, 1, orderDetailListTmp[i - 1].Length, 0, orderDetailListTmp[i - 1].OrderDetailId));
+                            if(typeService != (int)ServiceType.Gui_theo_dien_tich) cuboids.Add(new Cuboid(orderDetailListTmp[i - 1].Width, orderDetailListTmp[i - 1].Height, orderDetailListTmp[i - 1].Length, 0, orderDetailListTmp[i - 1].OrderDetailId));
+
+
                             serviceList.Add(orderDetailListTmp[i-1].OrderDetailId);
                             serviceNum++;
                         }
@@ -354,7 +357,7 @@ namespace RSSMS.DataService.Services
                                 orderDetailList.AddRange(floor.OrderDetails);
                             }
                         }
-                        if (floorList.Count < serviceNum && model.Type == (int)OrderType.Kho_tu_quan)
+                        if (!(floorList.Count < serviceNum && model.Type == (int)OrderType.Kho_tu_quan))
                         {
                             foreach (var floorInList in floorList)
                             {
@@ -365,7 +368,7 @@ namespace RSSMS.DataService.Services
                                            .Include(requests => requests.Order).ThenInclude(order => order.OrderDetails)
                                            .Include(requests => requests.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
                                     requestsAssignStorage = requestsAssignStorage.Where(requests => (requests.DeliveryDate <= model.DeliveryDate && requests.ReturnDate >= model.DeliveryDate) || (model.DeliveryDate <= requests.DeliveryDate && model.ReturnDate >= requests.DeliveryDate)).ToList();
-                                    if (floorList.Count <= requestsAssignStorage.Count && model.Type == (int)OrderType.Kho_tu_quan)
+                                    if (!(floorList.Count <= requestsAssignStorage.Count && model.Type == (int)OrderType.Kho_tu_quan))
                                     {
                                         foreach (var requestAssignStorage in requestsAssignStorage)
                                         {
@@ -399,12 +402,18 @@ namespace RSSMS.DataService.Services
                                                             if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
                                                             if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
                                                             if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
-                                                            cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                                            if (typeService == (int)ServiceType.Gui_theo_dien_tich)
+                                                                cuboids.Add(new Cuboid(service.Width, 1, service.Length, 0, service.Id));
+                                                            if (typeService != (int)ServiceType.Gui_theo_dien_tich)
+                                                                cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
                                                         }
                                                     }
                                                     else
                                                     {
-                                                        cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, (decimal)servicesInRequestDetail[i - 1].Height, (decimal)servicesInRequestDetail[i - 1].Length));
+                                                        if (typeService == (int)ServiceType.Gui_theo_dien_tich) 
+                                                        cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, 1, (decimal)servicesInRequestDetail[i - 1].Length));
+                                                        if (typeService != (int)ServiceType.Gui_theo_dien_tich)
+                                                            cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, (decimal)servicesInRequestDetail[i - 1].Height, (decimal)servicesInRequestDetail[i - 1].Length));
                                                     }
                                                 }
                                             }
@@ -416,7 +425,11 @@ namespace RSSMS.DataService.Services
                                         List<Cuboid> cuboidTmps = new List<Cuboid>();
                                         cuboidTmps.AddRange(cuboids);
                                         foreach (var orderDetail in orderDetailList)
-                                            cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, orderDetail.Id));
+                                        {
+                                            if (typeService == (int)ServiceType.Gui_theo_dien_tich) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, orderDetail.Id));
+                                            if (typeService != (int)ServiceType.Gui_theo_dien_tich) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, orderDetail.Id));
+                                        }
+                                            
 
                                         var parameter = new BinPackParameter(floorInList.Width, floorInList.Height, floorInList.Length, cuboids);
 
