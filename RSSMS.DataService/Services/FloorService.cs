@@ -173,10 +173,10 @@ namespace RSSMS.DataService.Services
                     floorUsage.Add(0);
                     floorUsage.Add(floorVolume);
                 }
-                var totalHeight = orderDetails.Select(orderDetail => orderDetail.Height).ToList().Sum();
-                var totalWidth = orderDetails.Select(orderDetail => orderDetail.Width).ToList().Sum();
-                var totalLength = orderDetails.Select(orderDetail => orderDetail.Length).ToList().Sum();
-                double totalVolume = (double)(totalHeight * totalWidth * totalLength);
+                double totalVolume = 0;
+                foreach(var orderDetail in orderDetails)
+                    totalVolume += (double)(orderDetail.Height * orderDetail.Width * orderDetail.Length);
+
                 
                 double usage = totalVolume * 100 / floorVolume;
                 floorUsage.Add(usage);
