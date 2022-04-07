@@ -37,6 +37,8 @@ namespace RSSMS.DataService.Models
         public string ReturnTime { get; set; }
         public string CancelReason { get; set; }
         public DateTime? CancelDate { get; set; }
+        public decimal? TotalPrice { get; set; }
+        public DateTime? OldReturnDate { get; set; }
 
         public virtual Account CreatedByNavigation { get; set; }
         public virtual Account Customer { get; set; }

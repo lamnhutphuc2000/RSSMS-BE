@@ -212,8 +212,8 @@ namespace RSSMS.DataService.Services
                 var result = await request.ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
                 if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
                 if (result.Type != 2) return result;
-                var orderHistoryExtension = _orderHistoryExtensionService.Get(orderHistory => orderHistory.RequestId == result.Id).First();
-                result.TotalPrice = orderHistoryExtension.TotalPrice;
+                var orderHistoryExtension = _orderHistoryExtensionService.Get(orderHistory => orderHistory.RequestId == result.Id).FirstOrDefault();
+                if(orderHistoryExtension != null)result.TotalPrice = orderHistoryExtension.TotalPrice;
                 return result;
             }
             catch (ErrorResponse e)
@@ -306,7 +306,12 @@ namespace RSSMS.DataService.Services
                     var floorInStorages = await _storageService.GetFloorWithStorage(request.Order.StorageId, spaceType, (DateTime)model.ReturnDate, isMany);
 
                     bool flag = false;
-                    if (floorInStorages == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+                    if (floorInStorages == null)
+                    {
+                        Delete(request);
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+                    }
+                        
 
                     foreach (var floorInStorage in floorInStorages)
                     {
@@ -453,7 +458,12 @@ namespace RSSMS.DataService.Services
                         }
                     }
 
-                    if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+                    if (!flag)
+                    {
+                        Delete(request);
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
+                    }
+                        
 
 
 
