@@ -324,7 +324,7 @@ namespace RSSMS.DataService.Services
                         }).ToList();
                         for (int i = 1; i <= orderDetailListTmp.Count; i++)
                         {
-                            if (orderDetailListTmp[i - 1].Width == 0 && orderDetailListTmp[i - 1].Height == 0 && orderDetailListTmp[i - 1].Length == 0)
+                            if (!(orderDetailListTmp[i - 1].Width == 0 && orderDetailListTmp[i - 1].Height == 0 && orderDetailListTmp[i - 1].Length == 0))
                             {
                                 if (typeService == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
                                 if (serviceMaxHeight < orderDetailListTmp[i - 1].Height) serviceMaxHeight = orderDetailListTmp[i - 1].Height;
