@@ -272,7 +272,6 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidatePassword(model.Password);
                 _utilService.ValidateBirthDate(model.Birthdate);
                 _utilService.ValidatePhonenumber(model.Phone);
-                _utilService.ValidateString(model.Image.File, "Avatar");
                 _utilService.ValidateString(model.Name, "Name");
                 _utilService.ValidateString(model.Address, "Address");
 

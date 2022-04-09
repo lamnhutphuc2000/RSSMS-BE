@@ -278,7 +278,7 @@ namespace RSSMS.DataService.Services
 
                     return model;
                 }
-                request = Get(request => request.IsActive && (request.Status == 1 || request.Status == 4) && request.Type != (int)RequestType.Create_Order).FirstOrDefault();
+                request = Get(request => request.IsActive && (request.Status == 1 || request.Status == 4) && request.Type != (int)RequestType.Create_Order && request.CreatedBy == userId).FirstOrDefault();
                 if (request != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Còn yêu cầu đang được xử lý");
                 if(model.Type != (int)RequestType.Create_Order)
 
