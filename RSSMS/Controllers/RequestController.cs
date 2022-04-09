@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using RSSMS.DataService.Constants;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.Services;
+using RSSMS.DataService.ViewModels.Notifications;
 using RSSMS.DataService.ViewModels.Requests;
 using System;
 using System.Collections.Generic;
@@ -165,10 +166,10 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(RequestByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> DeliverySendRequestNotification(Guid id, [FromBody] string message)
+        public async Task<IActionResult> DeliverySendRequestNotification(Guid id, [FromBody] NotificationDeliverySendRequestNotiViewModel model)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            return Ok(await _requestService.DeliverySendRequestNotification(id, message, accessToken));
+            return Ok(await _requestService.DeliverySendRequestNotification(id, model, accessToken));
         }
     }
 }

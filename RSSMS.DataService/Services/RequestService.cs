@@ -11,6 +11,7 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Floors;
+using RSSMS.DataService.ViewModels.Notifications;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Requests;
 using System;
@@ -32,7 +33,7 @@ namespace RSSMS.DataService.Services
         Task<RequestByIdViewModel> AssignStorage(RequestAssignStorageViewModel model, string accessToken);
         Task<RequestByIdViewModel> Cancel(Guid id, RequestCancelViewModel model, string accessToken);
         Task<RequestByIdViewModel> DeliverRequest(Guid id, string accessToken);
-        Task<RequestByIdViewModel> DeliverySendRequestNotification(Guid id, string message, string accessToken);
+        Task<RequestByIdViewModel> DeliverySendRequestNotification(Guid id, NotificationDeliverySendRequestNotiViewModel model, string accessToken);
     }
 
 
@@ -277,6 +278,9 @@ namespace RSSMS.DataService.Services
 
                     return model;
                 }
+                request = Get(request => request.IsActive && (request.Status == 1 || request.Status == 4) && request.Type != (int)RequestType.Create_Order).FirstOrDefault();
+                if (request != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Còn yêu cầu đang được xử lý");
+                if(model.Type != (int)RequestType.Create_Order)
 
                 if (model.Type == (int)RequestType.Extend_Order) // gia han don
                 {
@@ -1247,7 +1251,7 @@ namespace RSSMS.DataService.Services
 
         }
 
-        public async Task<RequestByIdViewModel> DeliverySendRequestNotification(Guid id, string message, string accessToken)
+        public async Task<RequestByIdViewModel> DeliverySendRequestNotification(Guid id, NotificationDeliverySendRequestNotiViewModel model, string accessToken)
         {
             try
             {
@@ -1272,9 +1276,9 @@ namespace RSSMS.DataService.Services
                 {
                     if (staff.DeviceTokenId != null)
                     {
-                        await _firebaseService.SendNoti(message, userId, staff.DeviceTokenId, request.Id, new
+                        await _firebaseService.SendNoti(model.Message, userId, staff.DeviceTokenId, request.Id, new
                         {
-                            Content = message,
+                            Content = model.Message,
                             request.OrderId,
                             RequestId = request.Id
                         });
