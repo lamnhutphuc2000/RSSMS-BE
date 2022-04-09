@@ -512,9 +512,11 @@ namespace RSSMS.DataService.Services
                 await UpdateAsync(order);
 
                 //
-                Request request = _requestService.Get(request => request.Id == model.RequestId).FirstOrDefault();
+                Request request = _requestService.Get(request => request.Id == model.RequestId).Include(request => request.Schedules).FirstOrDefault();
                 request.OrderId = order.Id;
                 request.Status = 3;
+                var schedules = request.Schedules;
+                request.Schedules = schedules.Select(schedule => { schedule.Status = 2; return schedule; }).ToList();
 
                 await _requestService.UpdateAsync(request);
 
@@ -733,7 +735,7 @@ namespace RSSMS.DataService.Services
             {
                 var order = await Get(order => order.Id == model.OrderId && order.IsActive)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
-                    .Include(order => order.Requests).FirstOrDefaultAsync();
+                    .Include(order => order.Requests).ThenInclude(request => request.Schedules).FirstOrDefaultAsync();
                 if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
@@ -742,7 +744,15 @@ namespace RSSMS.DataService.Services
 
                 var requests = order.Requests;
                 foreach (var request in requests)
-                    if (request.Id == model.RequestId) request.Status = 3;
+                {
+                    if (request.Id == model.RequestId)
+                    {
+                        request.Status = 3;
+                        var schedules = request.Schedules;
+                        request.Schedules = schedules.Select(schedule => { schedule.Status = 2; return schedule; }).ToList();
+                    }
+                }
+                    
 
                 order.Requests = requests;
 

@@ -4,12 +4,15 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
+using RSSMS.DataService.Enums;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Floors;
+using RSSMS.DataService.ViewModels.Requests;
+using RSSMS.DataService.ViewModels.StaffAssignStorage;
 using RSSMS.DataService.ViewModels.Storages;
 using System;
 using System.Collections.Generic;
@@ -27,6 +30,7 @@ namespace RSSMS.DataService.Services
         Task<StorageUpdateViewModel> Update(Guid id, StorageUpdateViewModel model);
         Task<StorageViewModel> Delete(Guid id);
         Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date, bool isMany);
+        Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -287,6 +291,116 @@ namespace RSSMS.DataService.Services
             }
             if (result.Count == 0) return null;
             return result;
+        }
+
+        public async Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken)
+        {
+            try
+            {
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var uid = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+
+                var staffAssigned = model.UserAssigned;
+                var staffUnAssigned = model.UserUnAssigned;
+
+                // Validate staff unassigned
+                if (staffUnAssigned != null)
+                {
+                    // get staff need to unassign with role and schedules
+                    var staffsToUnAssigned = _staffAssignStoragesService.Get(staffAssign => staffUnAssigned.Any(staffUnAssign => staffUnAssign.UserId == staffAssign.Id) && staffAssign.IsActive)
+                                                .Include(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Role)
+                                                .Include(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Schedules).ToList();
+                    // check if there is staff who schedule have not finish
+                    if (staffsToUnAssigned.Where(staffAssign => staffAssign.Staff.Schedules.Where(schedule => schedule.IsActive && schedule.Status == 1).Count() > 0).Count() > 0)
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên còn lịch chưa hoàn thành không thể rút khỏi kho");
+
+                    // check if there is request that is assigned to this storage but unassigned staff leading to not enough staff;
+                    var requests = Get(storage => storage.Id == model.StorageId && storage.IsActive).Include(storage => storage.Requests).FirstOrDefault()
+                        .Requests.Where(request => request.IsActive && (request.Type == (int)RequestType.Create_Order || request.Type == (int)RequestType.Return_Order) && (request.Status == 2 || request.Status == 4) && request.DeliveryDate != null ).AsEnumerable();
+                    if(requests.Count() > 0)
+                    {
+                        // group by request to schedule day
+                        var requestByDateTime = requests.GroupBy(request => new { request.DeliveryDate, request.DeliveryTime })
+                                            .Select(request => new RequestByDateTimeViewModel
+                                            {
+                                                DeliveryDate = (DateTime)request.Key.DeliveryDate,
+                                                DeliveryTime = request.Key.DeliveryTime,
+                                                Requests = request.ToList()
+                                            });
+                        foreach(var request in requestByDateTime)
+                        {
+                            if (request.Requests.Count > staffAssigned.Count)
+                                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên được thêm sẽ không đủ với các yêu cầu đã được tiếp nhận");
+                        }
+                    }
+                }
+
+                if (staffAssigned != null)
+                {
+                    var managerAssigned = staffAssigned.Where(a => a.RoleName == "Manager").ToList();
+                    if (managerAssigned.Count > 0)
+                    {
+                        if (managerAssigned.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "More than 1 manager assigned to this storage");
+                        var managerInStorage = _staffAssignStoragesService.Get(x => x.RoleName == "Manager" && x.StorageId == model.StorageId && x.IsActive == true).FirstOrDefault();
+                        if (managerInStorage != null)
+                        {
+                            if (staffAssigned.Where(x => x.UserId == managerInStorage.StaffId).FirstOrDefault() == null && staffUnAssigned.Where(x => x.UserId == managerInStorage.StaffId).FirstOrDefault() == null)
+                                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "More than 1 manager assigned to this storage");
+                        }
+                    }
+
+                    foreach (var staff in staffAssigned)
+                    {
+                        var staffManageStorage = await _staffAssignStoragesService.Get(x => x.StaffId == staff.UserId && x.RoleName != "Manager" && x.StorageId != model.StorageId && x.IsActive == true).FirstOrDefaultAsync();
+                        if (staffManageStorage != null)
+                        {
+                            throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Staff has assigned to a storage before");
+                        }
+
+                    }
+
+                    if (staffUnAssigned != null)
+                    {
+                        var staffs = _staffAssignStoragesService.Get(x => x.StorageId == model.StorageId && x.IsActive == true).ToList().Where(x => staffUnAssigned.Any(a => a.UserId == x.StaffId)).ToList();
+
+                        foreach (var staff in staffs)
+                        {
+                            staff.IsActive = false;
+                            staff.ModifiedBy = uid;
+                            await _staffAssignStoragesService.UpdateAsync(staff);
+                        }
+                    }
+
+
+                    foreach (var staff in staffAssigned)
+                    {
+                        var staffAssign = await _staffAssignStoragesService.Get(x => x.StorageId == model.StorageId && x.StaffId == staff.UserId && x.IsActive == true).FirstOrDefaultAsync();
+                        if (staffAssign == null)
+                        {
+                            StaffAssignStorage staffAdd = new StaffAssignStorage
+                            {
+                                StorageId = model.StorageId,
+                                StaffId = staff.UserId,
+                                RoleName = staff.RoleName,
+                                IsActive = true,
+                                CreatedDate = DateTime.Now
+                            };
+                            await _staffAssignStoragesService.CreateAsync(staffAdd);
+                        }
+                    }
+                }
+
+                return null;
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception e)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
+            }
+
         }
     }
 }
