@@ -222,7 +222,7 @@ namespace RSSMS.DataService.Services
 
                 foreach (var floor in floors)
                 {
-                    var orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.Order.DeliveryDate <= date && orderDetail.Order.ReturnDate >= date).ToList();
+                    var orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.Order.DeliveryDate.Value.Date <= date.Date && orderDetail.Order.ReturnDate.Value.Date >= date.Date).ToList();
                     if (isSelfStorage && orderDetails.Count > 0) return null;
                     floor.OrderDetails = orderDetails;
                 }
@@ -242,5 +242,6 @@ namespace RSSMS.DataService.Services
             }
 
         }
+
     }
 }

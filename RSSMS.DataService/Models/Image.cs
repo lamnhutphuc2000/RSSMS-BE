@@ -11,7 +11,6 @@ namespace RSSMS.DataService.Models
         public string Url { get; set; }
         public string Name { get; set; }
         public string Note { get; set; }
-        public bool IsActive { get; set; }
 
         public virtual OrderDetail OrderDetail { get; set; }
     }

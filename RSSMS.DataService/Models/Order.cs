@@ -31,17 +31,15 @@ namespace RSSMS.DataService.Models
         public int? PaymentMethod { get; set; }
         public bool? IsUserDelivery { get; set; }
         public DateTime? DeliveryDate { get; set; }
-        public string DeliveryTime { get; set; }
+        public TimeSpan? DeliveryTime { get; set; }
         public DateTime? ReturnDate { get; set; }
-        public string ReturnTime { get; set; }
+        public TimeSpan? ReturnTime { get; set; }
         public int? Status { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedDate { get; set; }
         public Guid? CreatedBy { get; set; }
         public Guid? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
-        public decimal? CompensationFee { get; set; }
-        public string CompensationDescription { get; set; }
 
         public virtual Account Customer { get; set; }
         public virtual Storage Storage { get; set; }

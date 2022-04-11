@@ -6,7 +6,6 @@ namespace RSSMS.DataService.ViewModels.Areas
 {
     public class AreaDetailViewModel
     {
-        // có dùng
         public Guid Id { get; set; }
         public Guid? StorageId { get; set; }
         public string Name { get; set; }

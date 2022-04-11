@@ -82,8 +82,11 @@ namespace RSSMS.DataService.Services
 
                 // Get account in database
                 Account acc = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password.SequenceEqual(EncryptedPassword(model.Password)) && account.IsActive)
-                    .Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefaultAsync();
-                if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Email or password not found");
+                    .Include(account => account.Role)
+                    .Include(account => account.StaffAssignStorages)
+                    .FirstOrDefaultAsync();
+                if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Email hoặc mật khẩu không đúng");
+
                 TokenViewModel result = _mapper.Map<TokenViewModel>(acc);
 
                 // Generate Token to return
@@ -98,10 +101,10 @@ namespace RSSMS.DataService.Services
                 await UpdateAsync(acc);
 
                 // Check user role
-                if (acc.Role.Name != "Office Staff") return result;
+                if (acc.Role.Name != "Office Staff" || acc.Role.Name != "Delivery Staff") return result;
 
                 // Get office staff storage Id
-                Guid? storageId = acc.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).FirstOrDefault()?.StorageId;
+                Guid? storageId = acc.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).FirstOrDefault()?.StorageId;
                 if (storageId != null) result.StorageId = storageId;
 
                 return result;
@@ -127,11 +130,11 @@ namespace RSSMS.DataService.Services
                 if (!model.ConfirmPassword.Equals(model.Password)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Mật khẩu không khớp");
 
                 Account account = await Get(account => account.Id == model.Id).FirstOrDefaultAsync();
-                if (account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
+                if (account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản này");
 
                 byte[] OldPassword = EncryptedPassword(model.OldPassword);
-                if (!account.Password.SequenceEqual(OldPassword)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Wrong old password");
-                if (account.FirebaseId == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "FirebaseID null");
+                if (!account.Password.SequenceEqual(OldPassword)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Mật khẩu cũ không đúng");
+                if (account.FirebaseId == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Tài khoản không tồn tại trên firebase");
 
 
                 // Config firebaseApp
@@ -231,7 +234,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 var result = await Get(account => account.Id == id && account.IsActive).ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
-                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
+                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
                 return result;
             }
             catch (ErrorResponse e)
@@ -250,7 +253,7 @@ namespace RSSMS.DataService.Services
             {
                 _utilService.ValidatePhonenumber(phone);
                 var result = await Get(account => account.Phone == phone && account.IsActive).ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
-                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User phone not found");
+                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản với số điện thoại trên");
                 return result;
             }
             catch (ErrorResponse e)
@@ -272,15 +275,15 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidatePassword(model.Password);
                 _utilService.ValidateBirthDate(model.Birthdate);
                 _utilService.ValidatePhonenumber(model.Phone);
-                _utilService.ValidateString(model.Name, "Name");
-                _utilService.ValidateString(model.Address, "Address");
+                _utilService.ValidateString(model.Name, "Tên");
+                _utilService.ValidateString(model.Address, "Địa chỉ");
 
-                Role role = _roleService.Get(role => role.Id == model.RoleId && role.IsActive).First();
+                Role role = _roleService.Get(role => role.Id == model.RoleId).First();
                 if (role == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập chức vụ");
 
                 // Create user to firebase
                 var autho = new FirebaseAuthProvider(new FirebaseConfig(FirebaseKeyConstant.apiKEY));
-                Firebase.Auth.User us = null;
+                User us = null;
                 try
                 {
                     var a = await autho.CreateUserWithEmailAndPasswordAsync(model.Email, EncryptedPassword(model.Password).ToString(), model.Name, false);
@@ -324,7 +327,6 @@ namespace RSSMS.DataService.Services
                             CreatedDate = now,
                             IsActive = true,
                             StorageId = model.StorageIds.ElementAt(i),
-                            RoleName = userCreate.Role.Name
                         };
                         staffToAssigns.Add(staffAssignModel);
                     }
@@ -347,7 +349,7 @@ namespace RSSMS.DataService.Services
 
                 // get office staff storage id
                 var storageId = userCreate.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).FirstOrDefault()?.StorageId;
-                if (storageId != null && userCreate.Role.Name == "Office Staff")
+                if (storageId != null && (userCreate.Role.Name == "Office Staff" || userCreate.Role.Name == "Delivery Staff"))
                     result.StorageId = storageId;
 
                 return result;
@@ -370,13 +372,13 @@ namespace RSSMS.DataService.Services
                 // validate input
                 _utilService.ValidateBirthDate(model.Birthdate);
                 _utilService.ValidatePhonenumber(model.Phone);
-                _utilService.ValidateString(model.Name, "Name");
-                _utilService.ValidateString(model.Address, "Address");
+                _utilService.ValidateString(model.Name, "Tên");
+                _utilService.ValidateString(model.Address, "Địa chỉ");
 
-                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User Id not matched");
+                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id tài khoản không khớp");
 
                 var account = await Get(account => account.Id == id && account.IsActive).FirstOrDefaultAsync();
-                if (account == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "User not found");
+                if (account == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản");
 
                 var image = model.Image;
 
@@ -412,8 +414,7 @@ namespace RSSMS.DataService.Services
                 var entity = await Get(account => account.Id == id && account.IsActive)
                     .Include(account => account.Role)
                     .Include(account => account.Schedules).FirstOrDefaultAsync();
-                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User not found");
-                if (entity.Role.Name == "Customer") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Can not delete customer");
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
                 if (entity.Role.Name == "Delivery Staff")
                 {
                     DateTime now = DateTime.Now;
@@ -493,37 +494,54 @@ namespace RSSMS.DataService.Services
 
         public async Task<List<AccountViewModel>> GetStaff(Guid? storageId, string accessToken, List<string> roleName, DateTime? scheduleDay, ICollection<string> deliveryTimes, bool getFromAllStorage)
         {
-            var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-            var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
-            var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-
-
-            var staffs = Get(account => account.IsActive && account.Role.Name != "Admin" && account.Role.Name != "Customer").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-            if (roleName.Count > 0) staffs = Get(account => account.IsActive && roleName.Contains(account.Role.Name)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-            if (role == "Manager")
-                staffs = staffs.Where(account => account.Role.Name != "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-
-            // Nhân viên không thuộc kho nào
-            if (storageId == null && !getFromAllStorage)
-                staffs = staffs.Where(account => (account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() == 0) || account.Role.Name == "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-
-            if (getFromAllStorage)
-                staffs = staffs.Where(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() > 0).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-
-            if (storageId != null)
-                staffs = staffs.Where(account => account.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId && staffAssignStorage.IsActive)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-
-            if (scheduleDay != null)
+            try
             {
-                // delivery staff busy in the time
-                var usersInDelivery = _scheduleService.Get(schedule => scheduleDay.Value.Date == schedule.ScheduleDay.Date && deliveryTimes.Contains(schedule.ScheduleTime) && schedule.IsActive).Select(schedule => schedule.UserId).Distinct().ToList();
-                staffs = staffs.Where(account => !usersInDelivery.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-                //delivery staff busy in the day
-                var deliveryStaffBusyInDate = _scheduleService.Get(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && !schedule.IsActive && schedule.Status == 6).Select(schedule => schedule.UserId).Distinct().ToList();
-                staffs = staffs.Where(account => !deliveryStaffBusyInDate.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
+                var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+
+
+                var staffs = Get(account => account.IsActive && account.Role.Name != "Admin" && account.Role.Name != "Customer").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                if (roleName.Count > 0) staffs = Get(account => account.IsActive && roleName.Contains(account.Role.Name)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                if (role == "Admin")
+                    staffs = staffs.Where(account => account.Role.Name == "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+
+                if (role == "Manager")
+                    staffs = staffs.Where(account => account.Role.Name != "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+
+                // Nhân viên không thuộc kho nào
+                if (storageId == null && !getFromAllStorage)
+                    staffs = staffs.Where(account => (account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() == 0) || account.Role.Name == "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+
+                if (getFromAllStorage)
+                    staffs = staffs.Where(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() > 0).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+
+                if (storageId != null)
+                    staffs = staffs.Where(account => account.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId && staffAssignStorage.IsActive)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+
+                if (scheduleDay != null)
+                {
+                    List<TimeSpan> timeSpan = new List<TimeSpan>();
+                    foreach (var time in deliveryTimes)
+                        timeSpan.Add(_utilService.StringToTime(time));
+                    // delivery staff busy in the time
+                    var usersInDelivery = _scheduleService.Get(schedule => scheduleDay.Value.Date == schedule.ScheduleDay.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).Select(schedule => schedule.StaffId).Distinct().ToList();
+                    staffs = staffs.Where(account => !usersInDelivery.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                    //delivery staff busy in the day
+                    var deliveryStaffBusyInDate = _scheduleService.Get(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && !schedule.IsActive && schedule.Status == 6).Select(schedule => schedule.StaffId).Distinct().ToList();
+                    staffs = staffs.Where(account => !deliveryStaffBusyInDate.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                }
+                var result = await staffs.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToListAsync();
+                return result;
             }
-            var result = await staffs.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToListAsync();
-            return result;
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
 
         private byte[] EncryptedPassword(string password)

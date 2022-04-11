@@ -21,6 +21,7 @@ namespace RSSMS.DataService.Models
         public decimal? Width { get; set; }
         public decimal? Length { get; set; }
         public bool IsActive { get; set; }
+        public Guid? ModifiedBy { get; set; }
 
         public virtual Storage Storage { get; set; }
         public virtual ICollection<Space> Spaces { get; set; }

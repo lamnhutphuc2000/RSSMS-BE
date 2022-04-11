@@ -7,6 +7,40 @@ using System.Text.RegularExpressions;
 
 namespace RSSMS.DataService.Services
 {
+    public static class TimeUtilStatic
+    {
+        public static TimeSpan StringToTime(string input)
+        {
+            TimeSpan result;
+            var meo = input.Split(" - ");
+            var time1 = meo[0];
+            var tho = time1.Split(new[] { 'a', 'p' });
+            int index = input.IndexOf('a');
+            result = TimeSpan.FromHours(double.Parse(tho[0]));
+            if (index <= 0) result += TimeSpan.FromHours(12);
+            return result;
+        }
+
+        public static string TimeToString(TimeSpan time)
+        {
+            int hour1 = time.Hours;
+            int hour2 = hour1 + 2;
+            string tmp1 = "am";
+            string tmp2 = "am";
+            if (hour1 >= 12)
+            {
+                if (hour1 != 12) hour1 = hour1 - 12;
+                tmp1 = "pm";
+            }
+
+            if (hour2 >= 12)
+            {
+                if (hour2 != 12) hour2 = hour2 - 12;
+                tmp2 = "pm";
+            }
+            return hour1 + tmp1 + " - " + hour2 + tmp2;
+        }
+    }
     public interface IUtilService
     {
         bool ValidateEmail(string email);
@@ -16,11 +50,45 @@ namespace RSSMS.DataService.Services
         bool ValidateBirthDate(DateTime? date);
         bool ValidateDecimal(Decimal? number, string name);
         bool ValidateInt(int? number, string name);
+        TimeSpan StringToTime(string input);
+        string TimeToString(TimeSpan time);
     }
     public class UtilService : IUtilService
     {
         public UtilService()
         {
+        }
+
+        public TimeSpan StringToTime(string input)
+        {
+            TimeSpan result;
+            var meo = input.Split(" - ");
+            var time1 = meo[0];
+            var tho = time1.Split(new[] { 'a', 'p' });
+            int index = input.IndexOf('a');
+            result = TimeSpan.FromHours(double.Parse(tho[0]));
+            if (index <= 0) result += TimeSpan.FromHours(12);
+            return result;
+        }
+
+        public string TimeToString(TimeSpan time)
+        {
+            int hour1 = time.Hours;
+            int hour2 = hour1 + 2;
+            string tmp1 = "am";
+            string tmp2 = "am";
+            if (hour1 >= 12)
+            {
+                if (hour1 != 12) hour1 = hour1 - 12;
+                tmp1 = "pm";
+            }
+
+            if (hour2 >= 12)
+            {
+                if (hour2 != 12) hour2 = hour2 - 12;
+                tmp2 = "pm";
+            }
+            return hour1 + tmp1 + " - " + hour2 + tmp2;
         }
 
         public bool ValidateBirthDate(DateTime? date)

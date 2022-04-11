@@ -5,7 +5,6 @@ namespace RSSMS.DataService.ViewModels.Accounts
 {
     public class AccountUpdateViewModel
     {
-        // có dùng
         public Guid Id { get; set; }
         public string Name { get; set; }
         public int? Gender { get; set; }

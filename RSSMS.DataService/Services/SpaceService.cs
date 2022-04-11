@@ -30,7 +30,6 @@ namespace RSSMS.DataService.Services
         bool CheckIsUsed(Guid id);
 
         Task<List<FloorGetByIdViewModel>> GetFloorOfSpace(Guid areaId, int spaceType, DateTime date, bool isMany);
-
     }
     public class SpaceService : BaseService<Space>, ISpaceService
     {
@@ -320,5 +319,6 @@ namespace RSSMS.DataService.Services
             if (result.Count == 0) return null;
             return result;
         }
+
     }
 }

@@ -33,7 +33,7 @@ namespace RSSMS.DataService.Services
             try
             {
 
-                var roles = Get(x => x.Name != "Admin" && x.IsActive == true)
+                var roles = Get(role => role.Name != "Admin")
                     .ProjectTo<RolesViewModel>(_mapper.ConfigurationProvider);
                 (int, IQueryable<RolesViewModel>) result;
                 DynamicModelResponse<RolesViewModel> rs;

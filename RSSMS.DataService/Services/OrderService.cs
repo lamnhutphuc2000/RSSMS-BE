@@ -10,8 +10,6 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
-using RSSMS.DataService.ViewModels.Floors;
-using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Orders;
 using System;
 using System.Collections.Generic;
@@ -29,7 +27,6 @@ namespace RSSMS.DataService.Services
         Task<OrderUpdateViewModel> Update(Guid id, OrderUpdateViewModel model);
         Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes);
         Task<OrderViewModel> Cancel(Guid id, OrderCancelViewModel model, string accessToken);
-        //Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken);
         Task<OrderByIdViewModel> Done(OrderDoneViewModel model, string accessToken);
         Task<OrderViewModel> UpdateOrders(List<OrderUpdateStatusViewModel> model);
         Task<OrderViewModel> AssignStorage(OrderAssignStorageViewModel model, string accessToken);
@@ -218,9 +215,18 @@ namespace RSSMS.DataService.Services
                 double serviceVolumne = 0;
 
                 int typeService = 1;
+                int spaceType = 0;
+                if (model.Type == (int)OrderType.Kho_tu_quan) spaceType = 1;
+                bool isMany = false;
+
+                // service list chứa list service người dùng đặt
+                List<Cuboid> cuboid = new List<Cuboid>();
+
                 // check order detail customer order
                 foreach (var orderDetail in orderDetails)
                 {
+
+
                     height = Decimal.ToDouble((decimal)orderDetail.Height);
                     width = Decimal.ToDouble((decimal)orderDetail.Width);
                     length = Decimal.ToDouble((decimal)orderDetail.Length);
@@ -233,6 +239,7 @@ namespace RSSMS.DataService.Services
                     foreach (var serviceId in servicesIds)
                     {
                         var service = await _serviceService.GetById(serviceId.ServiceId);
+                        if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
                         if (service.Type != 1) typeService = (int)service.Type;
                         serviceHeight += Decimal.ToDouble((decimal)service.Height);
                         serviceWidth += Decimal.ToDouble((decimal)service.Width);
@@ -240,7 +247,8 @@ namespace RSSMS.DataService.Services
                         serviceVolumne = (int)serviceId.Amount * serviceHeight * serviceLength * serviceWidth;
 
                     }
-
+                    if (isMany) cuboid.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, Guid.NewGuid()));
+                    else cuboid.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, Guid.NewGuid()));
                     if (serviceHeight < height || serviceLength < length || serviceWidth < width || serviceVolumne < volumne)
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail is bigger than service");
                 }
@@ -281,185 +289,8 @@ namespace RSSMS.DataService.Services
 
 
 
-                int spaceType = 0;
-                bool isMany = false;
-                if (model.Type == (int)OrderType.Kho_tu_quan) spaceType = 1;
-                if (model.Type == (int)OrderType.Giu_do_thue) spaceType = 0;
-
-
-
-                decimal serviceMaxHeight = 0;
-                decimal serviceMaxWidth = 0;
-                decimal serviceMaxLength = 0;
-
-                List<Cuboid> cuboids = new List<Cuboid>();
-                List<Guid> serviceList = new List<Guid>();
-
-                var orderDetailListTmp = model.OrderDetails.Select(orderDetail => new
-                {
-                    OrderDetailId = Guid.NewGuid(),
-                    Height = (decimal)orderDetail.Height,
-                    Width = (decimal)orderDetail.Width,
-                    Length = (decimal)orderDetail.Length,
-                }).ToList();
-                if (typeService == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
-                // Check xem storage còn đủ chỗ không
-                var floorInStorages = await _storageService.GetFloorWithStorage(storageId, spaceType, (DateTime)model.DeliveryDate, isMany);
-
-                bool flag = false;
-                if (floorInStorages == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
-
-                foreach (var floorInStorage in floorInStorages)
-                {
-                    int serviceNum = 0;
-                    if (!flag)
-                    {
-                        // Lay kich thuoc cac service khach hang dat 
-                        orderDetailListTmp = model.OrderDetails.Select(orderDetail => new
-                        {
-                            OrderDetailId = Guid.NewGuid(),
-                            Height = (decimal)orderDetail.Height,
-                            Width = (decimal)orderDetail.Width,
-                            Length = (decimal)orderDetail.Length,
-                        }).ToList();
-                        for (int i = 1; i <= orderDetailListTmp.Count; i++)
-                        {
-                            if (!(orderDetailListTmp[i - 1].Width == 0 && orderDetailListTmp[i - 1].Height == 0 && orderDetailListTmp[i - 1].Length == 0))
-                            {
-                                if (typeService == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
-                                if (serviceMaxHeight < orderDetailListTmp[i - 1].Height) serviceMaxHeight = orderDetailListTmp[i - 1].Height;
-                                if (serviceMaxWidth < orderDetailListTmp[i - 1].Width) serviceMaxWidth = orderDetailListTmp[i - 1].Width;
-                                if (serviceMaxLength < orderDetailListTmp[i - 1].Length) serviceMaxLength = orderDetailListTmp[i - 1].Length;
-                                if (typeService == (int)ServiceType.Gui_theo_dien_tich) cuboids.Add(new Cuboid(orderDetailListTmp[i - 1].Width, 1, orderDetailListTmp[i - 1].Length, 0, orderDetailListTmp[i - 1].OrderDetailId));
-                                if (typeService != (int)ServiceType.Gui_theo_dien_tich) cuboids.Add(new Cuboid(orderDetailListTmp[i - 1].Width, orderDetailListTmp[i - 1].Height, orderDetailListTmp[i - 1].Length, 0, orderDetailListTmp[i - 1].OrderDetailId));
-
-
-                                serviceList.Add(orderDetailListTmp[i - 1].OrderDetailId);
-                                serviceNum++;
-                            }
-
-                        }
-
-
-
-                        var floors = floorInStorage.Value.ToList();
-                        List<OrderDetailInFloorViewModel> orderDetailList = new List<OrderDetailInFloorViewModel>();
-                        List<FloorGetByIdViewModel> floorList = new List<FloorGetByIdViewModel>();
-                        foreach (var floor in floors)
-                        {
-                            if (floor.Height >= serviceMaxHeight && floor.Width >= serviceMaxWidth && floor.Length >= serviceMaxLength)
-                            {
-                                floorList.Add(floor);
-                                orderDetailList.AddRange(floor.OrderDetails);
-                            }
-                        }
-                        if (!(floorList.Count < serviceNum && model.Type == (int)OrderType.Kho_tu_quan))
-                        {
-                            foreach (var floorInList in floorList)
-                            {
-                                if (!flag)
-                                {
-                                    // get request đã được assign vào storage
-                                    var requestsAssignStorage = await _requestService.Get(requests => requests.IsActive && requests.TypeOrder == model.Type && requests.Type == (int)RequestType.Create_Order && requests.StorageId == floorInStorage.Key && requests.Type == (int)RequestType.Create_Order && (requests.Status == 2 || requests.Status == 3) && requests.Id != model.RequestId)
-                                           .Include(requests => requests.Order).ThenInclude(order => order.OrderDetails)
-                                           .Include(requests => requests.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
-                                    requestsAssignStorage = requestsAssignStorage.Where(requests => (requests.DeliveryDate <= model.DeliveryDate && requests.ReturnDate >= model.DeliveryDate) || (model.DeliveryDate <= requests.DeliveryDate && model.ReturnDate >= requests.DeliveryDate)).ToList();
-                                    if (!(floorList.Count <= requestsAssignStorage.Count && model.Type == (int)OrderType.Kho_tu_quan))
-                                    {
-                                        foreach (var requestAssignStorage in requestsAssignStorage)
-                                        {
-                                            var servicesInRequestDetail = requestAssignStorage.RequestDetails.Select(requestDetail => new
-                                            {
-                                                ServiceId = (Guid)requestDetail.ServiceId,
-                                                Height = (decimal?)null,
-                                                Width = (decimal?)null,
-                                                Length = (decimal?)null,
-                                                Amount = (int)requestDetail.Amount
-                                            }).ToList();
-                                            if (requestAssignStorage.Order != null)
-                                                servicesInRequestDetail = requestAssignStorage.Order.OrderDetails.Select(orderDetail => new
-                                                {
-                                                    ServiceId = orderDetail.Id,
-                                                    Height = orderDetail.Height,
-                                                    Width = orderDetail.Width,
-                                                    Length = orderDetail.Length,
-                                                    Amount = 0
-                                                }).ToList();
-                                            for (int i = 1; i <= servicesInRequestDetail.Count; i++)
-                                            {
-                                                for (int j = 0; j < servicesInRequestDetail[i - 1].Amount; j++)
-                                                {
-                                                    if (servicesInRequestDetail[i - 1].Amount != 0)
-                                                    {
-                                                        var service = _serviceService.Get(service => service.Id == servicesInRequestDetail[i - 1].ServiceId).FirstOrDefault();
-                                                        if (service.Type != (int)ServiceType.Phu_kien)
-                                                        {
-                                                            if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
-                                                            if (serviceMaxHeight < service.Height) serviceMaxHeight = service.Height;
-                                                            if (serviceMaxWidth < service.Width) serviceMaxWidth = service.Width;
-                                                            if (serviceMaxLength < service.Length) serviceMaxLength = service.Length;
-                                                            if (typeService == (int)ServiceType.Gui_theo_dien_tich)
-                                                                cuboids.Add(new Cuboid(service.Width, 1, service.Length, 0, service.Id));
-                                                            if (typeService != (int)ServiceType.Gui_theo_dien_tich)
-                                                                cuboids.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        if (typeService == (int)ServiceType.Gui_theo_dien_tich)
-                                                            cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, 1, (decimal)servicesInRequestDetail[i - 1].Length));
-                                                        if (typeService != (int)ServiceType.Gui_theo_dien_tich)
-                                                            cuboids.Add(new Cuboid((decimal)servicesInRequestDetail[i - 1].Width, (decimal)servicesInRequestDetail[i - 1].Height, (decimal)servicesInRequestDetail[i - 1].Length));
-                                                    }
-                                                }
-                                            }
-                                        }
-
-
-
-
-                                        List<Cuboid> cuboidTmps = new List<Cuboid>();
-                                        cuboidTmps.AddRange(cuboids);
-                                        foreach (var orderDetail in orderDetailList)
-                                        {
-                                            if (typeService == (int)ServiceType.Gui_theo_dien_tich) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, orderDetail.Id));
-                                            if (typeService != (int)ServiceType.Gui_theo_dien_tich) cuboidTmps.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, orderDetail.Id));
-                                        }
-
-
-                                        BinPackParameter parameter = null;
-                                        if (isMany) parameter = new BinPackParameter(floorInList.Width, 1, floorInList.Length, cuboids);
-                                        else parameter = new BinPackParameter(floorInList.Width, floorInList.Height, floorInList.Length, cuboids);
-
-                                        var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
-                                        var result = binPacker.Pack(parameter);
-                                        if (result.BestResult.Count == 1)
-                                        {
-                                            flag = true;
-                                        }
-                                        else
-                                        {
-                                            foreach (var cuboid in result.BestResult.First())
-                                            {
-                                                var orderDetail = orderDetailList.Where(orderDetail => orderDetail.Id == (Guid)cuboid.Tag).FirstOrDefault();
-                                                if (orderDetail != null) orderDetailList.Remove(orderDetail);
-                                                var service = serviceList.Where(service => service == (Guid)cuboid.Tag).FirstOrDefault();
-                                                if (service != null) serviceList.Remove(service);
-                                            }
-                                        }
-                                    }
-
-                                }
-                            }
-                        }
-
-                    }
-                }
-
-                if (!flag) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Not enough space in storages");
-
-
-
+                var checkResult = await _requestService.CheckStorageAvailable(spaceType, isMany, (int)model.Type, (DateTime)model.DeliveryDate, cuboid, null, (bool)model.IsUserDelivery);
+                if (!checkResult) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
 
                 order.Status = 1;
 
@@ -490,7 +321,6 @@ namespace RSSMS.DataService.Services
                             {
                                 Image tmp = new Image
                                 {
-                                    IsActive = true,
                                     Url = url,
                                     Name = "Order detail image - " + num,
                                     Note = orderDetailImage.Note,
@@ -608,126 +438,6 @@ namespace RSSMS.DataService.Services
         }
 
 
-        //public async Task<OrderByIdViewModel> SendOrderNoti(OrderCreateViewModel model, string accessToken)
-        //{
-
-        //    var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-        //    var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-        //    var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-        //    var order = _mapper.Map<OrderByIdViewModel>(model);
-        //    try
-        //    {
-        //        if (role == "Delivery Staff")
-        //        {
-        //            var customer = _accountService.Get(x => x.Id == model.CustomerId).First();
-        //            var registrationId = customer.DeviceTokenId;
-        //            order.CustomerName = customer.Name;
-        //            order.CustomerPhone = customer.Phone;
-        //            string description = "Đơn cần được cập nhật";
-
-
-        //            // Get list of images
-        //            var orderDetailImagesList = model.OrderDetails.Select(orderDetail => orderDetail.OrderDetailImages.ToList()).ToList();
-        //            List<OrderDetailByIdViewModel> orderDetailToUpdate = new List<OrderDetailByIdViewModel>();
-        //            int index = 0;
-        //            foreach (var orderDetailImages in orderDetailImagesList)
-        //            {
-        //                var orderDetailToAdd = order.OrderDetails.ElementAt(index);
-        //                int num = 1;
-        //                List<AvatarImageViewModel> listImageToAdd = new List<AvatarImageViewModel>();
-        //                foreach (var orderDetailImage in orderDetailImages)
-        //                {
-        //                    if (orderDetailImage.File != null)
-        //                    {
-        //                        var url = await _firebaseService.UploadImageToFirebase(orderDetailImage.File, "OrderDetail in Order " + order.Id, orderDetailToAdd.Id, "Order detail image - " + num);
-        //                        if (url != null)
-        //                        {
-        //                            AvatarImageViewModel tmp = new AvatarImageViewModel
-        //                            {
-        //                                Url = url,
-        //                                Name = "Order detail image - " + num,
-        //                                Note = orderDetailImage.Note,
-        //                            };
-        //                            listImageToAdd.Add(tmp);
-        //                        }
-        //                    }
-        //                    num++;
-        //                }
-        //                orderDetailToAdd.Images = listImageToAdd;
-        //                string mainServiceName = null;
-        //                decimal? mainServicePrice = null;
-        //                int? mainServiceType = null;
-        //                string mainServiceUrl = null;
-        //                Guid? mainServiceId = null;
-        //                if (orderDetailToAdd.OrderDetailServices == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail service can not null");
-        //                var orderDetailServices = orderDetailToAdd.OrderDetailServices.ToList();
-        //                foreach (var orderDetailService in orderDetailServices)
-        //                {
-        //                    var service = _serviceService.Get(x => x.IsActive && x.Id == orderDetailService.ServiceId).FirstOrDefault();
-        //                    if (service == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Service not found");
-        //                    orderDetailService.ServiceName = service.Name;
-        //                    orderDetailService.ServiceType = service.Type;
-        //                    orderDetailService.ServiceUrl = service.ImageUrl;
-        //                    if (service.Type == 3 || service.Type == 2)
-        //                    {
-        //                        mainServiceName = service.Name;
-        //                        mainServicePrice = service.Price;
-        //                        mainServiceType = service.Type;
-        //                        mainServiceUrl = service.ImageUrl;
-        //                        mainServiceId = service.Id;
-        //                    }
-        //                    if (mainServiceType == null)
-        //                    {
-        //                        mainServiceName = service.Name;
-        //                        mainServicePrice = service.Price;
-        //                        mainServiceType = service.Type;
-        //                        mainServiceUrl = service.ImageUrl;
-        //                        mainServiceId = service.Id;
-        //                    }
-        //                }
-        //                orderDetailToAdd.ServiceId = mainServiceId;
-        //                orderDetailToAdd.ServiceName = mainServiceName;
-        //                orderDetailToAdd.ServicePrice = mainServicePrice;
-        //                orderDetailToAdd.ServiceType = mainServiceType;
-        //                orderDetailToAdd.ServiceImageUrl = mainServiceUrl;
-        //                orderDetailToAdd.OrderDetailServices = orderDetailServices;
-        //                orderDetailToUpdate.Add(orderDetailToAdd);
-        //                index++;
-        //            }
-        //            order.OrderDetails = orderDetailToUpdate;
-        //            order.RequestId = model.RequestId;
-        //            var result = await _firebaseService.SendNoti(description, customer.Id, customer.DeviceTokenId, null, order);
-
-
-        //            //Dictionary<int, List<AvatarImageViewModel>> imagesOfOrder = new Dictionary<int, List<AvatarImageViewModel>>();
-        //            //var orderDetails = model.OrderDetails;
-        //            //int num = 0;
-        //            //foreach (var orderDetail in orderDetails)
-        //            //{
-        //            //    var images = orderDetail.Images;
-        //            //    foreach (var image in images)
-        //            //    {
-        //            //        var url = await _firebaseService.UploadImageToFirebase(image.File, "temp", order.Id, orderDetail.Id + "-" + num);
-        //            //        if (url != null)
-        //            //        {
-        //            //            image.File = null;
-        //            //            image.Url = url;
-        //            //        }
-        //            //        num++;
-        //            //    }
-        //            //    orderDetail.Images = images;
-        //            //}
-        //            //model.OrderDetails = orderDetails;
-
-        //            //var result = await _firebaseService.SendNoti(description, customerId, registrationId, order.Id, null, model);
-        //        }
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
-        //    }
-        //    return order;
-        //}
 
         public async Task<OrderByIdViewModel> Done(OrderDoneViewModel model, string accessToken)
         {
@@ -752,7 +462,7 @@ namespace RSSMS.DataService.Services
                         request.Schedules = schedules.Select(schedule => { schedule.Status = 2; return schedule; }).ToList();
                     }
                 }
-                    
+
 
                 order.Requests = requests;
 
@@ -813,7 +523,7 @@ namespace RSSMS.DataService.Services
             {
                 var storageId = model.StorageId;
                 var storage = await _storageService.Get(order => order.Id == storageId && order.IsActive)
-                    .Include(order => order.StaffAssignStorages.Where(staff => staff.IsActive == true)).ThenInclude(staffAssign => staffAssign.Staff).FirstOrDefaultAsync();
+                    .Include(order => order.StaffAssignStorages.Where(staff => staff.IsActive)).ThenInclude(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Role).FirstOrDefaultAsync();
                 if (storage == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
                 var order = await Get(order => order.Id == model.OrderId && order.IsActive).Include(order => order.Customer).FirstOrDefaultAsync();
                 if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
@@ -827,7 +537,7 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
 
-                var manager = storage.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.RoleName == "Manager").Select(staffAssign => staffAssign.Staff).FirstOrDefault();
+                var manager = storage.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.Staff.Role.Name == "Manager").Select(staffAssign => staffAssign.Staff).FirstOrDefault();
                 var customer = order.Customer;
                 string description = "Don " + order.Id + " cua khach hang " + customer.Name + " da duoc xu ly ";
 
@@ -865,7 +575,7 @@ namespace RSSMS.DataService.Services
                 foreach (var orderDetailAssign in model.OrderDetailAssignFloor)
                     if (orderDetailAssign.ServiceType == (int)ServiceType.Gui_theo_dien_tich)
                         isMany = true;
-                var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Create_Order && request.Status == 3).First();
+                var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tao_don && request.Status == 3).First();
                 var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
@@ -972,7 +682,7 @@ namespace RSSMS.DataService.Services
                 foreach (var orderDetailAssign in model.OrderDetailAssignFloor)
                     if (orderDetailAssign.ServiceType == (int)ServiceType.Gui_theo_dien_tich)
                         isMany = true;
-                var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Create_Order && request.Status == 3).First();
+                var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tao_don && request.Status == 3).First();
                 var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {

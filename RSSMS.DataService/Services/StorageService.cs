@@ -31,6 +31,7 @@ namespace RSSMS.DataService.Services
         Task<StorageViewModel> Delete(Guid id);
         Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date, bool isMany);
         Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken);
+        Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime date, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -97,7 +98,7 @@ namespace RSSMS.DataService.Services
             {
                 var entity = await Get(x => x.Id == id && x.IsActive).Include(a => a.Areas.Where(area => area.IsActive))
                     .Include(storage => storage.Requests)
-                    .Include(storage => storage.StaffAssignStorages)
+                    .Include(storage => storage.StaffAssignStorages).ThenInclude(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Role)
                     .Include(storage => storage.Orders)
                     .FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
@@ -108,7 +109,7 @@ namespace RSSMS.DataService.Services
                     throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn đơn đang được gán vào");
                 if (entity.Requests.Where(request => !request.IsActive || request.Status != 0 || request.Status != 3 || request.Status != 4 || request.Status != 5).Count() > 0)
                     throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn đơn yêu cầu đang được gán vào");
-                if (entity.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.RoleName != "Manager").Count() > 0)
+                if (entity.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.Staff.Role.Name != "Manager").Count() > 0)
                     throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn nhân viên đang được gán vào");
                 entity.IsActive = false;
                 await UpdateAsync(entity);
@@ -133,7 +134,7 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-                var storages = Get(x => x.IsActive == true).Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Manager" && s.IsActive == true)).ThenInclude(a => a.Staff).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model);
+                var storages = Get(x => x.IsActive == true).Include(a => a.StaffAssignStorages.Where(s => s.Staff.Role.Name == "Manager" && s.IsActive == true)).ThenInclude(a => a.Staff).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model);
 
 
 
@@ -184,21 +185,17 @@ namespace RSSMS.DataService.Services
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
                 var result = await Get(x => x.Id == id && x.IsActive == true)
-                                    .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Manager" && s.IsActive == true))
+                                    .Include(a => a.StaffAssignStorages.Where(s => s.Staff.Role.Name == "Manager" && s.IsActive == true))
                                     .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
                 if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
 
                 if (role == "Office Staff")
                 {
                     result = await Get(x => x.Id == id && x.IsActive == true)
-                    .Include(a => a.StaffAssignStorages.Where(s => s.RoleName == "Office Staff" && s.IsActive == true && s.StaffId == userId))
+                    .Include(a => a.StaffAssignStorages.Where(s => s.Staff.Role.Name == "Office Staff" && s.IsActive == true && s.StaffId == userId))
                     .ThenInclude(a => a.Staff).ProjectTo<StorageDetailViewModel>(_mapper.ConfigurationProvider)
                     .FirstOrDefaultAsync();
-                    //if (result.StaffManageStorages == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
-
                 }
-
-                //if (result != null && result.StaffManageStorages != null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Office Staff not manage this storage");
 
                 return result;
             }
@@ -306,8 +303,9 @@ namespace RSSMS.DataService.Services
                 // Validate staff unassigned
                 if (staffUnAssigned != null)
                 {
+                    var staffUnAssignedId = staffUnAssigned.Select(staff => staff.UserId);
                     // get staff need to unassign with role and schedules
-                    var staffsToUnAssigned = _staffAssignStoragesService.Get(staffAssign => staffUnAssigned.Any(staffUnAssign => staffUnAssign.UserId == staffAssign.Id) && staffAssign.IsActive)
+                    var staffsToUnAssigned = _staffAssignStoragesService.Get(staffAssign => staffUnAssignedId.Contains(staffAssign.Id) && staffAssign.IsActive)
                                                 .Include(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Role)
                                                 .Include(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Schedules).ToList();
                     // check if there is staff who schedule have not finish
@@ -316,18 +314,18 @@ namespace RSSMS.DataService.Services
 
                     // check if there is request that is assigned to this storage but unassigned staff leading to not enough staff;
                     var requests = Get(storage => storage.Id == model.StorageId && storage.IsActive).Include(storage => storage.Requests).FirstOrDefault()
-                        .Requests.Where(request => request.IsActive && (request.Type == (int)RequestType.Create_Order || request.Type == (int)RequestType.Return_Order) && (request.Status == 2 || request.Status == 4) && request.DeliveryDate != null ).AsEnumerable();
-                    if(requests.Count() > 0)
+                        .Requests.Where(request => request.IsActive && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don) && (request.Status == 2 || request.Status == 4) && request.DeliveryDate != null).AsEnumerable();
+                    if (requests.Count() > 0)
                     {
                         // group by request to schedule day
                         var requestByDateTime = requests.GroupBy(request => new { request.DeliveryDate, request.DeliveryTime })
                                             .Select(request => new RequestByDateTimeViewModel
                                             {
                                                 DeliveryDate = (DateTime)request.Key.DeliveryDate,
-                                                DeliveryTime = request.Key.DeliveryTime,
+                                                DeliveryTime = _utilService.TimeToString((TimeSpan)request.Key.DeliveryTime),
                                                 Requests = request.ToList()
                                             });
-                        foreach(var request in requestByDateTime)
+                        foreach (var request in requestByDateTime)
                         {
                             if (request.Requests.Count > staffAssigned.Count)
                                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên được thêm sẽ không đủ với các yêu cầu đã được tiếp nhận");
@@ -341,7 +339,7 @@ namespace RSSMS.DataService.Services
                     if (managerAssigned.Count > 0)
                     {
                         if (managerAssigned.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "More than 1 manager assigned to this storage");
-                        var managerInStorage = _staffAssignStoragesService.Get(x => x.RoleName == "Manager" && x.StorageId == model.StorageId && x.IsActive == true).FirstOrDefault();
+                        var managerInStorage = _staffAssignStoragesService.Get(x => x.Staff.Role.Name == "Manager" && x.StorageId == model.StorageId && x.IsActive == true).FirstOrDefault();
                         if (managerInStorage != null)
                         {
                             if (staffAssigned.Where(x => x.UserId == managerInStorage.StaffId).FirstOrDefault() == null && staffUnAssigned.Where(x => x.UserId == managerInStorage.StaffId).FirstOrDefault() == null)
@@ -351,7 +349,7 @@ namespace RSSMS.DataService.Services
 
                     foreach (var staff in staffAssigned)
                     {
-                        var staffManageStorage = await _staffAssignStoragesService.Get(x => x.StaffId == staff.UserId && x.RoleName != "Manager" && x.StorageId != model.StorageId && x.IsActive == true).FirstOrDefaultAsync();
+                        var staffManageStorage = await _staffAssignStoragesService.Get(x => x.StaffId == staff.UserId && x.Staff.Role.Name != "Manager" && x.StorageId != model.StorageId && x.IsActive == true).FirstOrDefaultAsync();
                         if (staffManageStorage != null)
                         {
                             throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Staff has assigned to a storage before");
@@ -381,7 +379,6 @@ namespace RSSMS.DataService.Services
                             {
                                 StorageId = model.StorageId,
                                 StaffId = staff.UserId,
-                                RoleName = staff.RoleName,
                                 IsActive = true,
                                 CreatedDate = DateTime.Now
                             };
@@ -401,6 +398,28 @@ namespace RSSMS.DataService.Services
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, e.Message);
             }
 
+        }
+
+        public async Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime date, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery)
+        {
+            bool result = false;
+
+            // Get all storage
+            IQueryable<Storage> storages = Get(storage => storage.IsActive).Include(storage => storage.Areas.Where(area => area.IsActive));
+
+            // Get storage by Id
+            if (storageId != null) storages = storages.Where(storage => storage.Id == storageId).Include(storage => storage.Areas.Where(area => area.IsActive));
+            if (storages.ToList().Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không đủ kho");
+
+            var storageList = storages.ToList();
+            int i = 0;
+            do
+            {
+                var requestsOfStorage = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id).ToList();
+                result = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, date, isMany, cuboids, requestsOfStorage, isCustomerDelivery);
+                i++;
+            } while (i < storageList.Count || result);
+            return result;
         }
     }
 }

@@ -196,19 +196,11 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.AdditionalFeeDescription).HasMaxLength(255);
 
-                entity.Property(e => e.CompensationDescription).HasMaxLength(255);
-
-                entity.Property(e => e.CompensationFee).HasColumnType("decimal(18, 3)");
-
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.DeliveryAddress).HasMaxLength(255);
 
                 entity.Property(e => e.DeliveryDate).HasColumnType("date");
-
-                entity.Property(e => e.DeliveryTime)
-                    .HasMaxLength(20)
-                    .IsUnicode(false);
 
                 entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
 
@@ -221,10 +213,6 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.ReturnAddress).HasMaxLength(255);
 
                 entity.Property(e => e.ReturnDate).HasColumnType("date");
-
-                entity.Property(e => e.ReturnTime)
-                    .HasMaxLength(20)
-                    .IsUnicode(false);
 
                 entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 3)");
 
@@ -378,10 +366,6 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.DeliveryDate).HasColumnType("date");
 
-                entity.Property(e => e.DeliveryTime)
-                    .HasMaxLength(20)
-                    .IsUnicode(false);
-
                 entity.Property(e => e.Note).HasMaxLength(255);
 
                 entity.Property(e => e.OldReturnDate).HasColumnType("date");
@@ -390,21 +374,12 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.ReturnDate).HasColumnType("date");
 
-                entity.Property(e => e.ReturnTime)
-                    .HasMaxLength(20)
-                    .IsUnicode(false);
-
                 entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 3)");
 
                 entity.HasOne(d => d.CreatedByNavigation)
-                    .WithMany(p => p.RequestCreatedByNavigations)
+                    .WithMany(p => p.Requests)
                     .HasForeignKey(d => d.CreatedBy)
                     .HasConstraintName("FK_Request_Account");
-
-                entity.HasOne(d => d.Customer)
-                    .WithMany(p => p.RequestCustomers)
-                    .HasForeignKey(d => d.CustomerId)
-                    .HasConstraintName("FK_Request_Account1");
 
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.Requests)
@@ -460,18 +435,14 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.ScheduleDay).HasColumnType("date");
 
-                entity.Property(e => e.ScheduleTime)
-                    .IsRequired()
-                    .HasMaxLength(12);
-
                 entity.HasOne(d => d.Request)
                     .WithMany(p => p.Schedules)
                     .HasForeignKey(d => d.RequestId)
                     .HasConstraintName("FK_Schedule_Request");
 
-                entity.HasOne(d => d.User)
+                entity.HasOne(d => d.Staff)
                     .WithMany(p => p.Schedules)
-                    .HasForeignKey(d => d.UserId)
+                    .HasForeignKey(d => d.StaffId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Schedule_Account");
             });
@@ -527,8 +498,6 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CreatedDate).HasColumnType("date");
-
-                entity.Property(e => e.RoleName).HasMaxLength(255);
 
                 entity.HasOne(d => d.Staff)
                     .WithMany(p => p.StaffAssignStorages)

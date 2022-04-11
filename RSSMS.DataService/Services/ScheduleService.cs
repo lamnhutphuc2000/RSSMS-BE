@@ -28,9 +28,11 @@ namespace RSSMS.DataService.Services
 
     {
         private readonly IMapper _mapper;
-        public ScheduleService(IUnitOfWork unitOfWork, IScheduleRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IUtilService _utilService;
+        public ScheduleService(IUnitOfWork unitOfWork, IScheduleRepository repository, IUtilService utilService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
+            _utilService = utilService;
         }
 
         public async Task<List<ScheduleOrderViewModel>> Create(ScheduleCreateViewModel model)
@@ -66,9 +68,9 @@ namespace RSSMS.DataService.Services
                         var scheduleToCreate = _mapper.Map<Schedule>(model);
                         scheduleToCreate.Address = schedules[j].DeliveryAddress;
                         scheduleToCreate.ScheduleDay = (DateTime)model.ScheduleDay;
-                        scheduleToCreate.UserId = userIds[i];
+                        scheduleToCreate.StaffId = userIds[i];
                         scheduleToCreate.RequestId = schedules[j].RequestId;
-                        scheduleToCreate.ScheduleTime = schedules[j].ScheduleTime;
+                        scheduleToCreate.ScheduleTime = _utilService.StringToTime(schedules[j].ScheduleTime);
                         await CreateAsync(scheduleToCreate);
                         var schedule = Get(x => x.Id == scheduleToCreate.Id).Include(x => x.Request).FirstOrDefault();
                         schedule.Request.Status = 2;
@@ -102,12 +104,11 @@ namespace RSSMS.DataService.Services
 
                 if (role == "Delivery Staff")
                 {
-                    var schedules = await Get(x => x.IsActive == true && x.UserId == userId)
+                    var schedules = await Get(x => x.IsActive == true && x.StaffId == userId)
                             .Where(x => x.ScheduleDay.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Date <= model.DateTo.Value.Date).Include(x => x.Request)
                             .ThenInclude(request => request.Order)
                             .ThenInclude(order => order.Customer)
                             .Include(x => x.Request).ThenInclude(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role)
-                            .Include(x => x.Request).ThenInclude(request => request.Customer)
                             .Include(x => x.Request)
                             .ThenInclude(request => request.Order)
                             .ThenInclude(order => order.OrderDetails)
@@ -125,8 +126,8 @@ namespace RSSMS.DataService.Services
                                             Status = g.First().Request.Order != null ? g.First().Request.Order.Status : null,
                                             IsActive = g.First().IsActive,
                                             ScheduleDay = (DateTime)g.First().ScheduleDay,
-                                            ScheduleTime = g.First().ScheduleTime,
-                                            Accounts = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToList()
+                                            ScheduleTime = _utilService.TimeToString(g.First().ScheduleTime),
+                                            Accounts = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.Staff).ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToList()
                                         });
                     result = tmp.AsEnumerable().GroupBy(p => (DateTime)p.ScheduleDay)
                         .Select(g => new ScheduleViewModel
@@ -141,7 +142,6 @@ namespace RSSMS.DataService.Services
                             .Where(x => x.ScheduleDay.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Date <= model.DateTo.Value.Date).Include(x => x.Request)
                             .ThenInclude(request => request.Order)
                             .ThenInclude(order => order.Customer)
-                            .Include(x => x.Request).ThenInclude(request => request.Customer)
                             .Include(x => x.Request)
                             .ThenInclude(request => request.Order)
                             .ThenInclude(order => order.OrderDetails)
@@ -158,8 +158,8 @@ namespace RSSMS.DataService.Services
                                             Status = g.First().Request.Order != null ? g.First().Request.Order.Status : null,
                                             IsActive = g.First().IsActive,
                                             ScheduleDay = (DateTime)g.First().ScheduleDay,
-                                            ScheduleTime = g.First().ScheduleTime,
-                                            Accounts = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.User).ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToList()
+                                            ScheduleTime = _utilService.TimeToString(g.First().ScheduleTime),
+                                            Accounts = Get(x => x.RequestId == g.Key && x.IsActive == true).Select(x => x.Staff).ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToList()
                                         }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
                 }
                 if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedule not found");

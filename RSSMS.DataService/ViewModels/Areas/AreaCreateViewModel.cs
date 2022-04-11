@@ -4,7 +4,6 @@ namespace RSSMS.DataService.ViewModels.Areas
 {
     public class AreaCreateViewModel
     {
-        // có dùng
         public string Name { get; set; }
         public Guid? StorageId { get; set; }
         public int? Type { get; set; }

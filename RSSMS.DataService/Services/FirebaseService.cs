@@ -6,9 +6,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -65,7 +63,8 @@ namespace RSSMS.DataService.Services
 
         public async Task<ResponseContent> PushOrderNoti(string description, Guid? orderId, Guid? requestId)
         {
-            var managers = _staffAssignStoragesService.Get(x => x.RoleName == "Manager").Include(x => x.Staff).Select(x => x.Staff).ToList();
+            var managers = _staffAssignStoragesService.Get(staffAssign => staffAssign.IsActive).Include(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Role).Select(x => x.Staff).ToList();
+            managers = managers.Where(staff => staff.Role.Name == "Manager").ToList();
             if (managers.Count == 0) return null;
 
             List<string> registrationIds = managers.Where(x => x.DeviceTokenId != null && x.IsActive == true).Select(a => a.DeviceTokenId).ToList();
@@ -108,35 +107,7 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        //public static void CopyTo(Stream src, Stream dest)
-        //{
-        //    byte[] bytes = new byte[4096];
 
-        //    int cnt;
-
-        //    while ((cnt = src.Read(bytes, 0, bytes.Length)) != 0)
-        //    {
-        //        dest.Write(bytes, 0, cnt);
-        //    }
-        //}
-
-        public static byte[] Compress(byte[] input)
-        {
-            using (var result = new MemoryStream())
-            {
-                var lengthBytes = BitConverter.GetBytes(input.Length);
-                result.Write(lengthBytes, 0, 4);
-
-                using (var compressionStream = new GZipStream(result,
-                    CompressionMode.Compress))
-                {
-                    compressionStream.Write(input, 0, input.Length);
-                    compressionStream.Flush();
-
-                }
-                return result.ToArray();
-            }
-        }
 
         public async Task<ResponseContent> SendNoti(string description, Guid receiverId, string registrationId, Guid? requestId, object data)
         {
@@ -152,20 +123,6 @@ namespace RSSMS.DataService.Services
 
             string jsonConvert = JsonConvert.SerializeObject(data);
 
-            byte[] encoded = Encoding.UTF8.GetBytes(jsonConvert);
-            byte[] compressed = Compress(encoded);
-            string compressString = Convert.ToBase64String(compressed);
-            //string compressString;
-            //var bytes = Encoding.Unicode.GetBytes(jsonConvert);
-            //using (var msi = new MemoryStream(bytes))
-            //using (var mso = new MemoryStream())
-            //{
-            //    using (var gs = new GZipStream(mso, CompressionMode.Compress))
-            //    {
-            //        msi.CopyTo(gs);
-            //    }
-            //    compressString = Convert.ToBase64String(mso.ToArray());
-            //}
 
             using (var sender = new Sender("AAAAry7VzWE:APA91bEFLYrdoliXt0cRdQtnnRNOdxhYXP0mMTOSrgOvcqhULEGKWwUJQIP7phbTXq54zGYD0pzRpDNXfkaSDwd36q088cKkT-CiQz-IBIdLC2ki9zuyK865yiHMG1G6q403iW9fsaKR"))
             {
@@ -179,7 +136,7 @@ namespace RSSMS.DataService.Services
                     },
                     Data = new Dictionary<string, object>
                     {
-                        {"data",compressString },
+                        {"data",jsonConvert },
                         {"NotiId",noti.Id.ToString() }
                     }
                 };
@@ -191,7 +148,9 @@ namespace RSSMS.DataService.Services
         public async Task<ResponseContent> PushCancelRequestNoti(string description, Guid senderId)
         {
             var storageSenderIn = _staffAssignStoragesService.Get(x => x.StaffId == senderId).Select(a => a.StorageId).First();
-            var manager = _staffAssignStoragesService.Get(x => x.RoleName == "Manager" && x.StorageId == storageSenderIn).Include(x => x.Staff).Select(x => x.Staff).FirstOrDefault();
+            var manager = _staffAssignStoragesService.Get(x => x.IsActive && x.StorageId == storageSenderIn)
+                .Include(x => x.Staff).ThenInclude(staff => staff.IsActive).Select(x => x.Staff).Where(staff => staff.Role.Name == "Manager").FirstOrDefault();
+
             if (manager == null) return null;
 
             if (manager.DeviceTokenId == null) return null;

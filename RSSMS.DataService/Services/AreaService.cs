@@ -4,6 +4,7 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using RSSMS.DataService.Constants;
+using RSSMS.DataService.Enums;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
@@ -30,6 +31,7 @@ namespace RSSMS.DataService.Services
         Task<AreaDetailViewModel> GetById(Guid id);
         bool CheckIsUsed(Guid id);
         Task<List<FloorGetByIdViewModel>> GetFloorOfArea(Guid storageId, int spaceType, DateTime date, bool isMany);
+        Task<bool> CheckAreaAvailable(Guid storageId, int spaceType, DateTime date, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery);
     }
     public class AreaService : BaseService<Area>, IAreaService
 
@@ -37,13 +39,18 @@ namespace RSSMS.DataService.Services
         private readonly IMapper _mapper;
         private readonly ISpaceService _spaceService;
         private readonly IUtilService _utilService;
+        private readonly IServiceService _serviceService;
+        private readonly IAccountService _accountService;
         public AreaService(IUnitOfWork unitOfWork, ISpaceService spaceService,
-            IUtilService utilService,
+            IUtilService utilService, IServiceService serviceService,
+            IAccountService accountService,
             IAreaRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _spaceService = spaceService;
             _utilService = utilService;
+            _serviceService = serviceService;
+            _accountService = accountService;
         }
 
         public async Task<AreaViewModel> Create(AreaCreateViewModel model)
@@ -61,7 +68,7 @@ namespace RSSMS.DataService.Services
 
                 // Check area name is existed
                 var entity = Get(area => area.StorageId == model.StorageId && area.Name == model.Name && area.IsActive).FirstOrDefault();
-                if (entity != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
+                if (entity != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Tên khu vực đã tồn tại trong kho này");
 
                 // Create new Area
                 areaToCreate = _mapper.Map<Area>(model);
@@ -114,11 +121,11 @@ namespace RSSMS.DataService.Services
             {
                 // Get area to delete
                 var area = await Get(area => area.Id == id && area.IsActive).Include(area => area.Spaces).FirstOrDefaultAsync();
-                if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area id not found");
+                if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy khu vực");
 
                 // Check area is inused or not
                 var areaIsUsed = CheckIsUsed(id);
-                if (areaIsUsed) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area is in used");
+                if (areaIsUsed) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Khu vực đang được sử dụng");
 
                 // Change area isActive to false and update
                 area.IsActive = false;
@@ -142,7 +149,7 @@ namespace RSSMS.DataService.Services
                 List<SpaceViewModel> spacesInArea = new List<SpaceViewModel>();
                 // Get area
                 var area = await Get(area => area.Id == id && area.IsActive).Include(area => area.Spaces).ThenInclude(space => space.Floors).FirstOrDefaultAsync();
-                if (area == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area id not found");
+                if (area == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy khu vực");
 
                 // Mapping area to the result
                 var result = _mapper.Map<AreaDetailViewModel>(area);
@@ -176,9 +183,9 @@ namespace RSSMS.DataService.Services
                 available = total - used;
                 if (total != 0) usage = used * 100 / total;
                 else usage = 0;
-                result.Usage = Math.Round(usage, 4);
-                result.Used = Math.Round(used, 4);
-                result.Available = Math.Round(available, 4);
+                result.Usage = Math.Round(usage, 2);
+                result.Used = Math.Round(used, 2);
+                result.Available = Math.Round(available, 2);
                 result.SpacesInArea = spacesInArea;
                 return result;
             }
@@ -208,7 +215,7 @@ namespace RSSMS.DataService.Services
                 var result = areas
                      .DynamicFilter(model)
                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-                if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area not found");
+                if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy khu vực");
                 var rs = new DynamicModelResponse<AreaViewModel>
                 {
 
@@ -246,16 +253,16 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidateDecimal(model.Length, " chiều dài khu vực");
                 _utilService.ValidateInt(model.Type, " loại khu vực");
 
-                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area Id not matched");
+                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id khu vực không khớp");
 
                 Area entity = await Get(area => area.Id == id && area.IsActive).FirstOrDefaultAsync();
-                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area not found");
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy khu vực");
 
                 Area anotherArea = Get(area => area.Id != id && area.Name == model.Name && area.StorageId == entity.StorageId && area.IsActive).FirstOrDefault();
-                if (anotherArea != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Area name existed");
+                if (anotherArea != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Tên khu vực đã tồn tại");
 
                 AreaDetailViewModel area = await GetById(id);
-                if (area.Used > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Area is already in used");
+                if (area.Used > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Khu vực đang được sử dụng");
 
                 // check area update size
                 if (entity.Height != model.Height || entity.Length != model.Length || entity.Width != model.Width)
@@ -324,7 +331,7 @@ namespace RSSMS.DataService.Services
             }
             catch (InvalidOperationException)
             {
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích thước khu vực không hợp lệ");
             }
             catch (Exception ex)
             {
@@ -337,7 +344,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 Area area = Get(area => area.Id == id && area.IsActive).Include(area => area.Spaces).FirstOrDefault();
-                if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Area not found");
+                if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy khu vực");
                 var spaces = area.Spaces.Where(space => space.IsActive);
                 foreach (var space in spaces)
                     if (_spaceService.CheckIsUsed(space.Id)) return true;
@@ -364,6 +371,117 @@ namespace RSSMS.DataService.Services
                 if (space != null) result.AddRange(space);
             }
             if (result.Count == 0) return null;
+            return result;
+        }
+
+        public async Task<bool> CheckAreaAvailable(Guid storageId, int spaceType, DateTime date, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery)
+        {
+            bool result = false;
+
+            var areas = await Get(area => area.IsActive && area.StorageId == storageId).ToListAsync();
+
+            List<FloorGetByIdViewModel> floorList = new List<FloorGetByIdViewModel>();
+            // cuboidsTmp chứa các order detail đã có sẵn, các request đã được assign
+            List<Cuboid> cuboidsTmp = new List<Cuboid>();
+            cuboidsTmp.AddRange(cuboids);
+            foreach (var area in areas)
+            {
+                var floors = await _spaceService.GetFloorOfSpace(area.Id, spaceType, date, isMany);
+                if (floors != null)
+                {
+                    floorList.AddRange(floors);
+                    foreach (var floor in floors)
+                    {
+                        foreach (var orderDetail in floor.OrderDetails)
+                        {
+                            if (isMany) cuboidsTmp.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, orderDetail.Id));
+                            else cuboidsTmp.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, orderDetail.Id));
+                        }
+                    }
+
+                }
+            }
+            if (floorList.Count == 0) return result;
+
+            if (spaceType == (int)SpaceType.Dien_tich && (floorList.Count < cuboids.Count || floorList.Count <= requestsAssignToStorage.Count)) return false;
+
+            foreach (var request in requestsAssignToStorage)
+            {
+                var servicesInRequestDetail = request.RequestDetails.Select(requestDetail => new
+                {
+                    ServiceId = (Guid)requestDetail.ServiceId,
+                    Height = (decimal?)null,
+                    Width = (decimal?)null,
+                    Length = (decimal?)null,
+                    Amount = (int)requestDetail.Amount
+                }).ToList();
+                if (request.Order != null)
+                    servicesInRequestDetail = request.Order.OrderDetails.Select(orderDetail => new
+                    {
+                        ServiceId = orderDetail.Id,
+                        Height = orderDetail.Height,
+                        Width = orderDetail.Width,
+                        Length = orderDetail.Length,
+                        Amount = 0
+                    }).ToList();
+
+                for (int i = 0; i < servicesInRequestDetail.Count; i++)
+                {
+                    for (int j = 0; j < servicesInRequestDetail[i].Amount; j++)
+                    {
+                        if (servicesInRequestDetail[i].Amount != 0)
+                        {
+                            var service = _serviceService.Get(service => service.Id == servicesInRequestDetail[i].ServiceId).FirstOrDefault();
+                            if (service.Type != (int)ServiceType.Phu_kien)
+                            {
+
+                                if (isMany) cuboidsTmp.Add(new Cuboid(service.Width, 1, service.Length, 0, service.Id));
+                                else cuboidsTmp.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                            }
+                        }
+                        else
+                        {
+                            if (isMany) cuboidsTmp.Add(new Cuboid((decimal)servicesInRequestDetail[i].Width, 1, (decimal)servicesInRequestDetail[i].Length));
+                            else cuboidsTmp.Add(new Cuboid((decimal)servicesInRequestDetail[i].Width, (decimal)servicesInRequestDetail[i].Height, (decimal)servicesInRequestDetail[i].Length));
+
+                        }
+                    }
+                }
+            }
+
+            foreach (var floor in floorList)
+            {
+                BinPackParameter parameter = null;
+                List<Cuboid> cuboidsToPack = new List<Cuboid>();
+                foreach (var cuboid in cuboidsTmp)
+                {
+                    if (cuboid.Height <= floor.Height && cuboid.Depth <= floor.Length && cuboid.Width <= floor.Width)
+                        cuboidsToPack.Add(cuboid);
+                }
+                if (cuboidsToPack.Count != 0)
+                {
+                    if (isMany) parameter = new BinPackParameter(floor.Width, 1, floor.Length, cuboidsToPack);
+                    else parameter = new BinPackParameter(floor.Width, floor.Height, floor.Length, cuboidsToPack);
+
+                    var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                    var binResult = binPacker.Pack(parameter);
+                    if (binResult.BestResult.Count == 1)
+                    {
+                        result = true;
+                    }
+                    else
+                    {
+                        foreach (var cuboid in binResult.BestResult.First())
+                        {
+                            var cuboidTmp = cuboidsTmp.Where(x => x.Tag == cuboid.Tag).FirstOrDefault();
+                            cuboidsTmp.Remove(cuboidTmp);
+                        }
+                    }
+                }
+            }
+
+            if (cuboidsTmp.Count == 0 && cuboids.Count == 0) result = true;
+
             return result;
         }
     }

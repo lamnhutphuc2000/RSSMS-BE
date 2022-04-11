@@ -8,7 +8,6 @@ namespace RSSMS.DataService.ViewModels.Accounts
 {
     public class AccountViewModel
     {
-        // có dùng
         public static string[] Fields = {
             "Id","RoleName","StorageName","Gender","Birthdate","Name","Address","Phone","Email","IsActive","ImageUrl","StaffManageStorages"
         };

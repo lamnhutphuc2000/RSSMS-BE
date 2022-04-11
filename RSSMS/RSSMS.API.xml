@@ -291,7 +291,7 @@
             <param name="id"></param>
             <returns></returns>
         </member>
-        <member name="M:RSSMS.API.Controllers.RequestController.DeliverySendRequestNotification(System.Guid,System.String)">
+        <member name="M:RSSMS.API.Controllers.RequestController.DeliverySendRequestNotification(System.Guid,RSSMS.DataService.ViewModels.Notifications.NotificationDeliverySendRequestNotiViewModel)">
             <summary>
             Delivery staff send noti to staff
             </summary>
@@ -399,13 +399,6 @@
             <param name="id"></param>
             <returns></returns>
         </member>
-        <member name="M:RSSMS.API.Controllers.StaffAssignStorageController.Assign(RSSMS.DataService.ViewModels.StaffAssignStorage.StaffAssignInStorageViewModel)">
-            <summary>
-            Assign staff to storage
-            </summary>
-            <param name="model"></param>
-            <returns></returns>
-        </member>
         <member name="M:RSSMS.API.Controllers.StorageController.Get(RSSMS.DataService.ViewModels.Storages.StorageViewModel,System.Collections.Generic.List{System.Int32},System.String[],System.Int32,System.Int32)">
             <summary>
             Get all storages
@@ -444,6 +437,13 @@
             Delete storage by Id
             </summary>
             <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.StorageController.Assign(RSSMS.DataService.ViewModels.StaffAssignStorage.StaffAssignInStorageViewModel)">
+            <summary>
+            Assign staff to storage
+            </summary>
+            <param name="model"></param>
             <returns></returns>
         </member>
     </members>

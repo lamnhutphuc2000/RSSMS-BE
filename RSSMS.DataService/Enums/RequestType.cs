@@ -2,10 +2,10 @@
 {
     enum RequestType
     {
-        Delivery_Cancel_Schedule,
-        Create_Order,
-        Extend_Order,
-        Cancel_Order,
-        Return_Order
+        Huy_lich_giao_hang,
+        Tao_don,
+        Gia_han_don,
+        Huy_don,
+        Tra_don
     }
 }
