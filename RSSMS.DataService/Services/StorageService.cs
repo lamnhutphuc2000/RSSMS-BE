@@ -31,7 +31,7 @@ namespace RSSMS.DataService.Services
         Task<StorageViewModel> Delete(Guid id);
         Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date, bool isMany);
         Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken);
-        Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime date, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery);
+        Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -400,7 +400,7 @@ namespace RSSMS.DataService.Services
 
         }
 
-        public async Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime date, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery)
+        public async Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery)
         {
             bool result = false;
 
@@ -416,7 +416,7 @@ namespace RSSMS.DataService.Services
             do
             {
                 var requestsOfStorage = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id).ToList();
-                result = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, date, isMany, cuboids, requestsOfStorage, isCustomerDelivery);
+                result = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, dateFrom, dateTo, isMany, cuboids, requestsOfStorage, isCustomerDelivery);
                 i++;
                 if (result) break;
             } while (i < storageList.Count);

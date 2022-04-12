@@ -20,7 +20,7 @@ namespace RSSMS.DataService.Services
         Task<bool> RemoveFloors(Guid spaceId);
         Task<List<FloorInSpaceViewModel>> GetFloorInSpace(Guid spaceId, DateTime? date);
         Task<FloorGetByIdViewModel> GetById(Guid id);
-        Task<List<FloorGetByIdViewModel>> GetBySpaceId(Guid spaceId, DateTime date, bool isMany, bool isSelfStorage);
+        Task<List<FloorGetByIdViewModel>> GetBySpaceId(Guid spaceId, DateTime dateFrom, DateTime dateTo, bool isMany, bool isSelfStorage);
     }
     public class FloorService : BaseService<Floor>, IFloorService
 
@@ -190,7 +190,7 @@ namespace RSSMS.DataService.Services
             }
 
         }
-        public async Task<List<FloorGetByIdViewModel>> GetBySpaceId(Guid spaceId, DateTime date, bool isMany, bool isSelfStorage)
+        public async Task<List<FloorGetByIdViewModel>> GetBySpaceId(Guid spaceId, DateTime dateFrom, DateTime dateTo, bool isMany, bool isSelfStorage)
         {
             try
             {
@@ -222,7 +222,7 @@ namespace RSSMS.DataService.Services
 
                 foreach (var floor in floors)
                 {
-                    var orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.Order.DeliveryDate.Value.Date <= date.Date && orderDetail.Order.ReturnDate.Value.Date >= date.Date).ToList();
+                    var orderDetails = floor.OrderDetails.Where(orderDetail => (orderDetail.Order.DeliveryDate.Value.Date <= dateFrom.Date && orderDetail.Order.ReturnDate.Value.Date >= dateFrom.Date) || (dateFrom <= orderDetail.Order.DeliveryDate.Value.Date && dateTo >= orderDetail.Order.DeliveryDate.Value.Date)).ToList();
                     if (isSelfStorage && orderDetails.Count > 0) return null;
                     floor.OrderDetails = orderDetails;
                 }

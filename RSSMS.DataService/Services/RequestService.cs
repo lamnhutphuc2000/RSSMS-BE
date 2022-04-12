@@ -34,7 +34,7 @@ namespace RSSMS.DataService.Services
         Task<RequestByIdViewModel> Cancel(Guid id, RequestCancelViewModel model, string accessToken);
         Task<RequestByIdViewModel> DeliverRequest(Guid id, string accessToken);
         Task<RequestByIdViewModel> DeliverySendRequestNotification(Guid id, NotificationDeliverySendRequestNotiViewModel model, string accessToken);
-        Task<bool> CheckStorageAvailable(int spaceType, bool isMany, int orderType, DateTime date, List<Cuboid> cuboids, Guid? storageId, bool isCustomerDelivery);
+        Task<bool> CheckStorageAvailable(int spaceType, bool isMany, int orderType, DateTime dateFrom, DateTime dateTo, List<Cuboid> cuboids, Guid? storageId, bool isCustomerDelivery, Guid? requestId);
     }
 
 
@@ -275,7 +275,7 @@ namespace RSSMS.DataService.Services
                             }
                         }
                     }
-                    var checkResult = await CheckStorageAvailable(spaceType, isMany, (int)model.TypeOrder, (DateTime)model.DeliveryDate, cuboid, null, (bool)model.IsCustomerDelivery);
+                    var checkResult = await CheckStorageAvailable(spaceType, isMany, (int)model.TypeOrder, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, null, (bool)model.IsCustomerDelivery, null);
                     if (!checkResult) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
 
 
@@ -575,15 +575,9 @@ namespace RSSMS.DataService.Services
                         Name = "Yêu cầu rút đồ về chờ xác nhận"
                     });
 
-                    var requestList = Get(x => x.DeliveryTime == requestCreated.DeliveryTime && x.DeliveryDate == requestCreated.DeliveryDate && request.Status == 2).ToList();
-                    // check xem còn nhân viên trong storage nào không 
-                    var deliveryStaffs = await _accountService.GetStaff(requestCreated.Order.StorageId, accessToken, new List<string> { "Delivery Staff" }, model.DeliveryDate, new List<string> { model.DeliveryTime }, false);
-                    if (deliveryStaffs.Count - requestList.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Don't have enough delivery staff");
-
-
 
                     newRequest = Get(x => x.Id == request.Id && x.IsActive == true).Include(request => request.Order)
-                        .ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staffAssign => staffAssign.Staff.Role.Name == "Manager" && staffAssign.IsActive)).ThenInclude(taffAssignStorage => taffAssignStorage.Staff).FirstOrDefault();
+                        .ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staffAssign => staffAssign.Staff.Role.Name == "Manager" && staffAssign.IsActive)).ThenInclude(taffAssignStorage => taffAssignStorage.Staff).ThenInclude(staff => staff.Role).FirstOrDefault();
                     if (newRequest.Order == null)
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
                     if (newRequest.Order.Storage == null)
@@ -761,7 +755,7 @@ namespace RSSMS.DataService.Services
 
                 // check xem yêu cầu tạo đơn giữ đồ thuê hay kho tự quản => dẫn tới cần sử dụng space gì
                 int spaceType = 0;
-                if (request.Order.Type == (int)OrderType.Kho_tu_quan) spaceType = 1;
+                if (request.TypeOrder == (int)OrderType.Kho_tu_quan) spaceType = 1;
 
                 // check xem là giữ ít hay nhiều 
                 bool isMany = false;
@@ -786,7 +780,7 @@ namespace RSSMS.DataService.Services
                         }
                     }
                 }
-                var checkResult = await CheckStorageAvailable(spaceType, isMany, (int)request.Order.Type, (DateTime)request.DeliveryDate, cuboid, null, (bool)request.IsCustomerDelivery);
+                var checkResult = await CheckStorageAvailable(spaceType, isMany, (int)request.TypeOrder, (DateTime)request.DeliveryDate, (DateTime)request.ReturnDate, cuboid, model.StorageId, (bool)request.IsCustomerDelivery, request.Id);
                 if (!checkResult) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
 
 
@@ -951,7 +945,7 @@ namespace RSSMS.DataService.Services
 
         }
 
-        public async Task<bool> CheckStorageAvailable(int spaceType, bool isMany, int orderType, DateTime date, List<Cuboid> cuboids, Guid? storageId, bool isCustomerDelivery)
+        public async Task<bool> CheckStorageAvailable(int spaceType, bool isMany, int orderType, DateTime dateFrom, DateTime dateTo, List<Cuboid> cuboids, Guid? storageId, bool isCustomerDelivery, Guid? requestId)
         {
             // spaceType để check là kho tự quản hay giữ đồ thuê
             // isMany để check là giữ ít hay giữ nhiều
@@ -960,10 +954,11 @@ namespace RSSMS.DataService.Services
             var requestsAssignStorage = await Get(request => request.IsActive && request.TypeOrder == orderType && request.Type == (int)RequestType.Tao_don && request.Type == (int)RequestType.Tao_don && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen))
                                            .Include(request => request.Order).ThenInclude(order => order.OrderDetails)
                                            .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
-            requestsAssignStorage = requestsAssignStorage.Where(request => (request.DeliveryDate <= date && request.ReturnDate >= date) || (date <= request.DeliveryDate && date >= request.DeliveryDate)).ToList();
+            if (requestId != null) requestsAssignStorage = requestsAssignStorage.Where(request => request.Id != requestId).ToList();
+            requestsAssignStorage = requestsAssignStorage.Where(request => (request.DeliveryDate <= dateFrom && request.ReturnDate >= dateFrom) || (dateFrom <= request.DeliveryDate && dateTo >= request.DeliveryDate)).ToList();
 
             // Check xem storage còn đủ chỗ không
-            result = await _storageService.CheckStorageAvailable(storageId, spaceType, date, isMany, cuboids, requestsAssignStorage, isCustomerDelivery);
+            result = await _storageService.CheckStorageAvailable(storageId, spaceType, dateFrom, dateTo, isMany, cuboids, requestsAssignStorage, isCustomerDelivery);
             return result;
         }
     }

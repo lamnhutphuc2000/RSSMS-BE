@@ -31,7 +31,7 @@ namespace RSSMS.DataService.Services
         Task<AreaDetailViewModel> GetById(Guid id);
         bool CheckIsUsed(Guid id);
         Task<List<FloorGetByIdViewModel>> GetFloorOfArea(Guid storageId, int spaceType, DateTime date, bool isMany);
-        Task<bool> CheckAreaAvailable(Guid storageId, int spaceType, DateTime date, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery);
+        Task<bool> CheckAreaAvailable(Guid storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery);
     }
     public class AreaService : BaseService<Area>, IAreaService
 
@@ -81,7 +81,8 @@ namespace RSSMS.DataService.Services
 
                 var storage = area.Storage;
                 var areaList = storage.Areas.Where(area => area.IsActive).ToList();
-
+                if (storage.Height < area.Height || storage.Width < area.Width || storage.Length < area.Length)
+                    throw new InvalidOperationException();
                 List<Cuboid> cuboids = new List<Cuboid>();
                 for (int i = 0; i < areaList.Count; i++)
                     cuboids.Add(new Cuboid((decimal)areaList[i].Width, (decimal)areaList[i].Height, (decimal)areaList[i].Length));
@@ -367,14 +368,14 @@ namespace RSSMS.DataService.Services
             var areas = await Get(area => area.IsActive && area.StorageId == storageId).ToListAsync();
             foreach (var area in areas)
             {
-                var space = await _spaceService.GetFloorOfSpace(area.Id, spaceType, date, isMany);
-                if (space != null) result.AddRange(space);
+                //var space = await _spaceService.GetFloorOfSpace(area.Id, spaceType, date, isMany);
+                //if (space != null) result.AddRange(space);
             }
             if (result.Count == 0) return null;
             return result;
         }
 
-        public async Task<bool> CheckAreaAvailable(Guid storageId, int spaceType, DateTime date, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery)
+        public async Task<bool> CheckAreaAvailable(Guid storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery)
         {
             bool result = false;
 
@@ -386,7 +387,7 @@ namespace RSSMS.DataService.Services
             cuboidsTmp.AddRange(cuboids);
             foreach (var area in areas)
             {
-                var floors = await _spaceService.GetFloorOfSpace(area.Id, spaceType, date, isMany);
+                var floors = await _spaceService.GetFloorOfSpace(area.Id, spaceType, dateFrom, dateTo, isMany);
                 if (floors != null)
                 {
                     floorList.AddRange(floors);
@@ -467,7 +468,12 @@ namespace RSSMS.DataService.Services
                     var binResult = binPacker.Pack(parameter);
                     if (binResult.BestResult.Count == 1)
                     {
-                        result = true;
+                        foreach (var cuboid in binResult.BestResult.First())
+                        {
+                            var cuboidTmp = cuboidsTmp.Where(x => x.Tag == cuboid.Tag).FirstOrDefault();
+                            cuboidsTmp.Remove(cuboidTmp);
+                        }
+                        if (cuboidsTmp.Count == 0)result = true;
                     }
                     else
                     {
@@ -480,7 +486,7 @@ namespace RSSMS.DataService.Services
                 }
             }
 
-            if (cuboidsTmp.Count == 0 && cuboids.Count == 0) result = true;
+            if (cuboidsTmp.Count == 0) result = true;
 
             return result;
         }

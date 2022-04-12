@@ -289,7 +289,7 @@ namespace RSSMS.DataService.Services
 
 
 
-                var checkResult = await _requestService.CheckStorageAvailable(spaceType, isMany, (int)model.Type, (DateTime)model.DeliveryDate, cuboid, null, (bool)model.IsUserDelivery);
+                var checkResult = await _requestService.CheckStorageAvailable(spaceType, isMany, (int)model.Type, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, storageId, (bool)model.IsUserDelivery, model.RequestId);
                 if (!checkResult) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
 
                 order.Status = 1;
@@ -462,7 +462,12 @@ namespace RSSMS.DataService.Services
                         request.Schedules = schedules.Select(schedule => { schedule.Status = 2; return schedule; }).ToList();
                     }
                 }
-
+                if(model.OrderAdditionalFees.Count > 0)
+                {
+                    var orderAddtionalFee = model.OrderAdditionalFees.AsQueryable().ProjectTo<OrderAdditionalFee>(_mapper.ConfigurationProvider);
+                    order.OrderAdditionalFees = orderAddtionalFee.ToList();
+                }
+                
 
                 order.Requests = requests;
 

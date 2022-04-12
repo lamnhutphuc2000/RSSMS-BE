@@ -17,7 +17,10 @@ namespace RSSMS.DataService.Services
             var tho = time1.Split(new[] { 'a', 'p' });
             int index = input.IndexOf('a');
             result = TimeSpan.FromHours(double.Parse(tho[0]));
-            if (index <= 0) result += TimeSpan.FromHours(12);
+            if (index <= 0)
+            {
+                if(result.Hours != 12) result += TimeSpan.FromHours(12);
+            }
             return result;
         }
 
@@ -67,7 +70,10 @@ namespace RSSMS.DataService.Services
             var tho = time1.Split(new[] { 'a', 'p' });
             int index = input.IndexOf('a');
             result = TimeSpan.FromHours(double.Parse(tho[0]));
-            if (index <= 0) result += TimeSpan.FromHours(12);
+            if (index <= 0)
+            {
+                if (result.Hours != 12) result += TimeSpan.FromHours(12);
+            }
             return result;
         }
 

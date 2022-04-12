@@ -29,7 +29,7 @@ namespace RSSMS.DataService.Services
         Task<SpaceViewModel> Update(Guid id, SpaceUpdateViewModel model, string accessToken);
         bool CheckIsUsed(Guid id);
 
-        Task<List<FloorGetByIdViewModel>> GetFloorOfSpace(Guid areaId, int spaceType, DateTime date, bool isMany);
+        Task<List<FloorGetByIdViewModel>> GetFloorOfSpace(Guid areaId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany);
     }
     public class SpaceService : BaseService<Space>, ISpaceService
     {
@@ -231,6 +231,10 @@ namespace RSSMS.DataService.Services
                 await UpdateAsync(spaceToUpdate);
                 return await GetById(model.Id);
             }
+            catch(InvalidOperationException)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không đủ không gian chứa");
+            }
             catch (ErrorResponse e)
             {
                 throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
@@ -304,7 +308,7 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public async Task<List<FloorGetByIdViewModel>> GetFloorOfSpace(Guid areaId, int spaceType, DateTime date, bool isMany)
+        public async Task<List<FloorGetByIdViewModel>> GetFloorOfSpace(Guid areaId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany)
         {
             List<FloorGetByIdViewModel> result = new List<FloorGetByIdViewModel>();
             var spaces = Get(space => space.AreaId == areaId && space.Type == spaceType && space.IsActive).ToList();
@@ -313,7 +317,7 @@ namespace RSSMS.DataService.Services
             if (spaceType == 1) isSelfStorage = true;
             foreach (var space in spaces)
             {
-                var floor = await _floorsService.GetBySpaceId(space.Id, date, isMany, isSelfStorage);
+                var floor = await _floorsService.GetBySpaceId(space.Id, dateFrom, dateTo, isMany, isSelfStorage);
                 if (floor != null) result.AddRange(floor);
             }
             if (result.Count == 0) return null;

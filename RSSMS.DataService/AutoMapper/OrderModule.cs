@@ -11,6 +11,7 @@ namespace RSSMS.DataService.AutoMapper
         public static void ConfigOrderModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<OrderCreateViewModel, Order>()
+                .ForMember(des => des.ReturnTime, opt => opt.MapFrom(src => !string.IsNullOrWhiteSpace(src.ReturnTime) ? (TimeSpan?)TimeUtilStatic.StringToTime(src.ReturnTime) : null))
                 .ForMember(des => des.DeliveryTime, opt => opt.MapFrom(src => !string.IsNullOrWhiteSpace(src.DeliveryTime) ? (TimeSpan?)TimeUtilStatic.StringToTime(src.DeliveryTime) : null))
                 .ForMember(des => des.IsActive, opt => opt.MapFrom(src => 1))
                 .ForMember(des => des.CreatedDate, otp => otp.MapFrom(src => DateTime.Now));
@@ -37,7 +38,8 @@ namespace RSSMS.DataService.AutoMapper
                 .ForMember(des => des.ReturnTime, opt => opt.MapFrom(src => !string.IsNullOrWhiteSpace(src.ReturnTime) ? (TimeSpan?)TimeUtilStatic.StringToTime(src.ReturnTime) : null))
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
-            mc.CreateMap<OrderCreateViewModel, OrderByIdViewModel>();
+            mc.CreateMap<OrderCreateViewModel, OrderByIdViewModel>()
+                ;
 
         }
     }
