@@ -418,7 +418,8 @@ namespace RSSMS.DataService.Services
                 var requestsOfStorage = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id).ToList();
                 result = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, date, isMany, cuboids, requestsOfStorage, isCustomerDelivery);
                 i++;
-            } while (i < storageList.Count || result);
+                if (result) break;
+            } while (i < storageList.Count);
             return result;
         }
     }
