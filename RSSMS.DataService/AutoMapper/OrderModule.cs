@@ -14,12 +14,12 @@ namespace RSSMS.DataService.AutoMapper
                 .ForMember(des => des.CreatedDate, otp => otp.MapFrom(src => DateTime.Now));
 
             mc.CreateMap<Order, OrderViewModel>()
-                .ForMember(des => des.Status, opt => opt.MapFrom(src => (src.ReturnDate - DateTime.Now).Value.Days > 0 ? (int?)(src.ReturnDate - DateTime.Now).Value.Days <= 3 ? 3 : src.Status : 4))
+                .ForMember(des => des.Status, opt => opt.MapFrom(src => src.Status <= 4 ? (src.ReturnDate - DateTime.Now).Value.Days > 0 ? (int?)(src.ReturnDate - DateTime.Now).Value.Days <= 3 ? 3 : src.Status : 4 : src.Status))
                 .ForMember(des => des.DurationDays, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)(src.ReturnDate - src.DeliveryDate).Value.Days : null))
                 .ForMember(des => des.DurationMonths, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)((src.ReturnDate - src.DeliveryDate).Value.Days) / 30 : null));
 
             mc.CreateMap<Order, OrderByIdViewModel>()
-                .ForMember(des => des.Status, opt => opt.MapFrom(src => (src.ReturnDate - DateTime.Now).Value.Days > 0 ? (int?)(src.ReturnDate - DateTime.Now).Value.Days <= 3 ? 3 : src.Status : 4))
+                .ForMember(des => des.Status, opt => opt.MapFrom(src => src.Status <= 4 ? (src.ReturnDate - DateTime.Now).Value.Days > 0 ? (int?)(src.ReturnDate - DateTime.Now).Value.Days <= 3 ? 3 : src.Status : 4 : src.Status))
                 .ForMember(des => des.DurationDays, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)(src.ReturnDate - src.DeliveryDate).Value.Days : null))
                 .ForMember(des => des.DurationMonths, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)((src.ReturnDate - src.DeliveryDate).Value.Days) / 30 : null))
                 ;

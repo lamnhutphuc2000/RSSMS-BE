@@ -77,8 +77,11 @@ namespace RSSMS.DataService.Services
                 .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
                 if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
+                
+
                 var request = result.Requests;
                 if (requestTypes.Count == 0) return result;
+
 
                 request = request.Where(request => requestTypes.Contains((int)request.Type)).ToList();
                 result.Requests = request;
@@ -732,6 +735,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 var order = await Get(order => order.Id == model.OrderId && order.IsActive)
+                    .Include(order => order.OrderAdditionalFees)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
                     .Include(order => order.Requests).FirstOrDefaultAsync();
                 if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
@@ -742,7 +746,7 @@ namespace RSSMS.DataService.Services
 
                 var requests = order.Requests;
                 foreach (var request in requests)
-                    if (request.Id == model.RequestId) request.Status = 3;
+                    if (request.Id == model.RequestId) request.Status = 4;
 
                 order.Requests = requests;
 
@@ -755,6 +759,10 @@ namespace RSSMS.DataService.Services
                 order.OrderDetails = orderDetails;
                 order.ModifiedDate = DateTime.Now;
                 order.ModifiedBy = userId;
+                var orderAdditionalFee = model.OrderAdditionalFees.AsQueryable().ProjectTo<OrderAdditionalFee>(_mapper.ConfigurationProvider);
+                var oldOrderAdditionalFee = order.OrderAdditionalFees.ToList();
+                oldOrderAdditionalFee.AddRange(orderAdditionalFee);
+                order.OrderAdditionalFees = oldOrderAdditionalFee;
                 await UpdateAsync(order);
                 return await GetById(model.OrderId, new List<int>());
             }

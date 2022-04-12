@@ -1,0 +1,15 @@
+E:\RSSMS-BE\RSSMS.DataService\bin\Debug\netcoreapp3.1\RSSMS.DataService.deps.json
+E:\RSSMS-BE\RSSMS.DataService\bin\Debug\netcoreapp3.1\RSSMS.DataService.runtimeconfig.json
+E:\RSSMS-BE\RSSMS.DataService\bin\Debug\netcoreapp3.1\RSSMS.DataService.runtimeconfig.dev.json
+E:\RSSMS-BE\RSSMS.DataService\bin\Debug\netcoreapp3.1\RSSMS.DataService.dll
+E:\RSSMS-BE\RSSMS.DataService\bin\Debug\netcoreapp3.1\RSSMS.DataService.pdb
+E:\RSSMS-BE\RSSMS.DataService\bin\Debug\netcoreapp3.1\3DBinPacking.dll
+E:\RSSMS-BE\RSSMS.DataService\bin\Debug\netcoreapp3.1\3DBinPacking.pdb
+E:\RSSMS-BE\RSSMS.DataService\obj\Debug\netcoreapp3.1\RSSMS.DataService.csproj.AssemblyReference.cache
+E:\RSSMS-BE\RSSMS.DataService\obj\Debug\netcoreapp3.1\RSSMS.DataService.AssemblyInfoInputs.cache
+E:\RSSMS-BE\RSSMS.DataService\obj\Debug\netcoreapp3.1\RSSMS.DataService.AssemblyInfo.cs
+E:\RSSMS-BE\RSSMS.DataService\obj\Debug\netcoreapp3.1\RSSMS.DataService.csproj.CoreCompileInputs.cache
+E:\RSSMS-BE\RSSMS.DataService\obj\Debug\netcoreapp3.1\RSSMS.DataService.csproj.CopyComplete
+E:\RSSMS-BE\RSSMS.DataService\obj\Debug\netcoreapp3.1\RSSMS.DataService.dll
+E:\RSSMS-BE\RSSMS.DataService\obj\Debug\netcoreapp3.1\RSSMS.DataService.pdb
+E:\RSSMS-BE\RSSMS.DataService\obj\Debug\netcoreapp3.1\RSSMS.DataService.genruntimeconfig.cache

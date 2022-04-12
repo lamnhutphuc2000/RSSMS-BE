@@ -8885,24 +8885,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\ASUS\\.nuget\\packages\\": {},
-    "D:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\Treater\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\RSSMS.API.csproj",
+      "projectUniqueName": "E:\\RSSMS-BE\\RSSMS\\RSSMS.API.csproj",
       "projectName": "RSSMS.API",
-      "projectPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\RSSMS.API.csproj",
-      "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-      "outputPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS\\obj\\",
+      "projectPath": "E:\\RSSMS-BE\\RSSMS\\RSSMS.API.csproj",
+      "packagesPath": "C:\\Users\\Treater\\.nuget\\packages\\",
+      "outputPath": "E:\\RSSMS-BE\\RSSMS\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "D:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Users\\Treater\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
@@ -8916,8 +8911,8 @@
         "netcoreapp3.1": {
           "targetAlias": "netcoreapp3.1",
           "projectReferences": {
-            "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj": {
-              "projectPath": "D:\\Study\\CapstoneProject\\RSSMS\\RSSMS.DataService\\RSSMS.DataService.csproj"
+            "E:\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj": {
+              "projectPath": "E:\\RSSMS-BE\\RSSMS.DataService\\RSSMS.DataService.csproj"
             }
           }
         }
@@ -8975,7 +8970,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.404\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.300\\RuntimeIdentifierGraph.json"
       }
     }
   }

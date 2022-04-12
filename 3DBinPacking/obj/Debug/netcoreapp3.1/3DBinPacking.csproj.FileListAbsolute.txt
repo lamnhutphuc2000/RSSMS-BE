@@ -1,0 +1,9 @@
+E:\RSSMS-BE\3DBinPacking\bin\Debug\netcoreapp3.1\3DBinPacking.deps.json
+E:\RSSMS-BE\3DBinPacking\bin\Debug\netcoreapp3.1\3DBinPacking.dll
+E:\RSSMS-BE\3DBinPacking\bin\Debug\netcoreapp3.1\3DBinPacking.pdb
+E:\RSSMS-BE\3DBinPacking\obj\Debug\netcoreapp3.1\3DBinPacking.csproj.AssemblyReference.cache
+E:\RSSMS-BE\3DBinPacking\obj\Debug\netcoreapp3.1\3DBinPacking.AssemblyInfoInputs.cache
+E:\RSSMS-BE\3DBinPacking\obj\Debug\netcoreapp3.1\3DBinPacking.AssemblyInfo.cs
+E:\RSSMS-BE\3DBinPacking\obj\Debug\netcoreapp3.1\3DBinPacking.csproj.CoreCompileInputs.cache
+E:\RSSMS-BE\3DBinPacking\obj\Debug\netcoreapp3.1\3DBinPacking.dll
+E:\RSSMS-BE\3DBinPacking\obj\Debug\netcoreapp3.1\3DBinPacking.pdb

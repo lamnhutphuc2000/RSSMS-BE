@@ -501,6 +501,9 @@ namespace RSSMS.DataService.Services
 
             var staffs = Get(account => account.IsActive && account.Role.Name != "Admin" && account.Role.Name != "Customer").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
             if (roleName.Count > 0) staffs = Get(account => account.IsActive && roleName.Contains(account.Role.Name)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+            if(role == "Admin")
+                staffs = staffs.Where(account => account.Role.Name == "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+
             if (role == "Manager")
                 staffs = staffs.Where(account => account.Role.Name != "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
 
