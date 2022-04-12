@@ -206,10 +206,15 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-                if (role == "Delivery Staff")
+                if (role == "Delivery Staff" || role == "Office Staff")
                 {
-                    var storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
-                    request = request.Where(request => request.StorageId == storageId && request.Schedules.Where(schedule => schedule.IsActive && schedule.StaffId == userId).Count() > 0)
+                    var acc = _accountService.Get(account => account.IsActive && account.Id == userId)
+                        .Include(acc => acc.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive)).FirstOrDefault();
+
+                    Guid? storageId = null;
+                    if (acc != null) storageId = acc.StaffAssignStorages.FirstOrDefault().StorageId;
+                    if(storageId != null)
+                        request = request.Where(request => request.StorageId == storageId && request.Schedules.Where(schedule => schedule.IsActive && schedule.StaffId == userId).Count() > 0)
                                     .Include(request => request.Schedules)
                                     .Include(request => request.Order)
                                     .Include(request => request.Storage)
