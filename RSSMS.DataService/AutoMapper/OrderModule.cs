@@ -18,13 +18,13 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<Order, OrderViewModel>()
                 .ForMember(des => des.DeliveryTime, opt => opt.MapFrom(src => src.DeliveryTime != null ? TimeUtilStatic.TimeToString((TimeSpan)src.DeliveryTime) : ""))
-                .ForMember(des => des.Status, opt => opt.MapFrom(src => src.Status <= 4 ? src.Status : (src.ReturnDate - DateTime.Now).Value.Days < 3 ? 3 : (src.ReturnDate - DateTime.Now).Value.Days < 0 ? 4 : src.Status))
+                .ForMember(des => des.Status, opt => opt.MapFrom(src => src.Status > 4 ? src.Status : (src.ReturnDate - DateTime.Now).Value.Days < 3 ? 3 : (src.ReturnDate - DateTime.Now).Value.Days < 0 ? 4 : src.Status))
                 .ForMember(des => des.DurationDays, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)(src.ReturnDate - src.DeliveryDate).Value.Days : null))
                 .ForMember(des => des.DurationMonths, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)((src.ReturnDate - src.DeliveryDate).Value.Days) / 30 : null));
 
             mc.CreateMap<Order, OrderByIdViewModel>()
                 .ForMember(des => des.DeliveryTime, opt => opt.MapFrom(src => src.DeliveryTime != null ? TimeUtilStatic.TimeToString((TimeSpan)src.DeliveryTime) : ""))
-                .ForMember(des => des.Status, opt => opt.MapFrom(src => src.Status <= 4 ? src.Status : (src.ReturnDate - DateTime.Now).Value.Days < 3 ? 3 : (src.ReturnDate - DateTime.Now).Value.Days < 0 ? 4 : src.Status))
+                .ForMember(des => des.Status, opt => opt.MapFrom(src => src.Status > 4 ? src.Status : (src.ReturnDate - DateTime.Now).Value.Days < 3 ? 3 : (src.ReturnDate - DateTime.Now).Value.Days < 0 ? 4 : src.Status))
                 .ForMember(des => des.DurationDays, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)(src.ReturnDate - src.DeliveryDate).Value.Days : null))
                 .ForMember(des => des.DurationMonths, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)((src.ReturnDate - src.DeliveryDate).Value.Days) / 30 : null));
 

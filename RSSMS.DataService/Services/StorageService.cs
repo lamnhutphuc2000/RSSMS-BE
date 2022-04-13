@@ -420,13 +420,19 @@ namespace RSSMS.DataService.Services
             {
                 var requestsOfStorage = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id).ToList();
                 result = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, dateFrom, dateTo, isMany, cuboids, requestsOfStorage, isCustomerDelivery);
-                i++;
                 var staffs = await _accountService.GetStaff(storageList[i].Id, accessToken, new List<string> { "Delivery Staff" }, dateFrom, deliveryTimes, false);
                 if (result)
                 {
                     if (!isCustomerDelivery && spaceType == (int)SpaceType.Ke)
                     {
-                        var requestsNeedToDeli = requestsOfStorage.Where(request => !(bool)request.IsCustomerDelivery && request.TypeOrder == (int)OrderType.Giu_do_thue).ToList();
+                        // list time
+                        List<TimeSpan> timeSpan = new List<TimeSpan>();
+                        if (deliveryTimes.Count > 0)
+                        {
+                            foreach (var time in deliveryTimes)
+                                timeSpan.Add(_utilService.StringToTime(time));
+                        }
+                        var requestsNeedToDeli = requestsOfStorage.Where(request => !(bool)request.IsCustomerDelivery && request.TypeOrder == (int)OrderType.Giu_do_thue && timeSpan.Contains((TimeSpan)request.DeliveryTime)).ToList();
                         if (requestsNeedToDeli.Count() + 1 <= staffs.Count())
                         {
                             deliFlag = true;
@@ -437,6 +443,7 @@ namespace RSSMS.DataService.Services
                     }
                     break;
                 }
+                i++;
             } while (i < storageList.Count);
             if (!deliFlag && !isCustomerDelivery && spaceType == (int)SpaceType.Ke) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không đủ nhân viên vận chuyển");
             return result;
