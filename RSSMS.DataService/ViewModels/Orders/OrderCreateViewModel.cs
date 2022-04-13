@@ -11,7 +11,6 @@ namespace RSSMS.DataService.ViewModels.Orders
         public Guid? CustomerId { get; set; }
         public Guid? RequestId { get; set; }
         public string DeliveryAddress { get; set; }
-        public AvatarImageCreateViewModel ContractImage { get; set; }
         public string ReturnAddress { get; set; }
         public decimal TotalPrice { get; set; }
         public double? AdditionalFee { get; set; }

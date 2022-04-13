@@ -204,7 +204,6 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                if (model.ContractImage == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Cần ảnh hợp đồng");
                 var orderDetails = model.OrderDetails.ToList();
                 double height = 0;
                 double width = 0;
@@ -268,12 +267,6 @@ namespace RSSMS.DataService.Services
                 var order = _mapper.Map<Order>(model);
                 var now = DateTime.Now;
                 order.Id = new Guid();
-
-                if (model.ContractImage != null)
-                {
-                    var url = await _firebaseService.UploadImageToFirebase(model.ContractImage.File, "accounts", order.Id, "contract");
-                    if (url != null) order.ContractImageUrl = url;
-                }
 
                 if (role == "Office Staff")
                 {
