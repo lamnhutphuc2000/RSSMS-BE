@@ -25,7 +25,7 @@ namespace RSSMS.DataService.Services
 {
     public interface IRequestService : IBaseService<Request>
     {
-        Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestTypes, string[] fields, int page, int size, string accessToken);
+        Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestTypes, IList<int> RequestStatus, string[] fields, int page, int size, string accessToken);
         Task<RequestByIdViewModel> GetById(Guid id, string accessToken);
         Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken);
         Task<RequestUpdateViewModel> Update(Guid id, RequestUpdateViewModel model, string accessToken);
@@ -93,7 +93,7 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public async Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestTypes, string[] fields, int page, int size, string accessToken)
+        public async Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestTypes, IList<int> RequestStatus, string[] fields, int page, int size, string accessToken)
         {
             try
             {
@@ -119,7 +119,18 @@ namespace RSSMS.DataService.Services
                 {
                     if (RequestTypes.Count > 0)
                     {
-                        requests = requests.Where(request => RequestTypes.Contains((int)request.Type))
+                        requests = requests.Where(request => RequestTypes.Contains(request.Type))
+                            .Include(request => request.Schedules)
+                            .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
+                            .Include(request => request.Storage)
+                            .Include(request => request.Order).ThenInclude(order => order.Storage);
+                    }
+                }
+                if (RequestStatus != null)
+                {
+                    if (RequestStatus.Count > 0)
+                    {
+                        requests = requests.Where(request => RequestStatus.Contains((int)request.Status))
                             .Include(request => request.Schedules)
                             .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
                             .Include(request => request.Storage)

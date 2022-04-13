@@ -28,6 +28,7 @@ namespace RSSMS.API.Controllers
         /// </summary>
         /// <param name="model"></param>
         /// <param name="RequestTypes"></param>
+        /// <param name="RequestStatus"></param>
         /// <param name="fields"></param>
         /// <param name="page"></param>
         /// <param name="size"></param>
@@ -38,10 +39,10 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(DynamicModelResponse<RequestViewModel>), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Get([FromQuery] RequestViewModel model, [FromQuery] IList<int> RequestTypes, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
+        public async Task<IActionResult> Get([FromQuery] RequestViewModel model, [FromQuery] IList<int> RequestTypes, [FromQuery] IList<int>  RequestStatus, [FromQuery] string[] fields, int page = CommonConstant.DefaultPage, int size = CommonConstant.DefaultPaging)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            return Ok(await _requestService.GetAll(model, RequestTypes, fields, page, size, accessToken));
+            return Ok(await _requestService.GetAll(model, RequestTypes, RequestStatus, fields, page, size, accessToken));
         }
         /// <summary>
         /// Get request by Id
