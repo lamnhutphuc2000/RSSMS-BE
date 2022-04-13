@@ -31,7 +31,7 @@ namespace RSSMS.DataService.Services
         Task<StorageViewModel> Delete(Guid id);
         Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date, bool isMany);
         Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken);
-        Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery);
+        Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -40,8 +40,9 @@ namespace RSSMS.DataService.Services
         private readonly IAreaService _areaService;
         private readonly IFirebaseService _firebaseService;
         private readonly IUtilService _utilService;
+        private readonly IAccountService _accountService;
         public StorageService(IUnitOfWork unitOfWork, IStorageRepository repository, IMapper mapper
-            , IStaffAssignStorageService staffAssignStoragesService, IAreaService areaService
+            , IStaffAssignStorageService staffAssignStoragesService, IAreaService areaService, IAccountService accountService
             , IFirebaseService firebaseService, IUtilService utilService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -49,6 +50,7 @@ namespace RSSMS.DataService.Services
             _areaService = areaService;
             _firebaseService = firebaseService;
             _utilService = utilService;
+            _accountService = accountService;
         }
 
         public async Task<StorageViewModel> Create(StorageCreateViewModel model)
@@ -400,7 +402,7 @@ namespace RSSMS.DataService.Services
 
         }
 
-        public async Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery)
+        public async Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes)
         {
             bool result = false;
 
@@ -413,13 +415,30 @@ namespace RSSMS.DataService.Services
 
             var storageList = storages.ToList();
             int i = 0;
+            bool deliFlag = false;
             do
             {
                 var requestsOfStorage = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id).ToList();
                 result = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, dateFrom, dateTo, isMany, cuboids, requestsOfStorage, isCustomerDelivery);
                 i++;
-                if (result) break;
+                var staffs = await _accountService.GetStaff(storageList[i].Id, accessToken, new List<string> { "Delivery Staff" }, dateFrom, deliveryTimes, false);
+                if (result)
+                {
+                    if (!isCustomerDelivery && spaceType == (int)SpaceType.Ke)
+                    {
+                        var requestsNeedToDeli = requestsOfStorage.Where(request => !(bool)request.IsCustomerDelivery && request.TypeOrder == (int)OrderType.Giu_do_thue).ToList();
+                        if (requestsNeedToDeli.Count() + 1 <= staffs.Count())
+                        {
+                            deliFlag = true;
+                            break;
+                        }
+
+                        result = false;
+                    }
+                    break;
+                }
             } while (i < storageList.Count);
+            if (!deliFlag && !isCustomerDelivery && spaceType == (int)SpaceType.Ke) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không đủ nhân viên vận chuyển");
             return result;
         }
     }

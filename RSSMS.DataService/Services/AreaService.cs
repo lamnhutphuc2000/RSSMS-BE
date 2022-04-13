@@ -456,8 +456,17 @@ namespace RSSMS.DataService.Services
                 List<Cuboid> cuboidsToPack = new List<Cuboid>();
                 foreach (var cuboid in cuboidsTmp)
                 {
-                    if (cuboid.Height <= floor.Height && cuboid.Depth <= floor.Length && cuboid.Width <= floor.Width)
-                        cuboidsToPack.Add(cuboid);
+                    if (spaceType == (int)SpaceType.Dien_tich)
+                    {
+                        if (cuboid.Height == floor.Height && cuboid.Depth == floor.Length && cuboid.Width == floor.Width)
+                            cuboidsToPack.Add(cuboid);
+                    }
+                    else
+                    {
+                        if (cuboid.Height <= floor.Height && cuboid.Depth <= floor.Length && cuboid.Width <= floor.Width)
+                            cuboidsToPack.Add(cuboid);
+                    }
+
                 }
                 if (cuboidsToPack.Count != 0)
                 {
@@ -473,7 +482,7 @@ namespace RSSMS.DataService.Services
                             var cuboidTmp = cuboidsTmp.Where(x => x.Tag == cuboid.Tag).FirstOrDefault();
                             cuboidsTmp.Remove(cuboidTmp);
                         }
-                        if (cuboidsTmp.Count == 0)result = true;
+                        if (cuboidsTmp.Count == 0) result = true;
                     }
                     else
                     {

@@ -231,7 +231,7 @@ namespace RSSMS.DataService.Services
                 await UpdateAsync(spaceToUpdate);
                 return await GetById(model.Id);
             }
-            catch(InvalidOperationException)
+            catch (InvalidOperationException)
             {
                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không đủ không gian chứa");
             }

@@ -19,7 +19,7 @@ namespace RSSMS.DataService.Services
             result = TimeSpan.FromHours(double.Parse(tho[0]));
             if (index <= 0)
             {
-                if(result.Hours != 12) result += TimeSpan.FromHours(12);
+                if (result.Hours != 12) result += TimeSpan.FromHours(12);
             }
             return result;
         }

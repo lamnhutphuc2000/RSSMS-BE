@@ -20,6 +20,8 @@ namespace RSSMS.DataService.ViewModels.Orders
         public string CustomerName { get; set; }
         [JsonProperty("customerPhone")]
         public string CustomerPhone { get; set; }
+        [JsonProperty("contractImageUrl")]
+        public string ContractImageUrl { get; set; }
         [JsonProperty("name")]
         public string Name { get; set; }
         [JsonProperty("deliveryAddress")]

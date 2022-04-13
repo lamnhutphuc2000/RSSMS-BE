@@ -204,6 +204,7 @@ namespace RSSMS.DataService.Services
         {
             try
             {
+                if (model.ContractImage == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Cần ảnh hợp đồng");
                 var orderDetails = model.OrderDetails.ToList();
                 double height = 0;
                 double width = 0;
@@ -218,6 +219,8 @@ namespace RSSMS.DataService.Services
                 int spaceType = 0;
                 if (model.Type == (int)OrderType.Kho_tu_quan) spaceType = 1;
                 bool isMany = false;
+
+
 
                 // service list chứa list service người dùng đặt
                 List<Cuboid> cuboid = new List<Cuboid>();
@@ -266,6 +269,12 @@ namespace RSSMS.DataService.Services
                 var now = DateTime.Now;
                 order.Id = new Guid();
 
+                if (model.ContractImage != null)
+                {
+                    var url = await _firebaseService.UploadImageToFirebase(model.ContractImage.File, "accounts", order.Id, "contract");
+                    if (url != null) order.ContractImageUrl = url;
+                }
+
                 if (role == "Office Staff")
                 {
                     if (secureToken.Claims.First(claim => claim.Type == "storage_id").Value != null)
@@ -289,7 +298,7 @@ namespace RSSMS.DataService.Services
 
 
 
-                var checkResult = await _requestService.CheckStorageAvailable(spaceType, isMany, (int)model.Type, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, storageId, (bool)model.IsUserDelivery, model.RequestId);
+                var checkResult = await _requestService.CheckStorageAvailable(spaceType, isMany, (int)model.Type, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, storageId, (bool)model.IsUserDelivery, model.RequestId, accessToken, new List<string> { model.DeliveryTime });
                 if (!checkResult) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
 
                 order.Status = 1;
@@ -462,12 +471,12 @@ namespace RSSMS.DataService.Services
                         request.Schedules = schedules.Select(schedule => { schedule.Status = 2; return schedule; }).ToList();
                     }
                 }
-                if(model.OrderAdditionalFees.Count > 0)
+                if (model.OrderAdditionalFees.Count > 0)
                 {
                     var orderAddtionalFee = model.OrderAdditionalFees.AsQueryable().ProjectTo<OrderAdditionalFee>(_mapper.ConfigurationProvider);
                     order.OrderAdditionalFees = orderAddtionalFee.ToList();
                 }
-                
+
 
                 order.Requests = requests;
 

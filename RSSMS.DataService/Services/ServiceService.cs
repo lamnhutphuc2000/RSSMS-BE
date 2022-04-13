@@ -132,10 +132,10 @@ namespace RSSMS.DataService.Services
             try
             {
 
-                var result = await Get(x => x.Id == id && x.IsActive == true)
+                var result = await Get(x => x.Id == id && x.IsActive)
                     .ProjectTo<ServicesViewModel>(_mapper.ConfigurationProvider)
                     .FirstOrDefaultAsync();
-                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Service id not found");
+                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy dịch vụ đã yêu cầu");
                 return result;
             }
             catch (ErrorResponse e)
@@ -164,8 +164,8 @@ namespace RSSMS.DataService.Services
 
                 if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Service Id not matched");
 
-                var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
-                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Service not found");
+                var entity = await Get(x => x.Id == id && x.IsActive).FirstOrDefaultAsync();
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy dịch vụ");
                 entity.IsActive = false;
                 await UpdateAsync(entity);
 

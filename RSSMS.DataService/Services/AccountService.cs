@@ -101,7 +101,7 @@ namespace RSSMS.DataService.Services
                 await UpdateAsync(acc);
 
                 // Check user role
-                if (acc.Role.Name != "Office Staff" || acc.Role.Name != "Delivery Staff") return result;
+                if (acc.Role.Name != "Office Staff" && acc.Role.Name != "Delivery Staff") return result;
 
                 // Get office staff storage Id
                 Guid? storageId = acc.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).FirstOrDefault()?.StorageId;
@@ -522,11 +522,14 @@ namespace RSSMS.DataService.Services
                 if (scheduleDay != null)
                 {
                     List<TimeSpan> timeSpan = new List<TimeSpan>();
-                    foreach (var time in deliveryTimes)
-                        timeSpan.Add(_utilService.StringToTime(time));
-                    // delivery staff busy in the time
-                    var usersInDelivery = _scheduleService.Get(schedule => scheduleDay.Value.Date == schedule.ScheduleDay.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).Select(schedule => schedule.StaffId).Distinct().ToList();
-                    staffs = staffs.Where(account => !usersInDelivery.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                    if (deliveryTimes.Count > 0)
+                    {
+                        foreach (var time in deliveryTimes)
+                            timeSpan.Add(_utilService.StringToTime(time));
+                        // delivery staff busy in the time
+                        var usersInDelivery = _scheduleService.Get(schedule => scheduleDay.Value.Date == schedule.ScheduleDay.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).Select(schedule => schedule.StaffId).Distinct().ToList();
+                        staffs = staffs.Where(account => !usersInDelivery.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                    }
                     //delivery staff busy in the day
                     var deliveryStaffBusyInDate = _scheduleService.Get(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && !schedule.IsActive && schedule.Status == 6).Select(schedule => schedule.StaffId).Distinct().ToList();
                     staffs = staffs.Where(account => !deliveryStaffBusyInDate.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);

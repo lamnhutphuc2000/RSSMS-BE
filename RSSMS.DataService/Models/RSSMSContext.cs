@@ -196,6 +196,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.AdditionalFeeDescription).HasMaxLength(255);
 
+                entity.Property(e => e.ContractImageUrl).IsUnicode(false);
+
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.DeliveryAddress).HasMaxLength(255);

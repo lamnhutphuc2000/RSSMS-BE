@@ -22,6 +22,7 @@ namespace RSSMS.DataService.Models
         public string Name { get; set; }
         public string DeliveryAddress { get; set; }
         public string ReturnAddress { get; set; }
+        public string ContractImageUrl { get; set; }
         public decimal TotalPrice { get; set; }
         public string AdditionalFeeDescription { get; set; }
         public double? AdditionalFee { get; set; }
