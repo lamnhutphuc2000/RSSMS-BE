@@ -107,17 +107,7 @@ namespace RSSMS.DataService.Services
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
                     .Include(order => order.OrderAdditionalFees);
 
-                if (OrderStatuses.Count > 0)
-                {
-                    order = order.Where(order => OrderStatuses.Contains((int)order.Status))
-                        .Include(order => order.OrderHistoryExtensions)
-                        .Include(order => order.Storage)
-                        .Include(order => order.Requests).ThenInclude(request => request.Schedules)
-                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
-                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
-                        .Include(order => order.OrderAdditionalFees);
-                }
-
+                
 
                 if (dateFrom != null && dateTo != null)
                 {
@@ -167,12 +157,15 @@ namespace RSSMS.DataService.Services
                         .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
                         .Include(order => order.OrderAdditionalFees);
                 }
+                var orderReturn = order.OrderByDescending(order => order.CreatedDate)
+                    .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider);
+                if (OrderStatuses.Count > 0)
+                    orderReturn = orderReturn.Where(order => OrderStatuses.Contains((int)order.Status));
+                        
 
-                var result = order.OrderByDescending(order => order.CreatedDate)
-                    .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider)
-                    .DynamicFilter(model)
-                    .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-                var meo = result.Item2.ToList();
+                var result = orderReturn.DynamicFilter(model)
+                        .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
+
                 if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
 
 
