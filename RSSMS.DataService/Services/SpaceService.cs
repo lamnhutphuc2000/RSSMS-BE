@@ -63,8 +63,18 @@ namespace RSSMS.DataService.Services
 
                 // Check is Area oversize
                 // Lay space va area cua space vua tao
+
                 space = Get(space => space.Id == spaceToCreate.Id).Include(space => space.Area).First();
                 var area = space.Area;
+
+                if(model.FloorWidth > area.Width || model.FloorLength > area.Length)
+                {
+                    var floors = spaceToCreate.Floors.ToList();
+                    for (int i = 0; i < floors.Count; i++)
+                        await _floorsService.DeleteAsync(floors[i]);
+                    await DeleteAsync(spaceToCreate);
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space heigh is larger than area height.");
+                }
                 if (model.NumberOfFloor * model.FloorHeight > area.Height)
                 {
                     var floors = spaceToCreate.Floors.ToList();

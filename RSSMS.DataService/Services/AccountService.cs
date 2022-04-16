@@ -525,10 +525,14 @@ namespace RSSMS.DataService.Services
                     if (deliveryTimes.Count > 0)
                     {
                         foreach (var time in deliveryTimes)
-                            timeSpan.Add(_utilService.StringToTime(time));
+                            if(!string.IsNullOrWhiteSpace(time))
+                                timeSpan.Add(_utilService.StringToTime(time));
                         // delivery staff busy in the time
-                        var usersInDelivery = _scheduleService.Get(schedule => scheduleDay.Value.Date == schedule.ScheduleDay.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).Select(schedule => schedule.StaffId).Distinct().ToList();
-                        staffs = staffs.Where(account => !usersInDelivery.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                        if(timeSpan.Count > 0)
+                        {
+                            var usersInDelivery = _scheduleService.Get(schedule => scheduleDay.Value.Date == schedule.ScheduleDay.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).Select(schedule => schedule.StaffId).Distinct().ToList();
+                            staffs = staffs.Where(account => !usersInDelivery.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                        }
                     }
                     //delivery staff busy in the day
                     var deliveryStaffBusyInDate = _scheduleService.Get(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && !schedule.IsActive && schedule.Status == 6).Select(schedule => schedule.StaffId).Distinct().ToList();

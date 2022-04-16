@@ -108,6 +108,7 @@ namespace RSSMS.DataService.Services
                     .Include(order => order.OrderAdditionalFees);
 
                 
+                
 
                 if (dateFrom != null && dateTo != null)
                 {
@@ -157,16 +158,43 @@ namespace RSSMS.DataService.Services
                         .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
                         .Include(order => order.OrderAdditionalFees);
                 }
-                var orderReturn = order.OrderByDescending(order => order.CreatedDate)
-                    .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider);
+                var tmps = order.ToList();
+                foreach(var tmp in tmps)
+                {
+                    if(tmp.Status < 5)
+                    {
+                        if ((tmp.ReturnDate - DateTime.Now).Value.Days < 0)
+                        {
+                            tmp.Status = 4;
+                        }
+                        else if ((tmp.ReturnDate - DateTime.Now).Value.Days < 3)
+                        {
+                            tmp.Status = 3;
+                        }
+                    }
+                }
                 if (OrderStatuses.Count > 0)
-                    orderReturn = orderReturn.Where(order => OrderStatuses.Contains((int)order.Status));
-                        
-
-                var result = orderReturn.DynamicFilter(model)
+                {
+                    tmps = tmps.Where(x => OrderStatuses.Contains((int)x.Status)).AsQueryable().Include(order => order.OrderHistoryExtensions)
+                        .Include(order => order.Storage)
+                        .Include(order => order.Requests).ThenInclude(request => request.Schedules)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                        .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                        .Include(order => order.OrderAdditionalFees).ToList();
+                    var ids = tmps.AsQueryable().Select(x => x.Id).ToList();
+                    order = order.Where(x => ids.Contains(x.Id)).Include(order => order.OrderHistoryExtensions)
+                            .Include(order => order.Storage)
+                            .Include(order => order.Requests).ThenInclude(request => request.Schedules)
+                            .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
+                            .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                            .Include(order => order.OrderAdditionalFees);
+                }
+                    
+                var result = order.OrderByDescending(order => order.CreatedDate)
+                    .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model)
                         .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
 
-                if (result.Item2 == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
+                if (result.Item2.Count() < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Can not found");
 
 
                 var rs = new DynamicModelResponse<OrderViewModel>
@@ -242,8 +270,8 @@ namespace RSSMS.DataService.Services
                         serviceVolumne = (int)serviceId.Amount * serviceHeight * serviceLength * serviceWidth;
 
                     }
-                    if (isMany) cuboid.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length, 0, Guid.NewGuid()));
-                    else cuboid.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, Guid.NewGuid()));
+                    if(!((decimal)orderDetail.Height == 0 && (decimal)orderDetail.Width ==0 && (decimal)orderDetail.Length == 0))
+                        cuboid.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, Guid.NewGuid()));
                     if (serviceHeight < height || serviceLength < length || serviceWidth < width || serviceVolumne < volumne)
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail is bigger than service");
                 }
@@ -284,7 +312,7 @@ namespace RSSMS.DataService.Services
 
 
 
-                var checkResult = await _requestService.CheckStorageAvailable(spaceType, isMany, (int)model.Type, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, storageId, (bool)model.IsUserDelivery, model.RequestId, accessToken, new List<string> { model.DeliveryTime });
+                var checkResult = await _requestService.CheckStorageAvailable(spaceType, isMany, (int)model.Type, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, storageId, (bool)model.IsUserDelivery, model.RequestId, accessToken, new List<string> { model.DeliveryTime }, true);
                 if (!checkResult) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
 
                 order.Status = 1;
@@ -385,11 +413,12 @@ namespace RSSMS.DataService.Services
                     .ThenInclude(orderDetails => orderDetails.Images).AsNoTracking().FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
 
-
+                bool entityIsPaid = entity.IsPaid;
 
                 var updateEntity = _mapper.Map(model, entity);
                 var orderDetails = updateEntity.OrderDetails.Select(c => { c.OrderId = id; return c; }).ToList();
                 updateEntity.OrderDetails = orderDetails;
+                if (model.IsPaid == null) updateEntity.IsPaid = entityIsPaid;
                 await UpdateAsync(updateEntity);
 
                 return model;
@@ -452,12 +481,13 @@ namespace RSSMS.DataService.Services
                 {
                     if (request.Id == model.RequestId)
                     {
-                        request.Status = 3;
+                        request.Status = (int)RequestStatus.Hoan_thanh;
                         var schedules = request.Schedules;
                         request.Schedules = schedules.Select(schedule => { schedule.Status = 2; return schedule; }).ToList();
                     }
+                    if (request.Status == (int)RequestStatus.Dang_van_chuyen) request.Status = (int)RequestStatus.Hoan_thanh;
                 }
-                if (model.OrderAdditionalFees.Count > 0)
+                if(model.OrderAdditionalFees != null)
                 {
                     var orderAddtionalFee = model.OrderAdditionalFees.AsQueryable().ProjectTo<OrderAdditionalFee>(_mapper.ConfigurationProvider);
                     order.OrderAdditionalFees = orderAddtionalFee.ToList();

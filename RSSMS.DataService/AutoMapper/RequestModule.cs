@@ -45,6 +45,7 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<Request, RequestScheduleViewModel>()
                .ForMember(des => des.OrderName, opt => opt.MapFrom(src => src.Order.Name))
+               .ForMember(des => des.DeliveryTime, opt => opt.MapFrom(src => src.DeliveryTime != null ? TimeUtilStatic.TimeToString((TimeSpan)src.DeliveryTime) : ""))
                .ForMember(des => des.StorageId, opt => opt.MapFrom(src => src.Storage != null ? src.StorageId : src.Order != null ? src.Order.StorageId : null))
                .ForMember(des => des.StorageName, opt => opt.MapFrom(src => src.Storage != null ? src.Storage.Name : src.Order != null ? src.Order.Storage.Name : null))
                .ForMember(des => des.CustomerName, opt => opt.MapFrom(src => src.CreatedByNavigation.Role.Name == "Customer" ? src.CreatedByNavigation.Name : null))

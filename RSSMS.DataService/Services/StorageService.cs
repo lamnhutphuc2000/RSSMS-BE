@@ -31,7 +31,7 @@ namespace RSSMS.DataService.Services
         Task<StorageViewModel> Delete(Guid id);
         Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date, bool isMany);
         Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken);
-        Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes);
+        Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, bool isCreateOrder);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -309,9 +309,9 @@ namespace RSSMS.DataService.Services
                     // get staff need to unassign with role and schedules
                     var staffsToUnAssigned = _staffAssignStoragesService.Get(staffAssign => staffUnAssignedId.Contains(staffAssign.Id) && staffAssign.IsActive)
                                                 .Include(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Role)
-                                                .Include(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Schedules).ToList();
+                                                .Include(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Schedules).ThenInclude(schedule => schedule.Request).ToList();
                     // check if there is staff who schedule have not finish
-                    if (staffsToUnAssigned.Where(staffAssign => staffAssign.Staff.Schedules.Where(schedule => schedule.IsActive && schedule.Status == 1).Count() > 0).Count() > 0)
+                    if (staffsToUnAssigned.Where(staffAssign => staffAssign.Staff.Schedules.Where(schedule => schedule.IsActive && (schedule.Request.Status == (int)RequestStatus.Dang_van_chuyen || schedule.Request.Status == (int)RequestStatus.Da_xu_ly)).Count() > 0).Count() > 0)
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên còn lịch chưa hoàn thành không thể rút khỏi kho");
 
                     // check if there is request that is assigned to this storage but unassigned staff leading to not enough staff;
@@ -402,7 +402,7 @@ namespace RSSMS.DataService.Services
 
         }
 
-        public async Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes)
+        public async Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, bool isCreateOrder)
         {
             bool result = false;
 
@@ -423,7 +423,7 @@ namespace RSSMS.DataService.Services
                 var staffs = await _accountService.GetStaff(storageList[i].Id, accessToken, new List<string> { "Delivery Staff" }, dateFrom, deliveryTimes, false);
                 if (result)
                 {
-                    if (!isCustomerDelivery && spaceType == (int)SpaceType.Ke)
+                    if (!isCustomerDelivery && spaceType == (int)SpaceType.Ke && !isCreateOrder)
                     {
                         // list time
                         List<TimeSpan> timeSpan = new List<TimeSpan>();
@@ -445,7 +445,8 @@ namespace RSSMS.DataService.Services
                 }
                 i++;
             } while (i < storageList.Count);
-            if (!deliFlag && !isCustomerDelivery && spaceType == (int)SpaceType.Ke) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không đủ nhân viên vận chuyển");
+            if(!result) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
+            if (!deliFlag && !isCustomerDelivery && spaceType == (int)SpaceType.Ke && !isCreateOrder) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không đủ nhân viên vận chuyển");
             return result;
         }
     }
