@@ -329,9 +329,19 @@ namespace RSSMS.DataService.Services
                                             });
                         foreach (var request in requestByDateTime)
                         {
+                            if(staffAssigned == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên được thêm sẽ không đủ với các yêu cầu đã được tiếp nhận");
                             if (request.Requests.Count > staffAssigned.Count)
                                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên được thêm sẽ không đủ với các yêu cầu đã được tiếp nhận");
                         }
+                    }
+
+                    var staffs = _staffAssignStoragesService.Get(x => x.StorageId == model.StorageId && x.IsActive == true).ToList().Where(x => staffUnAssigned.Any(a => a.UserId == x.StaffId)).ToList();
+
+                    foreach (var staff in staffs)
+                    {
+                        staff.IsActive = false;
+                        staff.ModifiedBy = uid;
+                        await _staffAssignStoragesService.UpdateAsync(staff);
                     }
                 }
 
@@ -359,17 +369,6 @@ namespace RSSMS.DataService.Services
 
                     }
 
-                    if (staffUnAssigned != null)
-                    {
-                        var staffs = _staffAssignStoragesService.Get(x => x.StorageId == model.StorageId && x.IsActive == true).ToList().Where(x => staffUnAssigned.Any(a => a.UserId == x.StaffId)).ToList();
-
-                        foreach (var staff in staffs)
-                        {
-                            staff.IsActive = false;
-                            staff.ModifiedBy = uid;
-                            await _staffAssignStoragesService.UpdateAsync(staff);
-                        }
-                    }
 
 
                     foreach (var staff in staffAssigned)
