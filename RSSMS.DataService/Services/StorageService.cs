@@ -316,7 +316,7 @@ namespace RSSMS.DataService.Services
 
                     // check if there is request that is assigned to this storage but unassigned staff leading to not enough staff;
                     var requests = Get(storage => storage.Id == model.StorageId && storage.IsActive).Include(storage => storage.Requests).FirstOrDefault()
-                        .Requests.Where(request => request.IsActive && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don) && (request.Status == 2 || request.Status == 4) && request.DeliveryDate != null).AsEnumerable();
+                        .Requests.Where(request => request.IsActive && request.DeliveryTime != null && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don) && (request.Status == 2 || request.Status == 4) && request.DeliveryDate != null).AsEnumerable();
                     if (requests.Count() > 0)
                     {
                         // group by request to schedule day
@@ -330,7 +330,7 @@ namespace RSSMS.DataService.Services
                         foreach (var request in requestByDateTime)
                         {
                             if(staffAssigned == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên được thêm sẽ không đủ với các yêu cầu đã được tiếp nhận");
-                            if (request.Requests.Count > staffAssigned.Count)
+                            if (request.Requests?.Count > staffAssigned.Count)
                                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên được thêm sẽ không đủ với các yêu cầu đã được tiếp nhận");
                         }
                     }
