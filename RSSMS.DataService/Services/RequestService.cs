@@ -14,6 +14,7 @@ using RSSMS.DataService.ViewModels.Floors;
 using RSSMS.DataService.ViewModels.Notifications;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Requests;
+using RSSMS.DataService.ViewModels.Storages;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -35,6 +36,7 @@ namespace RSSMS.DataService.Services
         Task<RequestByIdViewModel> DeliverRequest(Guid id, string accessToken);
         Task<RequestByIdViewModel> DeliverySendRequestNotification(Guid id, NotificationDeliverySendRequestNotiViewModel model, string accessToken);
         Task<bool> CheckStorageAvailable(int spaceType, bool isMany, int orderType, DateTime dateFrom, DateTime dateTo, List<Cuboid> cuboids, Guid? storageId, bool isCustomerDelivery, Guid? requestId, string accessToken, List<string> deliveryTimes, bool isCreateOrder);
+        Task<List<StorageViewModel>> GetStorageAvailable(RequestCreateViewModel model, string accessToken);
     }
 
 
@@ -1018,6 +1020,60 @@ namespace RSSMS.DataService.Services
             // Check xem storage còn đủ chỗ không
             result = await _storageService.CheckStorageAvailable(storageId, spaceType, dateFrom, dateTo, isMany, cuboids, requestsAssignStorage, isCustomerDelivery, accessToken, deliveryTimes, isCreateOrder);
             return result;
+        }
+
+        public async Task<List<StorageViewModel>> GetStorageAvailable(RequestCreateViewModel model, string accessToken)
+        {
+            try
+            {
+                List<StorageViewModel> result = new List<StorageViewModel>();
+                // check xem yêu cầu tạo đơn giữ đồ thuê hay kho tự quản => dẫn tới cần sử dụng space gì
+                int spaceType = (int)SpaceType.Ke;
+                // check xem là giữ ít hay nhiều 
+                bool isMany = false;
+
+                var services = model.RequestDetails.Select(requestDetail => new
+                {
+                    ServiceId = requestDetail.ServiceId,
+                    Amount = requestDetail.Amount
+                }).ToList();
+                if(services.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Chưa đặt bất kì sản phẩm nào.");
+                // service list chứa list service người dùng đặt
+                List<Cuboid> cuboid = new List<Cuboid>();
+                for (int i = 0; i < services.Count; i++)
+                {
+                    for (int j = 0; j < services[i].Amount; j++)
+                    {
+                        var service = _serviceService.Get(service => service.Id == services[i].ServiceId).FirstOrDefault();
+                        if (!service.IsActive) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Dịch vụ không tồn tại");
+                        if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+                        if (service.Type != (int)ServiceType.Phu_kien)
+                            cuboid.Add(new Cuboid((decimal)service.Width, (decimal)service.Height, (decimal)service.Length, 0, service.Id + i.ToString()));
+                        if (service.Type == (int)ServiceType.Kho) spaceType = (int)SpaceType.Dien_tich;
+                    }
+                }
+
+                var requestsAssignStorage = await Get(request => request.IsActive && request.Type == (int)RequestType.Tao_don && request.Type == (int)RequestType.Tao_don && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen))
+                                           .Include(request => request.Order).ThenInclude(order => order.OrderDetails)
+                                           .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
+                requestsAssignStorage = requestsAssignStorage.Where(request => (request.DeliveryDate <= model.DeliveryDate && request.ReturnDate >= model.DeliveryDate) || (model.DeliveryDate <= request.DeliveryDate && model.ReturnDate >= request.DeliveryDate)).ToList();
+
+
+
+                result = await _storageService.GetStorageAvailable(null, spaceType, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, isMany, cuboid, requestsAssignStorage, (bool) model.IsCustomerDelivery, accessToken, new List<string> { model.DeliveryTime }, true);
+
+
+                if (result.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không có kho còn chỗ trống.");
+                return result;
+            }
+            catch (ErrorResponse e)
+            {
+                throw new ErrorResponse((int)e.Error.Code, e.Error.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
+            }
         }
     }
 }

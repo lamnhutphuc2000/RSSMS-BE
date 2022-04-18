@@ -9,7 +9,7 @@ namespace RSSMS.DataService.ViewModels.Storages
     public partial class StorageViewModel
     {
         public static string[] Fields = {
-            "Id","Name","Type","Status","Address","Description","ImageUrl","Height","Width","Length","Usage","ManagerName","Areas"
+            "Id","Name","Type","Status","Address","Description","ImageUrl","Height","Width","Length","Usage","ManagerName","Areas","DeliveryFee"
         };
         [BindNever]
         public Guid? Id { get; set; }
@@ -35,6 +35,9 @@ namespace RSSMS.DataService.ViewModels.Storages
         public int? Usage { get; set; }
         [BindNever]
         public string ManagerName { get; set; }
+        [BindNever]
         public List<AreaDetailViewModel> Areas { get; set; }
+        [BindNever]
+        public decimal? DeliveryFee { get; set; }
     }
 }

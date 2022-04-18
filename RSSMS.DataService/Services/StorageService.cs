@@ -32,6 +32,7 @@ namespace RSSMS.DataService.Services
         Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date, bool isMany);
         Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken);
         Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, bool isCreateOrder);
+        Task<List<StorageViewModel>> GetStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, bool isCreateOrder);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -446,6 +447,50 @@ namespace RSSMS.DataService.Services
             } while (i < storageList.Count);
             if(!result) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
             if (!deliFlag && !isCustomerDelivery && spaceType == (int)SpaceType.Ke && !isCreateOrder) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không đủ nhân viên vận chuyển");
+            return result;
+        }
+
+        public async Task<List<StorageViewModel>> GetStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, bool isCreateOrder)
+        {
+            List<StorageViewModel> result = new List<StorageViewModel>();
+            bool isAvailable = false;
+            // Get all storage
+            IQueryable<Storage> storages = Get(storage => storage.IsActive).Include(storage => storage.Areas.Where(area => area.IsActive));
+
+            // Get storage by Id
+            if (storageId != null) storages = storages.Where(storage => storage.Id == storageId).Include(storage => storage.Areas.Where(area => area.IsActive));
+            if (storages.ToList().Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không đủ kho");
+
+            var storageList = storages.ToList();
+            int i = 0;
+            do
+            {
+                var requestsOfStorage = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id).ToList();
+                isAvailable = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, dateFrom, dateTo, isMany, cuboids, requestsOfStorage, isCustomerDelivery);
+                var staffs = await _accountService.GetStaff(storageList[i].Id, accessToken, new List<string> { "Delivery Staff" }, dateFrom, deliveryTimes, false);
+                if (isAvailable)
+                {
+                    if (!isCustomerDelivery && spaceType == (int)SpaceType.Ke)
+                    {
+                        // list time
+                        List<TimeSpan> timeSpan = new List<TimeSpan>();
+                        if (deliveryTimes.Count > 0)
+                        {
+                            foreach (var time in deliveryTimes)
+                                timeSpan.Add(_utilService.StringToTime(time));
+                        }
+                        var requestsNeedToDeli = requestsOfStorage.Where(request => !(bool)request.IsCustomerDelivery && request.TypeOrder == (int)OrderType.Giu_do_thue && timeSpan.Contains((TimeSpan)request.DeliveryTime)).ToList();
+                        if (requestsNeedToDeli.Count() + 1 <= staffs.Count())
+                        {
+                            result.Add(_mapper.Map<StorageViewModel>(storageList[i]));
+                            break;
+                        }
+                    } else
+                        result.Add(_mapper.Map<StorageViewModel>(storageList[i]));
+                }
+                isAvailable = false;
+                i++;
+            } while (i < storageList.Count);
             return result;
         }
     }
