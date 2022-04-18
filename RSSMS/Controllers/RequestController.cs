@@ -162,6 +162,7 @@ namespace RSSMS.API.Controllers
         /// Delivery staff send noti to staff
         /// </summary>
         /// <param name="id"></param>
+        /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost("send request notification/{id}")]
         [Authorize(Roles = "Manager, Office Staff, Customer")]
@@ -174,9 +175,13 @@ namespace RSSMS.API.Controllers
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _requestService.DeliverySendRequestNotification(id, model, accessToken));
         }
-
+        /// <summary>
+        /// Get storage available for create request
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost("get-storage-available")]
-        [Authorize(Roles = "Manager, Office Staff, Customer")]
+        //[Authorize(Roles = "Manager, Office Staff, Customer")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(RequestByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]

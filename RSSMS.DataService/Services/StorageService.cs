@@ -11,6 +11,7 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
 using RSSMS.DataService.ViewModels.Floors;
+using RSSMS.DataService.ViewModels.Geocodes;
 using RSSMS.DataService.ViewModels.Requests;
 using RSSMS.DataService.ViewModels.StaffAssignStorage;
 using RSSMS.DataService.ViewModels.Storages;
@@ -19,6 +20,8 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 namespace RSSMS.DataService.Services
 {
@@ -32,7 +35,7 @@ namespace RSSMS.DataService.Services
         Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date, bool isMany);
         Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken);
         Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, bool isCreateOrder);
-        Task<List<StorageViewModel>> GetStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, bool isCreateOrder);
+        Task<List<StorageViewModel>> GetStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, string deliveryAddress);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -450,7 +453,7 @@ namespace RSSMS.DataService.Services
             return result;
         }
 
-        public async Task<List<StorageViewModel>> GetStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, bool isCreateOrder)
+        public async Task<List<StorageViewModel>> GetStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, string deliveryAddress)
         {
             List<StorageViewModel> result = new List<StorageViewModel>();
             bool isAvailable = false;
@@ -482,7 +485,11 @@ namespace RSSMS.DataService.Services
                         var requestsNeedToDeli = requestsOfStorage.Where(request => !(bool)request.IsCustomerDelivery && request.TypeOrder == (int)OrderType.Giu_do_thue && timeSpan.Contains((TimeSpan)request.DeliveryTime)).ToList();
                         if (requestsNeedToDeli.Count() + 1 <= staffs.Count())
                         {
-                            result.Add(_mapper.Map<StorageViewModel>(storageList[i]));
+                            StorageViewModel storage = _mapper.Map<StorageViewModel>(storageList[i]);
+                            DistanceViewModel distance = await GetDistanceFromCustomerToStorage(deliveryAddress, storage.Address);
+                            if(distance != null)
+                                storage.DeliveryDistance = distance.rows[0].elements[0].distance.text;
+                            result.Add(storage);
                             break;
                         }
                     } else
@@ -491,6 +498,53 @@ namespace RSSMS.DataService.Services
                 isAvailable = false;
                 i++;
             } while (i < storageList.Count);
+            return result;
+        }
+
+        private async Task<DistanceViewModel> GetDistanceFromCustomerToStorage(string deliveryAddress, string storageAddress)
+        {
+            DistanceViewModel result= null;
+
+            // Điểm bắt đầu
+            string origin = null;
+            // Điểm đến
+            string destination = null;
+            string key = "9gAZdEIcBCUAYj8o3p7EcCepH30zYGgK1Pw3LULV";
+            GeometryViewModel geometry = new GeometryViewModel();
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri("https://rsapi.goong.io/");
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+            HttpResponseMessage response = await client.GetAsync(
+                $"/geocode?address={deliveryAddress}&api_key={key}"
+                );
+            if (response.IsSuccessStatusCode)
+            {
+                geometry = await response.Content.ReadAsAsync<GeometryViewModel>();
+                if (geometry.results.Count() > 0)
+                    origin = geometry.results[0].geometry.location.lat + "," + geometry.results[0].geometry.location.lng;
+            }
+            
+            response = await client.GetAsync(
+                $"/geocode?address={storageAddress}&api_key={key}"
+                );
+            if (response.IsSuccessStatusCode)
+            {
+                geometry = await response.Content.ReadAsAsync<GeometryViewModel>();
+                if (geometry.results.Count() > 0)
+                    destination = geometry.results[0].geometry.location.lat + "," + geometry.results[0].geometry.location.lng;
+            }
+
+
+            // tính quãng đường
+            response = await client.GetAsync(
+                $"DistanceMatrix?origins={origin}&destinations={destination}&vehicle=truck&api_key={key}"
+                );
+            if (response.IsSuccessStatusCode)
+            {
+                result = await response.Content.ReadAsAsync<DistanceViewModel>();
+            }
             return result;
         }
     }

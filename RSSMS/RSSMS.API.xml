@@ -229,12 +229,13 @@
             <param name="size"></param>
             <returns></returns>
         </member>
-        <member name="M:RSSMS.API.Controllers.RequestController.Get(RSSMS.DataService.ViewModels.Requests.RequestViewModel,System.Collections.Generic.IList{System.Int32},System.String[],System.Int32,System.Int32)">
+        <member name="M:RSSMS.API.Controllers.RequestController.Get(RSSMS.DataService.ViewModels.Requests.RequestViewModel,System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Int32},System.String[],System.Int32,System.Int32)">
             <summary>
             Get list request
             </summary>
             <param name="model"></param>
             <param name="RequestTypes"></param>
+            <param name="RequestStatus"></param>
             <param name="fields"></param>
             <param name="page"></param>
             <param name="size"></param>
@@ -296,6 +297,14 @@
             Delivery staff send noti to staff
             </summary>
             <param name="id"></param>
+            <param name="model"></param>
+            <returns></returns>
+        </member>
+        <member name="M:RSSMS.API.Controllers.RequestController.GetStorageAvailable(RSSMS.DataService.ViewModels.Requests.RequestCreateViewModel)">
+            <summary>
+            Get storage available for create request
+            </summary>
+            <param name="model"></param>
             <returns></returns>
         </member>
         <member name="M:RSSMS.API.Controllers.RoleController.Get(System.String[],System.Int32,System.Int32)">

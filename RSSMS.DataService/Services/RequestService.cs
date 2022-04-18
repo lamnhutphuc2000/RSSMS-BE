@@ -1060,7 +1060,7 @@ namespace RSSMS.DataService.Services
 
 
 
-                result = await _storageService.GetStorageAvailable(null, spaceType, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, isMany, cuboid, requestsAssignStorage, (bool) model.IsCustomerDelivery, accessToken, new List<string> { model.DeliveryTime }, true);
+                result = await _storageService.GetStorageAvailable(null, spaceType, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, isMany, cuboid, requestsAssignStorage, (bool) model.IsCustomerDelivery, accessToken, new List<string> { model.DeliveryTime }, model.DeliveryAddress);
 
 
                 if (result.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không có kho còn chỗ trống.");
@@ -1075,5 +1075,7 @@ namespace RSSMS.DataService.Services
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
         }
+
+        
     }
 }
