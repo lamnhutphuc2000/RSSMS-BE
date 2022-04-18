@@ -7,6 +7,7 @@ namespace RSSMS.DataService.ViewModels.Requests
     public class RequestCreateViewModel
     {
         public Guid? OrderId { get; set; }
+        public Guid? StorageId { get; set; }
         public decimal? TotalPrice { get; set; }
         public Guid? CustomerId { get; set; }
         public string DeliveryAddress { get; set; }

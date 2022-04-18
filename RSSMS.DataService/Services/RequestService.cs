@@ -315,7 +315,7 @@ namespace RSSMS.DataService.Services
                         }
                     }
                     //if(totalPrice < model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
-                    var checkResult = await CheckStorageAvailable(spaceType, isMany, (int)model.TypeOrder, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, null, (bool)model.IsCustomerDelivery, null, accessToken, new List<string> { model.DeliveryTime }, false);
+                    var checkResult = await CheckStorageAvailable(spaceType, isMany, (int)model.TypeOrder, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, model.StorageId, (bool)model.IsCustomerDelivery, null, accessToken, new List<string> { model.DeliveryTime }, false);
                     if (!checkResult) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
 
 
