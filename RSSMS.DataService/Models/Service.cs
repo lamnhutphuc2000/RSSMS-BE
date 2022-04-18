@@ -24,6 +24,7 @@ namespace RSSMS.DataService.Models
         public decimal Width { get; set; }
         public decimal Length { get; set; }
         public string ToolTip { get; set; }
+        public decimal? DeliveryFee { get; set; }
         public string Description { get; set; }
         public string Unit { get; set; }
         public bool IsActive { get; set; }

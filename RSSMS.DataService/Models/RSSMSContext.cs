@@ -455,6 +455,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.DeliveryFee).HasColumnType("decimal(18, 3)");
+
                 entity.Property(e => e.Description).HasMaxLength(255);
 
                 entity.Property(e => e.Height).HasColumnType("decimal(18, 3)");

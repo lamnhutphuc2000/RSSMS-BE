@@ -14,6 +14,7 @@ namespace RSSMS.DataService.ViewModels.Services
         public string Description { get; set; }
         public int? Type { get; set; }
         public string Unit { get; set; }
+        public decimal? DeliveryFee { get; set; }
         public string Tooltip { get; set; }
         public AvatarImageViewModel Image { get; set; }
     }
