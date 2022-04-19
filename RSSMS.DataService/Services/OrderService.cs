@@ -612,7 +612,8 @@ namespace RSSMS.DataService.Services
             {
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-                var acc = _accountService.Get(account => account.IsActive && account.Id == userId).Include(account => account.Role).FirstOrDefault();
+                var acc = _accountService.Get(account => account.IsActive && account.Id == userId)
+                    .Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefault();
                 if(acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
                 if(acc.Role.Name != "Office Staff") throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không phải nhân viên thủ kho");
                 var orderDetailIds = model.OrderDetailAssignFloor.Select(orderDetailAssign => orderDetailAssign.OrderDetailId).ToList();

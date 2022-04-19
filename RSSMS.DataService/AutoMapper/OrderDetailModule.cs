@@ -21,29 +21,25 @@ namespace RSSMS.DataService.AutoMapper
 
 
             mc.CreateMap<OrderDetail, OrderDetailByIdViewModel>()
-                //.ForMember(des => des.FloorName, opt => opt.MapFrom(src => src.Floor.Name))
-                //.ForMember(des => des.SpaceName, opt => opt.MapFrom(src => src.Floor.Space.Name))
-                //.ForMember(des => des.AreaName, opt => opt.MapFrom(src => src.Floor.Space.Area.Name))
-                //.ForMember(des => des.StorageName, opt => opt.MapFrom(src => src.Floor.Space.Area.Storage.Name))
+                .ForMember(des => des.FloorName, opt => opt.MapFrom(src => src.Import != null ? src.Export != null ? null : src.TrasnferDetails.Count > 0 ? src.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault().FloorTo.Name : src.Import.Floor.Name : null))
+                .ForMember(des => des.SpaceName, opt => opt.MapFrom(src => src.Import != null ? src.Export != null ? null : src.TrasnferDetails.Count > 0 ? src.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault().FloorTo.Space.Name : src.Import.Floor.Space.Name : null))
+                .ForMember(des => des.AreaName, opt => opt.MapFrom(src => src.Import != null ? src.Export != null ? null : src.TrasnferDetails.Count > 0 ? src.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault().FloorTo.Space.Area.Name : src.Import.Floor.Space.Area.Name : null))
+                .ForMember(des => des.StorageName, opt => opt.MapFrom(src => src.Import != null ? src.Export != null ? null : src.TrasnferDetails.Count > 0 ? src.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault().FloorTo.Space.Area.Storage.Name : src.Import.Floor.Space.Area.Storage.Name : null))
                 .ForMember(des => des.ServiceId, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.Id : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2 || x.Service.Type == 0).First().Service.Id))
                 .ForMember(des => des.ServiceType, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.Type : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2 || x.Service.Type == 0).First().Service.Type))
                 .ForMember(des => des.ServiceName, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.Name : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2 || x.Service.Type == 0).First().Service.Name))
                 .ForMember(des => des.ServicePrice, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.Price : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2 || x.Service.Type == 0).First().Service.Price))
                 .ForMember(des => des.ServiceImageUrl, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.ImageUrl : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2 || x.Service.Type == 0).First().Service.ImageUrl))
                 .ForMember(des => des.OrderDetailServices, opt => opt.MapFrom(src => src.OrderDetailServiceMaps));
-            //.ForMember(des => des.BoxDetails, opt => opt.MapFrom(src => src.Boxes))
-            //.ForMember(des => des.ServiceType, opt => opt.MapFrom(src => src.Service.Type))
-            //.ForMember(des => des.ServiceImageUrl, opt => opt.MapFrom(src => src.Service.ImageUrl))
-            //.ForMember(des => des.Price, opt => opt.MapFrom(src => src.Service.Price));
             mc.CreateMap<OrderDetailByIdViewModel, OrderDetail>();
 
 
             mc.CreateMap<OrderDetail, OrderDetailInFloorViewModel>()
                 .ForMember(des => des.OrderStatus, opt => opt.MapFrom(src => (src.Order.ReturnDate - DateTime.Now.Date).Value.Days > 0 ? (int?)(src.Order.ReturnDate - DateTime.Now.Date).Value.Days <= 3 ? 3 : src.Order.Status : 4))
-                //.ForMember(des => des.FloorName, opt => opt.MapFrom(src => src.Floor.Name))
-                //.ForMember(des => des.SpaceName, opt => opt.MapFrom(src => src.Floor.Space.Name))
-                //.ForMember(des => des.AreaName, opt => opt.MapFrom(src => src.Floor.Space.Area.Name))
-                //.ForMember(des => des.StorageName, opt => opt.MapFrom(src => src.Floor.Space.Area.Storage.Name))
+                .ForMember(des => des.FloorName, opt => opt.MapFrom(src => src.Import != null ? src.Export != null ? null : src.TrasnferDetails.Count > 0 ? src.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault().FloorTo.Name : src.Import.Floor.Name : null))
+                .ForMember(des => des.SpaceName, opt => opt.MapFrom(src => src.Import != null ? src.Export != null ? null : src.TrasnferDetails.Count > 0 ? src.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault().FloorTo.Space.Name : src.Import.Floor.Space.Name : null))
+                .ForMember(des => des.AreaName, opt => opt.MapFrom(src => src.Import != null ? src.Export != null ? null : src.TrasnferDetails.Count > 0 ? src.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault().FloorTo.Space.Area.Name : src.Import.Floor.Space.Area.Name : null))
+                .ForMember(des => des.StorageName, opt => opt.MapFrom(src => src.Import != null ? src.Export != null ? null : src.TrasnferDetails.Count > 0 ? src.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault().FloorTo.Space.Area.Storage.Name : src.Import.Floor.Space.Area.Storage.Name : null))
                 .ForMember(des => des.ServiceId, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.Id : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2 || x.Service.Type == 0).First().Service.Id))
                 .ForMember(des => des.ServiceType, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.Type : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2 || x.Service.Type == 0).First().Service.Type))
                 .ForMember(des => des.ServiceName, opt => opt.MapFrom(src => src.OrderDetailServiceMaps.Count == 1 ? src.OrderDetailServiceMaps.First().Service.Name : src.OrderDetailServiceMaps.Where(x => x.Service.Type == 3 || x.Service.Type == 2 || x.Service.Type == 0).First().Service.Name))

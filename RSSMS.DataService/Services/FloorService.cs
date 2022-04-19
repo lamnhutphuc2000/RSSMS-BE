@@ -38,10 +38,12 @@ namespace RSSMS.DataService.Services
             {
                 FloorGetByIdViewModel result = Get(floor => floor.Id == floorId).Include(floor => floor.Space).ProjectTo<FloorGetByIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefault();
                 var floor = await Get(floor => floor.Id == floorId)
-                                .Include(floor => floor.Imports).ThenInclude(import => import.OrderDetails).ThenInclude(orderDetail => orderDetail.Order)
-                                .Include(floor => floor.Imports).ThenInclude(import => import.OrderDetails)
-                                .ThenInclude(orderDetail => orderDetail.TrasnferDetails).ThenInclude(transferDetail => transferDetail.Transfer)
+                                .Include(floor => floor.Imports).ThenInclude(import => import.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.Floor).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
+                                .Include(floor => floor.Imports).ThenInclude(import => import.OrderDetails).ThenInclude(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer)
+                                .Include(floor => floor.Imports).ThenInclude(import => import.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(orderDetailService => orderDetailService.Service)
+                                .Include(floor => floor.Imports).ThenInclude(import => import.OrderDetails).ThenInclude(orderDetail => orderDetail.TrasnferDetails).ThenInclude(transferDetail => transferDetail.Transfer).ThenInclude(transfer => transfer.FloorTo).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
                                 .Select(floor => floor.Imports.Select(import => import.OrderDetails.ToList()).ToList()).FirstOrDefaultAsync();
+                List<OrderDetailInFloorViewModel> orderDetailToAdd = new List<OrderDetailInFloorViewModel>();
                 foreach (var imports in floor)
                 {
                     foreach (var orderDetail in imports)
@@ -49,14 +51,17 @@ namespace RSSMS.DataService.Services
                         if (orderDetail.ExportId != null) return result;
                         else
                         {
+
                             Transfer transfer = orderDetail.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault();
                             if (transfer == null)
-                                result.OrderDetails.Add(_mapper.Map<OrderDetailInFloorViewModel>(orderDetail));
+                                orderDetailToAdd.Add(_mapper.Map<OrderDetailInFloorViewModel>(orderDetail));
                             else if (transfer.FloorToId == floorId)
-                                result.OrderDetails.Add(_mapper.Map<OrderDetailInFloorViewModel>(orderDetail));
+                                orderDetailToAdd.Add(_mapper.Map<OrderDetailInFloorViewModel>(orderDetail));
+
                         }
                     }
                 }
+                result.OrderDetails = orderDetailToAdd;
                 if (result.OrderDetails == null) result.OrderDetails = new List<OrderDetailInFloorViewModel>();
                 return result;
             }
@@ -105,12 +110,12 @@ namespace RSSMS.DataService.Services
             {
                 List<Floor> floors = Get(floor => floor.SpaceId == spaceId && floor.IsActive).ToList();
                 if (floors.Count == 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không có tầng để xóa");
-                foreach(var floor in floors)
+                foreach (var floor in floors)
                 {
                     var floorWithOrderDetail = await GetFloorWithOrderDetail(floor.Id);
-                    if(floorWithOrderDetail.OrderDetails.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không gian đang được sử dụng");
+                    if (floorWithOrderDetail.OrderDetails.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không gian đang được sử dụng");
                 }
-                
+
                 foreach (var floor in floors)
                 {
                     floor.IsActive = false;
@@ -203,7 +208,7 @@ namespace RSSMS.DataService.Services
                 ICollection<OrderDetailInFloorViewModel> orderDetails = floor.OrderDetails;
                 if (date != null) orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.DeliveryDate <= date && orderDetail.ReturnDate >= date).ToList();
                 double floorVolume = (double)(floor.Height * floor.Width * floor.Length);
-                if(orderDetails.Count == 0)
+                if (orderDetails.Count == 0)
                 {
                     floorUsage.Add(0);
                     floorUsage.Add(0);
