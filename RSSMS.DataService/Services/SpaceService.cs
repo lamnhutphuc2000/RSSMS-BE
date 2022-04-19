@@ -266,9 +266,8 @@ namespace RSSMS.DataService.Services
                 var result = await spaces.Item2.ToListAsync();
                 if (result.Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy không gian");
                 foreach (var space in result)
-                {
                     space.Floors = await _floorsService.GetFloorInSpace((Guid)space.Id, date);
-                }
+                
 
                 var rs = new DynamicModelResponse<SpaceViewModel>
                 {

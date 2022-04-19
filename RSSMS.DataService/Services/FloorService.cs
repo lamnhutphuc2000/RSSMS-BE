@@ -57,6 +57,7 @@ namespace RSSMS.DataService.Services
                         }
                     }
                 }
+                if (result.OrderDetails == null) result.OrderDetails = new List<OrderDetailInFloorViewModel>();
                 return result;
             }
             catch (ErrorResponse e)
@@ -132,7 +133,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 List<FloorInSpaceViewModel> result = new List<FloorInSpaceViewModel>();
-                var floors = Get(floor => floor.SpaceId == spaceId && floor.IsActive);
+                var floors = Get(floor => floor.SpaceId == spaceId && floor.IsActive).ToList();
                 if (floors.Count() == 0) return null;
 
                 foreach (Floor floor in floors)
@@ -202,11 +203,12 @@ namespace RSSMS.DataService.Services
                 ICollection<OrderDetailInFloorViewModel> orderDetails = floor.OrderDetails;
                 if (date != null) orderDetails = floor.OrderDetails.Where(orderDetail => orderDetail.DeliveryDate <= date && orderDetail.ReturnDate >= date).ToList();
                 double floorVolume = (double)(floor.Height * floor.Width * floor.Length);
-                if (orderDetails.Count <= 0)
+                if(orderDetails.Count == 0)
                 {
                     floorUsage.Add(0);
                     floorUsage.Add(0);
                     floorUsage.Add(floorVolume);
+                    return floorUsage;
                 }
                 double totalVolume = 0;
                 foreach (var orderDetail in orderDetails)
@@ -243,6 +245,7 @@ namespace RSSMS.DataService.Services
                     var orderDetails = floorWithOrderDetail.OrderDetails.Where(orderDetail => (orderDetail.DeliveryDate.Value.Date <= dateFrom.Date && orderDetail.ReturnDate.Value.Date >= dateFrom.Date) || (dateFrom <= orderDetail.DeliveryDate.Value.Date && dateTo >= orderDetail.DeliveryDate.Value.Date)).ToList();
                     if (isSelfStorage && orderDetails.Count > 0) return null;
                     floorWithOrderDetail.OrderDetails = orderDetails;
+                    result.Add(floorWithOrderDetail);
                 }
                 return result;
             }

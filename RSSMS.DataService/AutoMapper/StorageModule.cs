@@ -10,7 +10,7 @@ namespace RSSMS.DataService.AutoMapper
         public static void ConfigStorageModule(this IMapperConfigurationExpression mc)
         {
             mc.CreateMap<Storage, StorageViewModel>()
-                .ForMember(des => des.DeliveryFee, opt => opt.MapFrom(des => 0))
+                .ForMember(des => des.DeliveryFee, opt => opt.MapFrom(des => (decimal?)0))
                 .ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager" && x.IsActive).FirstOrDefault() != null ? des.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager").FirstOrDefault().Staff.Name : null));
             mc.CreateMap<StorageViewModel, Storage>();
 
