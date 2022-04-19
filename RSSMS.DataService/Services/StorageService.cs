@@ -490,7 +490,6 @@ namespace RSSMS.DataService.Services
                             if(distance != null)
                                 storage.DeliveryDistance = distance.rows[0].elements[0].distance.text;
                             result.Add(storage);
-                            break;
                         }
                     } else
                         result.Add(_mapper.Map<StorageViewModel>(storageList[i]));
