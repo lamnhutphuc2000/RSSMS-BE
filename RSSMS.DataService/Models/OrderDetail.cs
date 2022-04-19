@@ -16,7 +16,6 @@ namespace RSSMS.DataService.Models
 
         public Guid Id { get; set; }
         public Guid OrderId { get; set; }
-        public Guid? FloorId { get; set; }
         public decimal? Height { get; set; }
         public decimal? Width { get; set; }
         public decimal? Length { get; set; }

@@ -47,7 +47,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 var space = Get(x => x.Name == model.Name && x.AreaId == model.AreaId && x.IsActive == true).FirstOrDefault();
-                if (space != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Space name is existed");
+                if (space != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Tên không gian bị trùng");
 
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
