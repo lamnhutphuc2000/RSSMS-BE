@@ -19,8 +19,10 @@ namespace RSSMS.DataService.Models
 
         public virtual DbSet<Account> Accounts { get; set; }
         public virtual DbSet<Area> Areas { get; set; }
+        public virtual DbSet<Export> Exports { get; set; }
         public virtual DbSet<Floor> Floors { get; set; }
         public virtual DbSet<Image> Images { get; set; }
+        public virtual DbSet<Import> Imports { get; set; }
         public virtual DbSet<Notification> Notifications { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<OrderAdditionalFee> OrderAdditionalFees { get; set; }
@@ -37,6 +39,8 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<Space> Spaces { get; set; }
         public virtual DbSet<StaffAssignStorage> StaffAssignStorages { get; set; }
         public virtual DbSet<Storage> Storages { get; set; }
+        public virtual DbSet<Transfer> Transfers { get; set; }
+        public virtual DbSet<TrasnferDetail> TrasnferDetails { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -118,6 +122,25 @@ namespace RSSMS.DataService.Models
                     .HasConstraintName("FK_Area_Storage");
             });
 
+            modelBuilder.Entity<Export>(entity =>
+            {
+                entity.ToTable("Export");
+
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.HasOne(d => d.CreatedByNavigation)
+                    .WithMany(p => p.Exports)
+                    .HasForeignKey(d => d.CreatedBy)
+                    .HasConstraintName("FK_Export_Account");
+
+                entity.HasOne(d => d.Floor)
+                    .WithMany(p => p.Exports)
+                    .HasForeignKey(d => d.FloorId)
+                    .HasConstraintName("FK_Export_Floor");
+            });
+
             modelBuilder.Entity<Floor>(entity =>
             {
                 entity.ToTable("Floor");
@@ -162,6 +185,34 @@ namespace RSSMS.DataService.Models
                     .HasForeignKey(d => d.OrderDetailid)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Image_OrderDetail");
+            });
+
+            modelBuilder.Entity<Import>(entity =>
+            {
+                entity.ToTable("Import");
+
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.Code)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.HasOne(d => d.CreatedByNavigation)
+                    .WithMany(p => p.ImportCreatedByNavigations)
+                    .HasForeignKey(d => d.CreatedBy)
+                    .HasConstraintName("FK_Import_Account");
+
+                entity.HasOne(d => d.DeliveryByNavigation)
+                    .WithMany(p => p.ImportDeliveryByNavigations)
+                    .HasForeignKey(d => d.DeliveryBy)
+                    .HasConstraintName("FK_Import_Account1");
+
+                entity.HasOne(d => d.Floor)
+                    .WithMany(p => p.Imports)
+                    .HasForeignKey(d => d.FloorId)
+                    .HasConstraintName("FK_Import_Floor");
             });
 
             modelBuilder.Entity<Notification>(entity =>
@@ -256,10 +307,15 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
 
-                entity.HasOne(d => d.Floor)
+                entity.HasOne(d => d.Export)
                     .WithMany(p => p.OrderDetails)
-                    .HasForeignKey(d => d.FloorId)
-                    .HasConstraintName("FK_OrderDetail_Floor");
+                    .HasForeignKey(d => d.ExportId)
+                    .HasConstraintName("FK_OrderDetail_Export");
+
+                entity.HasOne(d => d.Import)
+                    .WithMany(p => p.OrderDetails)
+                    .HasForeignKey(d => d.ImportId)
+                    .HasConstraintName("FK_OrderDetail_Import");
 
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderDetails)
@@ -537,6 +593,42 @@ namespace RSSMS.DataService.Models
                     .HasMaxLength(255);
 
                 entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
+            });
+
+            modelBuilder.Entity<Transfer>(entity =>
+            {
+                entity.ToTable("Transfer");
+
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.HasOne(d => d.FloorFrom)
+                    .WithMany(p => p.TransferFloorFroms)
+                    .HasForeignKey(d => d.FloorFromId)
+                    .HasConstraintName("FK_Transfer_Floor");
+
+                entity.HasOne(d => d.FloorTo)
+                    .WithMany(p => p.TransferFloorTos)
+                    .HasForeignKey(d => d.FloorToId)
+                    .HasConstraintName("FK_Transfer_Floor1");
+            });
+
+            modelBuilder.Entity<TrasnferDetail>(entity =>
+            {
+                entity.ToTable("TrasnferDetail");
+
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.HasOne(d => d.OrderDetail)
+                    .WithMany(p => p.TrasnferDetails)
+                    .HasForeignKey(d => d.OrderDetailId)
+                    .HasConstraintName("FK_TrasnferDetail_OrderDetail");
+
+                entity.HasOne(d => d.Transfer)
+                    .WithMany(p => p.TrasnferDetails)
+                    .HasForeignKey(d => d.TransferId)
+                    .HasConstraintName("FK_TrasnferDetail_Transfer");
             });
 
             OnModelCreatingPartial(modelBuilder);

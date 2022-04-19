@@ -139,23 +139,6 @@ namespace RSSMS.API.Controllers
             var accessToken = await HttpContext.GetTokenAsync("access_token");
             return Ok(await _orderService.Cancel(id, model, accessToken));
         }
-        ///// <summary>
-        ///// Send order notification to customer by delivery staff
-        ///// </summary>
-        ///// <param name="model"></param>
-        ///// <returns></returns>
-        //[HttpPost("send_noti_to_customer")]
-        //[Authorize(Roles = "Delivery Staff, Office Staff")]
-        //[MapToApiVersion("1")]
-        //[ProducesResponseType(typeof(OrderByIdViewModel), (int)HttpStatusCode.OK)]
-        //[ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
-        //[ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        //public async Task<IActionResult> SendOrderNoti(OrderCreateViewModel model)
-        //{
-        //    var accessToken = await HttpContext.GetTokenAsync("access_token");
-        //    return Ok(await _orderService.SendOrderNoti(model, accessToken));
-        //}
-
         /// <summary>
         /// Assign order to storage
         /// </summary>
@@ -178,7 +161,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost("assign to floor")]
-        [Authorize(Roles = "Manager, Office Staff")]
+        [Authorize(Roles = "Office Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(OrderViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]

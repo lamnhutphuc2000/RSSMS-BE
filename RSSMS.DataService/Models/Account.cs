@@ -9,6 +9,9 @@ namespace RSSMS.DataService.Models
     {
         public Account()
         {
+            Exports = new HashSet<Export>();
+            ImportCreatedByNavigations = new HashSet<Import>();
+            ImportDeliveryByNavigations = new HashSet<Import>();
             Notifications = new HashSet<Notification>();
             Orders = new HashSet<Order>();
             Requests = new HashSet<Request>();
@@ -32,6 +35,9 @@ namespace RSSMS.DataService.Models
         public DateTime CreatedDate { get; set; }
 
         public virtual Role Role { get; set; }
+        public virtual ICollection<Export> Exports { get; set; }
+        public virtual ICollection<Import> ImportCreatedByNavigations { get; set; }
+        public virtual ICollection<Import> ImportDeliveryByNavigations { get; set; }
         public virtual ICollection<Notification> Notifications { get; set; }
         public virtual ICollection<Order> Orders { get; set; }
         public virtual ICollection<Request> Requests { get; set; }

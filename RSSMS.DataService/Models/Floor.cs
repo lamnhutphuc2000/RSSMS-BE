@@ -9,7 +9,10 @@ namespace RSSMS.DataService.Models
     {
         public Floor()
         {
-            OrderDetails = new HashSet<OrderDetail>();
+            Exports = new HashSet<Export>();
+            Imports = new HashSet<Import>();
+            TransferFloorFroms = new HashSet<Transfer>();
+            TransferFloorTos = new HashSet<Transfer>();
         }
 
         public Guid Id { get; set; }
@@ -22,6 +25,9 @@ namespace RSSMS.DataService.Models
         public DateTime CreatedDate { get; set; }
 
         public virtual Space Space { get; set; }
-        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
+        public virtual ICollection<Export> Exports { get; set; }
+        public virtual ICollection<Import> Imports { get; set; }
+        public virtual ICollection<Transfer> TransferFloorFroms { get; set; }
+        public virtual ICollection<Transfer> TransferFloorTos { get; set; }
     }
 }

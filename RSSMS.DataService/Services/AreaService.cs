@@ -29,7 +29,7 @@ namespace RSSMS.DataService.Services
         Task<AreaViewModel> Delete(Guid id);
         Task<AreaViewModel> Update(Guid id, AreaUpdateViewModel model);
         Task<AreaDetailViewModel> GetById(Guid id);
-        bool CheckIsUsed(Guid id);
+        Task<bool> CheckIsUsed(Guid id);
         Task<List<FloorGetByIdViewModel>> GetFloorOfArea(Guid storageId, int spaceType, DateTime date, bool isMany);
         Task<bool> CheckAreaAvailable(Guid storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery);
     }
@@ -125,8 +125,7 @@ namespace RSSMS.DataService.Services
                 if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy khu vực");
 
                 // Check area is inused or not
-                var areaIsUsed = CheckIsUsed(id);
-                if (areaIsUsed) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Khu vực đang được sử dụng");
+                if (await CheckIsUsed(id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Khu vực đang được sử dụng");
 
                 // Change area isActive to false and update
                 area.IsActive = false;
@@ -340,7 +339,7 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        public bool CheckIsUsed(Guid id)
+        public async Task<bool> CheckIsUsed(Guid id)
         {
             try
             {
@@ -348,7 +347,7 @@ namespace RSSMS.DataService.Services
                 if (area == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy khu vực");
                 var spaces = area.Spaces.Where(space => space.IsActive);
                 foreach (var space in spaces)
-                    if (_spaceService.CheckIsUsed(space.Id)) return true;
+                    if (await _spaceService.CheckIsUsed(space.Id)) return true;
                 return false;
             }
             catch (ErrorResponse e)

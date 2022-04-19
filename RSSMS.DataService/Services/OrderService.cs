@@ -42,6 +42,7 @@ namespace RSSMS.DataService.Services
         private readonly IOrderTimelineService _orderTimelineService;
         private readonly IOrderDetailService _orderDetailService;
         private readonly IFloorService _floorService;
+        private readonly IAccountService _accountService;
         private readonly IServiceService _serviceService;
         public OrderService(IUnitOfWork unitOfWork, IOrderRepository repository
             , IFirebaseService firebaseService,
@@ -50,6 +51,7 @@ namespace RSSMS.DataService.Services
             IOrderDetailService orderDetailService,
             IFloorService floorService,
             IServiceService serviceService,
+            IAccountService accountService,
             IStorageService storageService, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
@@ -59,6 +61,7 @@ namespace RSSMS.DataService.Services
             _orderTimelineService = orderTimelineService;
             _orderDetailService = orderDetailService;
             _floorService = floorService;
+            _accountService = accountService;
             _serviceService = serviceService;
         }
         public async Task<OrderByIdViewModel> GetById(Guid id, IList<int> requestTypes)
@@ -66,8 +69,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 var result = await Get(x => x.Id == id && x.IsActive)
-                .Include(order => order.OrderDetails).Include(floor => floor.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
-                .ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
+                .Include(order => order.OrderDetails).Include(floor => floor.OrderDetails)
                 .Include(order => order.Requests)
                 .Include(order => order.OrderAdditionalFees)
                 .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
@@ -468,7 +470,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 var order = await Get(order => order.Id == model.OrderId && order.IsActive)
-                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Floor)
+                    .Include(order => order.OrderDetails)
                     .Include(order => order.Requests).ThenInclude(request => request.Schedules).FirstOrDefaultAsync();
                 if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
 
@@ -589,6 +591,11 @@ namespace RSSMS.DataService.Services
         {
             try
             {
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var acc = _accountService.Get(account => account.IsActive && account.Id == userId).Include(account => account.Role).FirstOrDefault();
+                if(acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
+                if(acc.Role.Name != "Office Staff") throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không phải nhân viên thủ kho");
                 var orderDetailIds = model.OrderDetailAssignFloor.Select(orderDetailAssign => orderDetailAssign.OrderDetailId).ToList();
                 var orders = Get(order => order.IsActive)
                     .Include(order => order.OrderDetails)
@@ -596,10 +603,12 @@ namespace RSSMS.DataService.Services
                     .Include(order => order.Requests)
                     .ToList().AsQueryable()
                     .ToList();
-                if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
-                if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail not in the same order");
+                if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
+                if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Các món đồ không thuộc cùng 1 đơn");
                 var order = orders.First();
+                if(order.Status != (int)OrderStatus.Dang_van_chuyen) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Đơn không đang vận chuyển");
 
+                // Check xem tầng còn đủ chỗ không
                 var orderDetails = order.OrderDetails;
                 bool isMany = false;
                 foreach (var orderDetailAssign in model.OrderDetailAssignFloor)
@@ -607,21 +616,26 @@ namespace RSSMS.DataService.Services
                         isMany = true;
                 var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tao_don && request.Status == 3).First();
                 var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
+
+                // Check xem nhân viên thuộc kho hay không
+                var storageId = _floorService.Get(floor => floor.Id == orderDetailToAssignFloorList.First().FloorId).Include(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage).Select(floor => floor.Space.Area.StorageId).FirstOrDefault();
+                if(acc.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.StorageId == storageId).FirstOrDefault() == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Nhân viên không thuộc kho");
+
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
                     var floor = await _floorService.GetById(orderDetailToAssignFloor.FloorId);
                     var orderDetail = orderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssignFloor.OrderDetailId).First();
                     var orderDetailSize = (double)(orderDetail.Height * orderDetail.Width * orderDetail.Length);
-                    if (orderDetail.Height > floor.Height) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
-                    if (orderDetail.Width > floor.Width) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
-                    if (orderDetail.Length > floor.Length) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
+                    if (orderDetail.Height > floor.Height) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
+                    if (orderDetail.Width > floor.Width) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
+                    if (orderDetail.Length > floor.Length) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
                     var oldOrderDetail = _orderDetailService.Get(orderDetail => orderDetail.FloorId == floor.Id).ToList();
 
                     if (orderDetail.Height != 0 && orderDetail.Length != 0 && orderDetail.Width != 0)
                     {
                         // Check kho tự quản
                         if (request.TypeOrder == (int)OrderType.Kho_tu_quan)
-                            if (oldOrderDetail.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor đã được xài");
+                            if (oldOrderDetail.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tầng đã được sử dụng");
 
                         List<Cuboid> cuboids = new List<Cuboid>();
                         for (int i = 0; i < oldOrderDetail.Count; i++)
@@ -649,21 +663,30 @@ namespace RSSMS.DataService.Services
 
                 }
 
-                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
 
+                DateTime now = DateTime.Now;
 
                 order.ModifiedBy = userId;
-                order.ModifiedDate = DateTime.Now;
+                order.ModifiedDate = now;
+                string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
+                    Random random = new Random();
+                    Import import = new Import()
+                    {
+                        CreatedBy = acc.Id,
+                        FloorId = orderDetailToAssignFloor.FloorId,
+                        DeliveryBy = model.DeliveryId,
+                        CreatedDate = now,
+                        Code = now.Day + now.Month + now.Year + now.Minute + now.Hour + new string(Enumerable.Repeat(chars, 5).Select(s => s[random.Next(s.Length)]).ToArray())
+                };
                     foreach (var orderDetail in orderDetails)
                         if (orderDetail.Id == orderDetailToAssignFloor.OrderDetailId)
-                            orderDetail.FloorId = orderDetailToAssignFloor.FloorId;
+                            orderDetail.Import = import;
                 }
                 order.OrderDetails = orderDetails;
-                order.Status = 2;
+                order.Status = (int)OrderStatus.Da_luu_kho;
                 await UpdateAsync(order);
                 await _orderTimelineService.CreateAsync(new OrderTimeline
                 {

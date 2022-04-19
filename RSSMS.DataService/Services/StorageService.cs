@@ -110,7 +110,7 @@ namespace RSSMS.DataService.Services
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage id not found");
                 var areas = entity.Areas;
                 foreach (var area in areas)
-                    if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage is in used");
+                    if (await _areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage is in used");
                 if (entity.Orders.Where(order => !order.IsActive || order.Status != 0 || order.Status != 6 || order.Status != 7).Count() > 0)
                     throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn đơn đang được gán vào");
                 if (entity.Requests.Where(request => !request.IsActive || request.Status != 0 || request.Status != 3 || request.Status != 4 || request.Status != 5).Count() > 0)
@@ -233,7 +233,7 @@ namespace RSSMS.DataService.Services
 
                 var areas = entity.Areas.Where(area => area.IsActive).ToList();
                 foreach (var area in areas)
-                    if (_areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
+                    if (await _areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
 
                 //Check kích thước kho sau khi update
                 List<Cuboid> cuboids = new List<Cuboid>();

@@ -10,6 +10,7 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public string OrderName { get; set; }
         public string CustomerName { get; set; }
         public int? OrderStatus { get; set; }
+        public DateTime? DeliveryDate { get; set; }
         public DateTime? ReturnDate { get; set; }
         public decimal? Height { get; set; }
         public decimal? Width { get; set; }

@@ -27,7 +27,7 @@ namespace RSSMS.DataService.Services
         Task<SpaceViewModel> Create(SpaceCreateViewModel model, string accessToken);
         Task<SpaceViewModel> Delete(Guid id);
         Task<SpaceViewModel> Update(Guid id, SpaceUpdateViewModel model, string accessToken);
-        bool CheckIsUsed(Guid id);
+        Task<bool> CheckIsUsed(Guid id);
 
         Task<List<FloorGetByIdViewModel>> GetFloorOfSpace(Guid areaId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany);
     }
@@ -135,10 +135,9 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Floors).ThenInclude(Floors => Floors.OrderDetails).FirstOrDefaultAsync();
-                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space id not found");
-                var shelfIsUsed = CheckIsUsed(id);
-                if (shelfIsUsed) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space is in used");
+                var entity = await Get(x => x.Id == id && x.IsActive == true).Include(a => a.Floors).FirstOrDefaultAsync();
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy không gian");
+                if (await CheckIsUsed(id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không gian đang được sử dụng");
                 entity.IsActive = false;
                 await UpdateAsync(entity);
                 return _mapper.Map<SpaceViewModel>(entity);
@@ -160,9 +159,8 @@ namespace RSSMS.DataService.Services
             try
             {
                 var space = await Get(x => x.Id == id && x.IsActive == true)
-            .Include(x => x.Floors.Where(a => a.IsActive == true))
-            .ThenInclude(x => x.OrderDetails).ThenInclude(x => x.Order).FirstOrDefaultAsync();
-                if (space == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space id not found");
+                                .Include(x => x.Floors.Where(a => a.IsActive == true)).FirstOrDefaultAsync();
+                if (space == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy không gian");
                 var result = _mapper.Map<SpaceViewModel>(space);
                 result.Floors = await _floorsService.GetFloorInSpace(id, null);
                 return result;
@@ -182,13 +180,13 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space Id not matched");
+                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id của không gian không khớp");
 
-                var entity = await Get(x => x.Id == id && x.IsActive).Include(a => a.Floors).ThenInclude(floor => floor.OrderDetails).FirstOrDefaultAsync();
-                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Space not found");
+                var entity = await Get(x => x.Id == id && x.IsActive).Include(space => space.Floors).FirstOrDefaultAsync();
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy không gian");
 
-                var space = Get(x => x.Name == model.Name && x.AreaId == entity.AreaId && x.Id != id && x.IsActive).Include(x => x.Floors.Where(x => x.IsActive == true)).FirstOrDefault();
-                if (space != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Space name is existed");
+                var space = Get(x => x.Name == model.Name && x.AreaId == entity.AreaId && x.Id != id && x.IsActive).Include(x => x.Floors.Where(x => x.IsActive)).FirstOrDefault();
+                if (space != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Tên không gian bị trùng");
 
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
@@ -259,15 +257,14 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                var spaces = Get(x => x.IsActive == true)
-                .Include(x => x.Floors.Where(a => a.IsActive == true))
-                .ThenInclude(x => x.OrderDetails)
+                var spaces = Get(x => x.IsActive)
+                .Include(x => x.Floors.Where(a => a.IsActive))
                 .ProjectTo<SpaceViewModel>(_mapper.ConfigurationProvider)
                 .DynamicFilter(model)
                 .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
 
                 var result = await spaces.Item2.ToListAsync();
-                if (result.Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space not found");
+                if (result.Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy không gian");
                 foreach (var space in result)
                 {
                     space.Floors = await _floorsService.GetFloorInSpace((Guid)space.Id, date);
@@ -298,14 +295,16 @@ namespace RSSMS.DataService.Services
         }
 
 
-        public bool CheckIsUsed(Guid id)
+        public async Task<bool> CheckIsUsed(Guid id)
         {
             try
             {
-                var entity = Get(space => space.Id == id && space.IsActive).Include(space => space.Floors).ThenInclude(floor => floor.OrderDetails).FirstOrDefault();
-                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Space id not found");
-                var BoxAssignedToOrder = entity.Floors.Where(x => x.OrderDetails.Count > 0 && x.IsActive).ToList();
-                if (BoxAssignedToOrder.Count() > 0) return true;
+                var entity = Get(space => space.Id == id && space.IsActive).Include(space => space.Floors).FirstOrDefault();
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy không gian");
+                if (entity.Floors.Count == 0) return false;
+                var floors = await _floorsService.GetFloorInSpace(id, null);
+                double usage = floors.Sum(floor => floor.Usage);
+                if (usage != 0) return true;
                 return false;
             }
             catch (ErrorResponse e)
