@@ -915,7 +915,7 @@ namespace RSSMS.DataService.Services
             {
                 var request = await Get(x => x.Id == id && x.IsActive).Include(x => x.CreatedByNavigation).FirstOrDefaultAsync();
                 if (request == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
-                request.Status = 4;
+                request.Status = (int)RequestStatus.Dang_van_chuyen;
 
                 await UpdateAsync(request);
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);

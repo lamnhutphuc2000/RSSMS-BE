@@ -147,7 +147,7 @@ namespace RSSMS.API.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpPut("deliver request/{id}")]
-        [Authorize(Roles = "Manager, Office Staff, Customer")]
+        [Authorize(Roles = "Manager, Office Staff, Customer, Delivery Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(RequestByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -165,7 +165,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost("send request notification/{id}")]
-        [Authorize(Roles = "Manager, Office Staff, Customer")]
+        [Authorize(Roles = "Manager, Office Staff, Customer, Delivery Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(RequestByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
@@ -181,7 +181,7 @@ namespace RSSMS.API.Controllers
         /// <param name="model"></param>
         /// <returns></returns>
         [HttpPost("get-storage-available")]
-        //[Authorize(Roles = "Manager, Office Staff, Customer")]
+        [Authorize(Roles = "Manager, Office Staff, Customer, Delivery Staff")]
         [MapToApiVersion("1")]
         [ProducesResponseType(typeof(RequestByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
