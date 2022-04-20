@@ -69,12 +69,13 @@ namespace RSSMS.DataService.Services
             try
             {
                 var result = await Get(x => x.Id == id && x.IsActive)
-                .Include(order => order.OrderDetails).Include(floor => floor.OrderDetails)
-                .Include(order => order.Requests)
-                .Include(order => order.OrderAdditionalFees)
-                .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
-                .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
-                .FirstOrDefaultAsync();
+                    .Include(order => order.Storage)
+                    .Include(order => order.OrderDetails).Include(floor => floor.OrderDetails)
+                    .Include(order => order.Requests)
+                    .Include(order => order.OrderAdditionalFees)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
+                    .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
+                    .FirstOrDefaultAsync();
                 if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
                 var request = result.Requests;
                 if (requestTypes.Count == 0) return result;
