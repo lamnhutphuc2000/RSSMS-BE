@@ -28,37 +28,40 @@ namespace RSSMS.DataService.Services
 
     {
         private readonly IMapper _mapper;
-        public FloorService(IUnitOfWork unitOfWork, IFloorRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IOrderDetailService _orderDetailService;
+        public FloorService(IUnitOfWork unitOfWork, IOrderDetailService orderDetailService, IFloorRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
+            _orderDetailService = orderDetailService;
         }
         public async Task<FloorGetByIdViewModel> GetFloorWithOrderDetail(Guid floorId)
         {
             try
             {
                 FloorGetByIdViewModel result = Get(floor => floor.Id == floorId).Include(floor => floor.Space).ProjectTo<FloorGetByIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefault();
-                var floor = await Get(floor => floor.Id == floorId)
-                                .Include(floor => floor.Imports).ThenInclude(import => import.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.Floor).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
-                                .Include(floor => floor.Imports).ThenInclude(import => import.OrderDetails).ThenInclude(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer)
-                                .Include(floor => floor.Imports).ThenInclude(import => import.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(orderDetailService => orderDetailService.Service)
-                                .Include(floor => floor.Imports).ThenInclude(import => import.OrderDetails).ThenInclude(orderDetail => orderDetail.TrasnferDetails).ThenInclude(transferDetail => transferDetail.Transfer).ThenInclude(transfer => transfer.FloorTo).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
-                                .Select(floor => floor.Imports.Select(import => import.OrderDetails.ToList()).ToList()).FirstOrDefaultAsync();
+
+                var orderDetails = await _orderDetailService.Get(orderDetail => orderDetail.ExportId == null && orderDetail.ImportId != null)
+                    .Include(orderDetail => orderDetail.Import).ThenInclude(import => import.Floor).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
+                    .Include(orderDetail => orderDetail.TrasnferDetails).ThenInclude(transferDetail => transferDetail.Transfer).ThenInclude(transfer => transfer.FloorTo).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
+                    .Include(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(orderDetailService => orderDetailService.Service)
+                    .Include(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer).ToListAsync();
+
+                var orderDetailHaveTransfer = orderDetails.Where(orderDetail => orderDetail.TrasnferDetails.Count > 0).ToList();
+                var orderDetailDontHaveTransfer = orderDetails.Where(orderDetail => orderDetail.TrasnferDetails.Count == 0).ToList();
                 List<OrderDetailInFloorViewModel> orderDetailToAdd = new List<OrderDetailInFloorViewModel>();
-                foreach (var imports in floor)
+
+                if (orderDetailDontHaveTransfer.Count > 0)
+                    foreach (var orderDetail in orderDetailDontHaveTransfer)
+                        orderDetailToAdd.Add(_mapper.Map<OrderDetailInFloorViewModel>(orderDetail));
+
+
+                if (orderDetailHaveTransfer.Count > 0)
                 {
-                    foreach (var orderDetail in imports)
+                    foreach (var orderDetail in orderDetailHaveTransfer)
                     {
-                        if (orderDetail.ExportId != null) return result;
-                        else
-                        {
-
-                            Transfer transfer = orderDetail.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault();
-                            if (transfer == null)
-                                orderDetailToAdd.Add(_mapper.Map<OrderDetailInFloorViewModel>(orderDetail));
-                            else if (transfer.FloorToId == floorId)
-                                orderDetailToAdd.Add(_mapper.Map<OrderDetailInFloorViewModel>(orderDetail));
-
-                        }
+                        Transfer transfer = orderDetail.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault();
+                        if (transfer.FloorToId == floorId)
+                            orderDetailToAdd.Add(_mapper.Map<OrderDetailInFloorViewModel>(orderDetail));
                     }
                 }
                 result.OrderDetails = orderDetailToAdd;
