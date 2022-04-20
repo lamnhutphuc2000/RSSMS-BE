@@ -812,34 +812,40 @@ namespace RSSMS.DataService.Services
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-
+                DateTime now = DateTime.Now;
                 order.ModifiedBy = userId;
-                order.ModifiedDate = DateTime.Now;
-                //foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
-                //{
-                //    if (orderDetailToAssignFloor.OldFloorId != null)
-                //    {
-                //        var oldOrderDetail = _orderDetailService.Get(orderDetail => orderDetail.FloorId == orderDetailToAssignFloor.OldFloorId && orderDetail.Id == orderDetailToAssignFloor.OrderDetailId).FirstOrDefault();
-                //        if (oldOrderDetail != null)
-                //        {
-                //            oldOrderDetail.FloorId = null;
-                //            await _orderDetailService.UpdateAsync(oldOrderDetail);
-                //        }
+                order.ModifiedDate = now;
+                foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
+                {
+                    if (orderDetailToAssignFloor.OldFloorId != null)
+                    {
+                        Transfer transfer = new Transfer()
+                        {
+                            CreatedDate = now,
+                            CreatedBy = userId,
+                            FloorFromId = orderDetailToAssignFloor.OldFloorId,
+                            FloorToId = orderDetailToAssignFloor.FloorId,
 
-                //    }
-                //}
-                //foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
-                //{
-                //    foreach (var orderDetail in orderDetails)
-                //    {
-                //        if (orderDetail.Id == orderDetailToAssignFloor.OrderDetailId)
-                //            orderDetail.FloorId = orderDetailToAssignFloor.FloorId;
-                //    }
+                        };
+                        TrasnferDetail transferDetail = new TrasnferDetail()
+                        {
+                            OrderDetailId = orderDetailToAssignFloor.OrderDetailId,
+                            Transfer = transfer
+                        };
 
-                //}
-                //order.OrderDetails = orderDetails;
-                //order.Status = (int)OrderStatus.Da_luu_kho;
-                //await UpdateAsync(order);
+                        var oldOrderDetail = orderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssignFloor.OrderDetailId).FirstOrDefault();
+                        if (oldOrderDetail != null)
+                        {
+                            List<TrasnferDetail> transferDetailList = new List<TrasnferDetail>();
+                            transferDetailList.Add(transferDetail);
+                            oldOrderDetail.TrasnferDetails = transferDetailList;
+                            await _orderDetailService.UpdateAsync(oldOrderDetail);
+                        }
+
+                    }
+                }
+                order.Status = (int)OrderStatus.Da_luu_kho;
+                await UpdateAsync(order);
 
                 return _mapper.Map<OrderViewModel>(order);
             }
