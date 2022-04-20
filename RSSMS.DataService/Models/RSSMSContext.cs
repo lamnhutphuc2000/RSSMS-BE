@@ -128,6 +128,10 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.Code)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.HasOne(d => d.CreatedByNavigation)
@@ -304,6 +308,10 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.ExportNote).HasMaxLength(50);
 
                 entity.Property(e => e.Height).HasColumnType("decimal(18, 3)");
+
+                entity.Property(e => e.ImportCode)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.ImportNote).HasMaxLength(50);
 

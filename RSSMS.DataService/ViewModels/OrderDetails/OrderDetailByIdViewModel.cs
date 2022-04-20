@@ -36,6 +36,10 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public decimal? ServicePrice { get; set; }
         [JsonProperty("serviceImageUrl")]
         public string ServiceImageUrl { get; set; }
+        [JsonProperty("importNote")]
+        public string ImportNote { get; set; }
+        [JsonProperty("importCode")]
+        public string ImportCode { get; set; }
         [JsonProperty("images")]
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
         [JsonProperty("orderDetailServices")]

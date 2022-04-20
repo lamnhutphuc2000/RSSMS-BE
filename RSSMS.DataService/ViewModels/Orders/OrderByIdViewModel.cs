@@ -68,6 +68,12 @@ namespace RSSMS.DataService.ViewModels.Orders
         public DateTime CreatedDate { get; set; }
         [JsonProperty("createdBy")]
         public Guid? CreatedBy { get; set; }
+        [JsonProperty("importDeliveryBy")]
+        public Guid? ImportDeliveryBy { get; set; }
+        [JsonProperty("importDay")]
+        public DateTime? ImportDay { get; set; }
+        [JsonProperty("importCode")]
+        public string ImportCode { get; set; }
         [JsonProperty("requests")]
         public virtual ICollection<RequestByIdViewModel> Requests { get; set; }
         [JsonProperty("orderDetails")]

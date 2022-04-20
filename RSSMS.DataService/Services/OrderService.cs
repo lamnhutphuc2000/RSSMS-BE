@@ -703,13 +703,15 @@ namespace RSSMS.DataService.Services
                         CreatedDate = now,
                         Code = now.Day + now.Month + now.Year + now.Minute + now.Hour + new string(Enumerable.Repeat(chars, 5).Select(s => s[random.Next(s.Length)]).ToArray())
                     };
+                    int index = 0;
                     foreach (var orderDetail in orderDetails)
                         if (orderDetail.Id == orderDetailToAssignFloor.OrderDetailId)
                         {
                             orderDetail.ImportNote = orderDetailToAssignFloor.ImportNote;
                             orderDetail.Import = import;
+                            orderDetail.ImportCode = import.Code + " - " + index;
                         }
-                            
+                    
                 }
                 order.OrderDetails = orderDetails;
                 order.Status = (int)OrderStatus.Da_luu_kho;

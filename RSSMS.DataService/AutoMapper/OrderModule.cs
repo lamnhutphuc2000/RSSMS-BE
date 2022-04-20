@@ -3,6 +3,7 @@ using RSSMS.DataService.Models;
 using RSSMS.DataService.Services;
 using RSSMS.DataService.ViewModels.Orders;
 using System;
+using System.Linq;
 
 namespace RSSMS.DataService.AutoMapper
 {
@@ -23,6 +24,9 @@ namespace RSSMS.DataService.AutoMapper
                 .ForMember(des => des.DurationMonths, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)((src.ReturnDate - src.DeliveryDate).Value.Days) / 30 : null));
 
             mc.CreateMap<Order, OrderByIdViewModel>()
+                .ForMember(des => des.ImportDay, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.CreatedDate  : null))
+                .ForMember(des => des.ImportDeliveryBy, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.DeliveryBy : null))
+                .ForMember(des => des.ImportCode, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.Code : null))
                 .ForMember(des => des.DeliveryTime, opt => opt.MapFrom(src => src.DeliveryTime != null ? TimeUtilStatic.TimeToString((TimeSpan)src.DeliveryTime) : ""))
                 .ForMember(des => des.Status, opt => opt.MapFrom(src => src.Status > 4 ? src.Status : (src.ReturnDate - DateTime.Now).Value.Days < 0 ? 4 : (src.ReturnDate - DateTime.Now).Value.Days < 3 ? 3 : src.Status))
                 .ForMember(des => des.DurationDays, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)(src.ReturnDate - src.DeliveryDate).Value.Days : null))
