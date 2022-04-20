@@ -102,7 +102,8 @@ namespace RSSMS.DataService.Services
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-
+                var account = _accountService.Get(account => account.Id == userId && account.IsActive).Include(account => account.StaffAssignStorages).FirstOrDefault();
+                if(account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
                 var requests = Get(request => request.IsActive)
                     .Include(request => request.Schedules)
                     .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
@@ -149,9 +150,9 @@ namespace RSSMS.DataService.Services
                 }
                 if (role == "Manager")
                 {
-                    var storageIds = _staffAssignStoragesService.Get(staffAssignStorage => staffAssignStorage.StaffId == userId).Select(a => a.StorageId).ToList();
+                    var storageIds = account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).Select(staffAssign => staffAssign.StorageId).ToList();
                     var staff = _staffAssignStoragesService.Get(staffAssignStorage => storageIds.Contains(staffAssignStorage.StorageId)).Select(a => a.StaffId).ToList();
-                    requests = requests.Where(request => staff.Contains((Guid)request.CreatedBy) || request.CreatedBy == userId || request.CreatedByNavigation.Role.Name == "Customer" || storageIds.Contains((Guid)request.StorageId))
+                    requests = requests.Where(request => storageIds.Contains((Guid)request.StorageId))
                         .Include(request => request.Schedules)
                         .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
                         .Include(request => request.Storage)
