@@ -43,16 +43,14 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IFirebaseService _firebaseService;
-        private readonly IScheduleService _scheduleService;
         private readonly IRoleService _roleService;
         private readonly IUtilService _utilService;
         public AccountService(IUnitOfWork unitOfWork, IAccountRepository repository, IMapper mapper
-            , IFirebaseService firebaseService, IScheduleService scheduleService, IRoleService roleService
+            , IFirebaseService firebaseService, IRoleService roleService
             , IUtilService utilService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _firebaseService = firebaseService;
-            _scheduleService = scheduleService;
             _roleService = roleService;
             _utilService = utilService;
         }
@@ -529,14 +527,10 @@ namespace RSSMS.DataService.Services
                                 timeSpan.Add(_utilService.StringToTime(time));
                         // delivery staff busy in the time
                         if(timeSpan.Count > 0)
-                        {
-                            var usersInDelivery = _scheduleService.Get(schedule => scheduleDay.Value.Date == schedule.ScheduleDay.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).Select(schedule => schedule.StaffId).Distinct().ToList();
-                            staffs = staffs.Where(account => !usersInDelivery.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-                        }
+                            staffs = staffs.Where(account => account.Schedules.Where(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).FirstOrDefault() == null).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
                     }
                     //delivery staff busy in the day
-                    var deliveryStaffBusyInDate = _scheduleService.Get(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && !schedule.IsActive && schedule.Status == 6).Select(schedule => schedule.StaffId).Distinct().ToList();
-                    staffs = staffs.Where(account => !deliveryStaffBusyInDate.Contains(account.Id)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                    staffs = staffs.Where(account => account.Schedules.Where(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && !schedule.IsActive && schedule.Status == 6).FirstOrDefault() == null).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
                 }
                 var result = await staffs.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToListAsync();
                 return result;

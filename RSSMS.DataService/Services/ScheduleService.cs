@@ -29,10 +29,14 @@ namespace RSSMS.DataService.Services
     {
         private readonly IMapper _mapper;
         private readonly IUtilService _utilService;
-        public ScheduleService(IUnitOfWork unitOfWork, IScheduleRepository repository, IUtilService utilService, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IAccountService _accountService;
+        public ScheduleService(IUnitOfWork unitOfWork, IScheduleRepository repository, IUtilService utilService,
+            IAccountService accountService,
+            IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _utilService = utilService;
+            _accountService = accountService;
         }
 
         public async Task<List<ScheduleOrderViewModel>> Create(ScheduleCreateViewModel model)
@@ -99,8 +103,9 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
                 (int, IQueryable<ScheduleViewModel>) result = (0, null);
-
-                if (model.DateFrom == null || model.DateTo == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Date from and date to null");
+                var account = _accountService.Get(account => account.Id == userId && account.IsActive).Include(account => account.StaffAssignStorages).FirstOrDefault();
+                if(account == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản");
+                if (model.DateFrom == null || model.DateTo == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Ngày bắt đầu và ngày kết thúc không thể để trống");
 
                 if (role == "Delivery Staff")
                 {
@@ -138,7 +143,9 @@ namespace RSSMS.DataService.Services
                 }
                 else
                 {
-                    var schedules = Get(x => x.IsActive == true)
+                    var storageIds = account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).Select(account => account.StorageId).ToList();
+                    if(storageIds == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên chưa được phân công vào kho");
+                    var schedules = Get(x => x.IsActive && storageIds.Contains((Guid)x.Request.StorageId))
                             .Where(x => x.ScheduleDay.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Date <= model.DateTo.Value.Date).Include(x => x.Request)
                             .ThenInclude(request => request.Order)
                             .ThenInclude(order => order.Customer)
