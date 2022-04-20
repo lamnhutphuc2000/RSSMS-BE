@@ -152,7 +152,7 @@ namespace RSSMS.DataService.Services
                 {
                     var storageIds = account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).Select(staffAssign => staffAssign.StorageId).ToList();
                     var staff = _staffAssignStoragesService.Get(staffAssignStorage => storageIds.Contains(staffAssignStorage.StorageId)).Select(a => a.StaffId).ToList();
-                    requests = requests.Where(request => storageIds.Contains((Guid)request.StorageId))
+                    requests = requests.Where(request => storageIds.Contains((Guid)request.StorageId) || storageIds.Contains((Guid)request.Order.StorageId))
                         .Include(request => request.Schedules)
                         .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
                         .Include(request => request.Storage)
@@ -631,6 +631,7 @@ namespace RSSMS.DataService.Services
 
                     newRequest = Get(x => x.Id == request.Id && x.IsActive == true).Include(request => request.Order)
                         .ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staffAssign => staffAssign.Staff.Role.Name == "Manager" && staffAssign.IsActive)).ThenInclude(taffAssignStorage => taffAssignStorage.Staff).ThenInclude(staff => staff.Role).FirstOrDefault();
+
                     if (newRequest.Order == null)
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
                     if (newRequest.Order.Storage == null)
