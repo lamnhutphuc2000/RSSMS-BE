@@ -20,7 +20,9 @@ namespace RSSMS.DataService.Models
         public decimal? Width { get; set; }
         public decimal? Length { get; set; }
         public Guid? ImportId { get; set; }
+        public string ImportNote { get; set; }
         public Guid? ExportId { get; set; }
+        public string ExportNote { get; set; }
 
         public virtual Export Export { get; set; }
         public virtual Import Import { get; set; }

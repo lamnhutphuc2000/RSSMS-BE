@@ -702,10 +702,14 @@ namespace RSSMS.DataService.Services
                         DeliveryBy = model.DeliveryId,
                         CreatedDate = now,
                         Code = now.Day + now.Month + now.Year + now.Minute + now.Hour + new string(Enumerable.Repeat(chars, 5).Select(s => s[random.Next(s.Length)]).ToArray())
-                };
+                    };
                     foreach (var orderDetail in orderDetails)
                         if (orderDetail.Id == orderDetailToAssignFloor.OrderDetailId)
+                        {
+                            orderDetail.ImportNote = orderDetailToAssignFloor.ImportNote;
                             orderDetail.Import = import;
+                        }
+                            
                 }
                 order.OrderDetails = orderDetails;
                 order.Status = (int)OrderStatus.Da_luu_kho;

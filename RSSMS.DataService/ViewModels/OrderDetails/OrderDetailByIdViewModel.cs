@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using RSSMS.DataService.ViewModels.Images;
+using RSSMS.DataService.ViewModels.Imports;
 using System;
 using System.Collections.Generic;
 
@@ -39,5 +40,7 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public virtual ICollection<AvatarImageViewModel> Images { get; set; }
         [JsonProperty("orderDetailServices")]
         public virtual ICollection<OrderDetailServiceByIdViewModel> OrderDetailServices { get; set; }
+        [JsonProperty("import")]
+        public virtual ImportViewModel Import { get; set; }
     }
 }

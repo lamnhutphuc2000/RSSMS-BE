@@ -301,7 +301,11 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.ExportNote).HasMaxLength(50);
+
                 entity.Property(e => e.Height).HasColumnType("decimal(18, 3)");
+
+                entity.Property(e => e.ImportNote).HasMaxLength(50);
 
                 entity.Property(e => e.Length).HasColumnType("decimal(18, 3)");
 

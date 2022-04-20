@@ -13,6 +13,7 @@ namespace RSSMS.API.App_Start
                 mc.ConfigAccountModule();
                 mc.ConfigAreaModule();
                 mc.ConfigFloorModule();
+                mc.ConfigImportModule();
                 mc.ConfigImageModule();
                 mc.ConfigNotificationModule();
                 mc.ConfigOrderAdditionalFeeModule();
