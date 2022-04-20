@@ -62,6 +62,8 @@ namespace RSSMS.DataService.ViewModels.Orders
         public bool? IsPaid { get; set; }
         [JsonProperty("storageId")]
         public Guid? StorageId { get; set; }
+        [JsonProperty("storageAddress")]
+        public string StorageAddress { get; set; }
         [JsonProperty("storageName")]
         public string StorageName { get; set; }
         [JsonProperty("createdDate")]
