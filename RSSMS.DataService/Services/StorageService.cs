@@ -421,8 +421,11 @@ namespace RSSMS.DataService.Services
             bool deliFlag = false;
             do
             {
-                var requestsOfStorage = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id).ToList();
-                result = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, dateFrom, dateTo, isMany, cuboids, requestsOfStorage, isCustomerDelivery);
+                // request chiếm kho
+                var requestsNeedSpace = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Gia_han_don || request.Type == (int)RequestType.Tao_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen)).ToList();
+                // request chiếm nhân viên
+                var requestsNeedDeliver = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen)).ToList();
+                result = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, dateFrom, dateTo, isMany, cuboids, requestsNeedSpace, isCustomerDelivery);
                 var staffs = await _accountService.GetStaff(storageList[i].Id, accessToken, new List<string> { "Delivery Staff" }, dateFrom, deliveryTimes, false);
                 if (result)
                 {
@@ -435,7 +438,7 @@ namespace RSSMS.DataService.Services
                             foreach (var time in deliveryTimes)
                                 timeSpan.Add(_utilService.StringToTime(time));
                         }
-                        var requestsNeedToDeli = requestsOfStorage.Where(request => !(bool)request.IsCustomerDelivery && request.TypeOrder == (int)OrderType.Giu_do_thue && timeSpan.Contains((TimeSpan)request.DeliveryTime)).ToList();
+                        var requestsNeedToDeli = requestsNeedDeliver.Where(request => !(bool)request.IsCustomerDelivery && request.TypeOrder == (int)OrderType.Giu_do_thue && timeSpan.Contains((TimeSpan)request.DeliveryTime)).ToList();
                         if (requestsNeedToDeli.Count() + 1 <= staffs.Count())
                         {
                             deliFlag = true;
@@ -468,8 +471,12 @@ namespace RSSMS.DataService.Services
             int i = 0;
             do
             {
-                var requestsOfStorage = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id).ToList();
-                isAvailable = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, dateFrom, dateTo, isMany, cuboids, requestsOfStorage, isCustomerDelivery);
+                // request chiếm kho
+                var requestsNeedSpace = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Gia_han_don || request.Type == (int)RequestType.Tao_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen)).ToList();
+                // request chiếm nhân viên
+                var requestsNeedDeliver = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen)).ToList();
+
+                isAvailable = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, dateFrom, dateTo, isMany, cuboids, requestsNeedSpace, isCustomerDelivery);
                 var staffs = await _accountService.GetStaff(storageList[i].Id, accessToken, new List<string> { "Delivery Staff" }, dateFrom, deliveryTimes, false);
                 if (isAvailable)
                 {
@@ -482,7 +489,7 @@ namespace RSSMS.DataService.Services
                             foreach (var time in deliveryTimes)
                                 timeSpan.Add(_utilService.StringToTime(time));
                         }
-                        var requestsNeedToDeli = requestsOfStorage.Where(request => !(bool)request.IsCustomerDelivery && request.TypeOrder == (int)OrderType.Giu_do_thue && timeSpan.Contains((TimeSpan)request.DeliveryTime)).ToList();
+                        var requestsNeedToDeli = requestsNeedDeliver.Where(request => !(bool)request.IsCustomerDelivery && request.TypeOrder == (int)OrderType.Giu_do_thue && timeSpan.Contains((TimeSpan)request.DeliveryTime)).ToList();
                         if (requestsNeedToDeli.Count() + 1 <= staffs.Count())
                         {
                             StorageViewModel storage = _mapper.Map<StorageViewModel>(storageList[i]);

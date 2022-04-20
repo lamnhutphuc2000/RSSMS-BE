@@ -1011,7 +1011,7 @@ namespace RSSMS.DataService.Services
             // isMany để check là giữ ít hay giữ nhiều
             // serviceList để chứa service người dùng đặt
             bool result = false;
-            var requestsAssignStorage = await Get(request => request.IsActive && request.TypeOrder == orderType && request.Type == (int)RequestType.Tao_don && request.Type == (int)RequestType.Tao_don && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen))
+            var requestsAssignStorage = await Get(request => request.IsActive && request.TypeOrder == orderType && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don || request.Type == (int)RequestType.Gia_han_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen || request.Status == (int)RequestStatus.Dang_xu_ly))
                                            .Include(request => request.Order).ThenInclude(order => order.OrderDetails)
                                            .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
             if (requestId != null) requestsAssignStorage = requestsAssignStorage.Where(request => request.Id != requestId).ToList();
@@ -1053,7 +1053,7 @@ namespace RSSMS.DataService.Services
                     }
                 }
 
-                var requestsAssignStorage = await Get(request => request.IsActive && request.Type == (int)RequestType.Tao_don && request.Type == (int)RequestType.Tao_don && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen))
+                var requestsAssignStorage = await Get(request => request.IsActive && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don || request.Type == (int)RequestType.Gia_han_don )&& (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen || request.Status == (int)RequestStatus.Da_xu_ly))
                                            .Include(request => request.Order).ThenInclude(order => order.OrderDetails)
                                            .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
                 requestsAssignStorage = requestsAssignStorage.Where(request => (request.DeliveryDate <= model.DeliveryDate && request.ReturnDate >= model.DeliveryDate) || (model.DeliveryDate <= request.DeliveryDate && model.ReturnDate >= request.DeliveryDate)).ToList();
