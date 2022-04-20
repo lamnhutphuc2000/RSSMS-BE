@@ -69,6 +69,8 @@ namespace RSSMS.DataService.Services
             try
             {
                 var result = await Get(x => x.Id == id && x.IsActive)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.CreatedByNavigation)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.DeliveryByNavigation)
                     .Include(order => order.Storage)
                     .Include(order => order.OrderDetails).Include(floor => floor.OrderDetails)
                     .Include(order => order.Requests)

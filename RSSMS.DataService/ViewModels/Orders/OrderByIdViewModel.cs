@@ -71,11 +71,11 @@ namespace RSSMS.DataService.ViewModels.Orders
         [JsonProperty("createdBy")]
         public Guid? CreatedBy { get; set; }
         [JsonProperty("importDeliveryBy")]
-        public Guid? ImportDeliveryBy { get; set; }
+        public string ImportDeliveryBy { get; set; }
         [JsonProperty("importDay")]
         public DateTime? ImportDay { get; set; }
         [JsonProperty("importStaff")]
-        public Guid? ImportStaff { get; set; }
+        public string ImportStaff { get; set; }
         [JsonProperty("importCode")]
         public string ImportCode { get; set; }
         [JsonProperty("requests")]

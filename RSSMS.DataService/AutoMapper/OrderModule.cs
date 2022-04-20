@@ -25,9 +25,9 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<Order, OrderByIdViewModel>()
                 .ForMember(des => des.StorageAddress, opt => opt.MapFrom(src => src.Storage.Address))
-                .ForMember(des => des.ImportStaff, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.CreatedBy : null))
+                .ForMember(des => des.ImportStaff, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.CreatedByNavigation.Name : null))
                 .ForMember(des => des.ImportDay, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.CreatedDate  : null))
-                .ForMember(des => des.ImportDeliveryBy, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.DeliveryBy : null))
+                .ForMember(des => des.ImportDeliveryBy, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.DeliveryByNavigation.Name : null))
                 .ForMember(des => des.ImportCode, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.Code : null))
                 .ForMember(des => des.DeliveryTime, opt => opt.MapFrom(src => src.DeliveryTime != null ? TimeUtilStatic.TimeToString((TimeSpan)src.DeliveryTime) : ""))
                 .ForMember(des => des.Status, opt => opt.MapFrom(src => src.Status > 4 ? src.Status : (src.ReturnDate - DateTime.Now).Value.Days < 0 ? 4 : (src.ReturnDate - DateTime.Now).Value.Days < 3 ? 3 : src.Status))
