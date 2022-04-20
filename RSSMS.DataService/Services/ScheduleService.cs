@@ -49,7 +49,7 @@ namespace RSSMS.DataService.Services
                 if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedules null");
                 var listSchedules = Get().Include(x => x.Request).ThenInclude(request => request.Order).ToList();
 
-                var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.RequestId == x.RequestId) && x.ScheduleDay.Date == model.ScheduleDay.Value.Date);
+                var schedulesAssigned = listSchedules.Where(x => x.IsActive && schedules.Any(a => a.RequestId == x.RequestId) && x.ScheduleDay.Date == model.ScheduleDay.Value.Date);
 
 
 
@@ -145,7 +145,7 @@ namespace RSSMS.DataService.Services
                 {
                     var storageIds = account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).Select(account => account.StorageId).ToList();
                     if(storageIds == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên chưa được phân công vào kho");
-                    var schedules = Get(x => x.IsActive && storageIds.Contains((Guid)x.Request.StorageId))
+                    var schedules = Get(x => x.IsActive && (storageIds.Contains((Guid)x.Request.StorageId) || storageIds.Contains((Guid)x.Request.Order.StorageId)))
                             .Where(x => x.ScheduleDay.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Date <= model.DateTo.Value.Date).Include(x => x.Request)
                             .ThenInclude(request => request.Order)
                             .ThenInclude(order => order.Customer)
