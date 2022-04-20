@@ -74,6 +74,8 @@ namespace RSSMS.DataService.ViewModels.Orders
         public Guid? ImportDeliveryBy { get; set; }
         [JsonProperty("importDay")]
         public DateTime? ImportDay { get; set; }
+        [JsonProperty("importStaff")]
+        public Guid? ImportStaff { get; set; }
         [JsonProperty("importCode")]
         public string ImportCode { get; set; }
         [JsonProperty("requests")]

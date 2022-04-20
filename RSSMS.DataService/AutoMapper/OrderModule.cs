@@ -25,6 +25,7 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<Order, OrderByIdViewModel>()
                 .ForMember(des => des.StorageAddress, opt => opt.MapFrom(src => src.Storage.Address))
+                .ForMember(des => des.ImportStaff, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.CreatedBy : null))
                 .ForMember(des => des.ImportDay, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.CreatedDate  : null))
                 .ForMember(des => des.ImportDeliveryBy, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.DeliveryBy : null))
                 .ForMember(des => des.ImportCode, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.Code : null))
