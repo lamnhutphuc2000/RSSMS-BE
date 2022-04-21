@@ -473,7 +473,8 @@ namespace RSSMS.DataService.Services
             try
             {
                 var order = await Get(order => order.Id == model.OrderId && order.IsActive)
-                    .Include(order => order.OrderDetails)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(transferDetail => transferDetail.Transfer)
                     .Include(order => order.Requests).ThenInclude(request => request.Schedules).FirstOrDefaultAsync();
                 if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy đơn");
 
@@ -487,7 +488,7 @@ namespace RSSMS.DataService.Services
 
                 if(account.Role.Name == "Office Staff")
                 {
-                    if(model.OrderAdditionalFees.Count == 0)
+                    if(model.OrderAdditionalFees == null)
                     {
                         order.Status = (int)OrderStatus.Da_xuat_kho;
                         var orderDetails = order.OrderDetails;
@@ -500,7 +501,7 @@ namespace RSSMS.DataService.Services
                             {
                                 Guid? floorId = null;
                                 if (orderDetail.TransferDetails.Count == 0) 
-                                    floorId = orderDetail.ImportId;
+                                    floorId = orderDetail.Import.FloorId;
                                 else
                                     floorId = orderDetail.TransferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer.FloorToId).FirstOrDefault();
                                 if(exports.Count == 0)
@@ -536,6 +537,7 @@ namespace RSSMS.DataService.Services
                                 await _orderDetailService.UpdateAsync(orderDetail);
                             }
                         }
+                        await UpdateAsync(order);
                         return await GetById(model.OrderId, new List<int>());
                     }
                 }
