@@ -24,6 +24,10 @@ namespace RSSMS.DataService.AutoMapper
                 .ForMember(des => des.DurationMonths, opt => opt.MapFrom(src => (src.ReturnDate != null && src.DeliveryDate != null) ? (int?)((src.ReturnDate - src.DeliveryDate).Value.Days) / 30 : null));
 
             mc.CreateMap<Order, OrderByIdViewModel>()
+                .ForMember(des => des.ExportStaff, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Export != null ? src.OrderDetails.FirstOrDefault().Export.CreatedByNavigation.Name : null))
+                .ForMember(des => des.ExportDay, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Export != null ? src.OrderDetails.FirstOrDefault().Export.CreatedDate : null))
+                .ForMember(des => des.ExportDeliveryBy, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Export != null ? src.OrderDetails.FirstOrDefault().Export.DeliveryByNavigation.Name : null))
+                .ForMember(des => des.ExportReturnAddress, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Export != null ? src.OrderDetails.FirstOrDefault().Export.ReturnAddress : null))
                 .ForMember(des => des.StorageAddress, opt => opt.MapFrom(src => src.Storage.Address))
                 .ForMember(des => des.ImportStaff, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.CreatedByNavigation.Name : null))
                 .ForMember(des => des.ImportDay, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.CreatedDate  : null))

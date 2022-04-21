@@ -69,6 +69,8 @@ namespace RSSMS.DataService.Services
             try
             {
                 var result = await Get(x => x.Id == id && x.IsActive)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Export).ThenInclude(export => export.CreatedByNavigation)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Export).ThenInclude(export => export.DeliveryByNavigation)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.CreatedByNavigation)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.DeliveryByNavigation)
                     .Include(order => order.Storage)
@@ -508,6 +510,7 @@ namespace RSSMS.DataService.Services
                                 {
                                     export = new Export()
                                     {
+                                        Code = orderDetail.Import.Code,
                                         CreatedBy = userId,
                                         CreatedDate = DateTime.Now,
                                         FloorId = floorId,
@@ -522,6 +525,7 @@ namespace RSSMS.DataService.Services
                                     {
                                         export = new Export()
                                         {
+                                            Code = orderDetail.Import.Code,
                                             CreatedBy = userId,
                                             CreatedDate = DateTime.Now,
                                             FloorId = floorId,

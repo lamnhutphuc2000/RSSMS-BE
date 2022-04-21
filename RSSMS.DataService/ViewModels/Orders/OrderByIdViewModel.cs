@@ -78,6 +78,14 @@ namespace RSSMS.DataService.ViewModels.Orders
         public string ImportStaff { get; set; }
         [JsonProperty("importCode")]
         public string ImportCode { get; set; }
+        [JsonProperty("exportStaff")]
+        public string ExportStaff { get; set; }
+        [JsonProperty("exportDay")]
+        public DateTime? ExportDay { get; set; }
+        [JsonProperty("exportDeliveryBy")]
+        public string ExportDeliveryBy { get; set; }
+        [JsonProperty("exportReturnAddress")]
+        public string ExportReturnAddress { get; set; }
         [JsonProperty("requests")]
         public virtual ICollection<RequestByIdViewModel> Requests { get; set; }
         [JsonProperty("orderDetails")]

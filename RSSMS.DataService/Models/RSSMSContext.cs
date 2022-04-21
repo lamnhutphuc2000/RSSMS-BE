@@ -137,9 +137,14 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.ReturnAddress).HasMaxLength(50);
 
                 entity.HasOne(d => d.CreatedByNavigation)
-                    .WithMany(p => p.Exports)
+                    .WithMany(p => p.ExportCreatedByNavigations)
                     .HasForeignKey(d => d.CreatedBy)
                     .HasConstraintName("FK_Export_Account");
+
+                entity.HasOne(d => d.DeliveryByNavigation)
+                    .WithMany(p => p.ExportDeliveryByNavigations)
+                    .HasForeignKey(d => d.DeliveryBy)
+                    .HasConstraintName("FK_Export_Account1");
 
                 entity.HasOne(d => d.Floor)
                     .WithMany(p => p.Exports)
