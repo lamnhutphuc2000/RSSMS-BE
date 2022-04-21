@@ -9,7 +9,7 @@ namespace RSSMS.DataService.Models
     {
         public Transfer()
         {
-            TrasnferDetails = new HashSet<TrasnferDetail>();
+            TransferDetails = new HashSet<TransferDetail>();
         }
 
         public Guid Id { get; set; }
@@ -20,6 +20,6 @@ namespace RSSMS.DataService.Models
 
         public virtual Floor FloorFrom { get; set; }
         public virtual Floor FloorTo { get; set; }
-        public virtual ICollection<TrasnferDetail> TrasnferDetails { get; set; }
+        public virtual ICollection<TransferDetail> TransferDetails { get; set; }
     }
 }

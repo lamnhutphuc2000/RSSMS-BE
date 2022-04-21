@@ -18,6 +18,7 @@ namespace RSSMS.DataService.Models
         public Guid? CreatedBy { get; set; }
         public string Code { get; set; }
         public Guid? DeliveryBy { get; set; }
+        public string ReturnAddress { get; set; }
 
         public virtual Account CreatedByNavigation { get; set; }
         public virtual Floor Floor { get; set; }

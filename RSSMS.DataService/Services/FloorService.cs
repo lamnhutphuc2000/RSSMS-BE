@@ -42,12 +42,12 @@ namespace RSSMS.DataService.Services
 
                 var orderDetails = await _orderDetailService.Get(orderDetail => orderDetail.ExportId == null && orderDetail.ImportId != null)
                     .Include(orderDetail => orderDetail.Import).ThenInclude(import => import.Floor).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
-                    .Include(orderDetail => orderDetail.TrasnferDetails).ThenInclude(transferDetail => transferDetail.Transfer).ThenInclude(transfer => transfer.FloorTo).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
+                    .Include(orderDetail => orderDetail.TransferDetails).ThenInclude(transferDetail => transferDetail.Transfer).ThenInclude(transfer => transfer.FloorTo).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
                     .Include(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(orderDetailService => orderDetailService.Service)
                     .Include(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer).ToListAsync();
 
-                var orderDetailHaveTransfer = orderDetails.Where(orderDetail => orderDetail.TrasnferDetails.Count > 0).ToList();
-                var orderDetailDontHaveTransfer = orderDetails.Where(orderDetail => orderDetail.TrasnferDetails.Count == 0).ToList();
+                var orderDetailHaveTransfer = orderDetails.Where(orderDetail => orderDetail.TransferDetails.Count > 0).ToList();
+                var orderDetailDontHaveTransfer = orderDetails.Where(orderDetail => orderDetail.TransferDetails.Count == 0).ToList();
                 List<OrderDetailInFloorViewModel> orderDetailToAdd = new List<OrderDetailInFloorViewModel>();
 
                 if (orderDetailDontHaveTransfer.Count > 0)
@@ -59,7 +59,7 @@ namespace RSSMS.DataService.Services
                 {
                     foreach (var orderDetail in orderDetailHaveTransfer)
                     {
-                        Transfer transfer = orderDetail.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault();
+                        Transfer transfer = orderDetail.TransferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault();
                         if (transfer.FloorToId == floorId)
                             orderDetailToAdd.Add(_mapper.Map<OrderDetailInFloorViewModel>(orderDetail));
                     }

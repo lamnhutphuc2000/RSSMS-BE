@@ -40,7 +40,7 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<StaffAssignStorage> StaffAssignStorages { get; set; }
         public virtual DbSet<Storage> Storages { get; set; }
         public virtual DbSet<Transfer> Transfers { get; set; }
-        public virtual DbSet<TrasnferDetail> TrasnferDetails { get; set; }
+        public virtual DbSet<TransferDetail> TransferDetails { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -133,6 +133,8 @@ namespace RSSMS.DataService.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.Property(e => e.ReturnAddress).HasMaxLength(50);
 
                 entity.HasOne(d => d.CreatedByNavigation)
                     .WithMany(p => p.Exports)
@@ -626,19 +628,19 @@ namespace RSSMS.DataService.Models
                     .HasConstraintName("FK_Transfer_Floor1");
             });
 
-            modelBuilder.Entity<TrasnferDetail>(entity =>
+            modelBuilder.Entity<TransferDetail>(entity =>
             {
-                entity.ToTable("TrasnferDetail");
+                entity.ToTable("TransferDetail");
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.HasOne(d => d.OrderDetail)
-                    .WithMany(p => p.TrasnferDetails)
+                    .WithMany(p => p.TransferDetails)
                     .HasForeignKey(d => d.OrderDetailId)
                     .HasConstraintName("FK_TrasnferDetail_OrderDetail");
 
                 entity.HasOne(d => d.Transfer)
-                    .WithMany(p => p.TrasnferDetails)
+                    .WithMany(p => p.TransferDetails)
                     .HasForeignKey(d => d.TransferId)
                     .HasConstraintName("FK_TrasnferDetail_Transfer");
             });

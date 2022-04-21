@@ -11,7 +11,7 @@ namespace RSSMS.DataService.Models
         {
             Images = new HashSet<Image>();
             OrderDetailServiceMaps = new HashSet<OrderDetailServiceMap>();
-            TrasnferDetails = new HashSet<TrasnferDetail>();
+            TransferDetails = new HashSet<TransferDetail>();
         }
 
         public Guid Id { get; set; }
@@ -30,6 +30,6 @@ namespace RSSMS.DataService.Models
         public virtual Order Order { get; set; }
         public virtual ICollection<Image> Images { get; set; }
         public virtual ICollection<OrderDetailServiceMap> OrderDetailServiceMaps { get; set; }
-        public virtual ICollection<TrasnferDetail> TrasnferDetails { get; set; }
+        public virtual ICollection<TransferDetail> TransferDetails { get; set; }
     }
 }

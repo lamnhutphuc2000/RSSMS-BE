@@ -9,8 +9,8 @@ namespace RSSMS.DataService.ViewModels.Orders
         public Guid OrderId { get; set; }
         public Guid RequestId { get; set; }
         public int? Status { get; set; }
-        public decimal? CompensationFee { get; set; }
-        public string CompensationDescription { get; set; }
+        public Guid? DeliveryBy { get; set; }
+        public string ReturnAddress { get; set; }
         public virtual ICollection<OrderAdditionalFeeCreateViewModel> OrderAdditionalFees { get; set; }
     }
 }

@@ -9,6 +9,7 @@
         Da_qua_han,
         Dang_thanh_ly,
         Hoan_thanh,
-        Da_thanh_ly
+        Da_thanh_ly,
+        Da_xuat_kho,
     }
 }

@@ -475,12 +475,70 @@ namespace RSSMS.DataService.Services
                 var order = await Get(order => order.Id == model.OrderId && order.IsActive)
                     .Include(order => order.OrderDetails)
                     .Include(order => order.Requests).ThenInclude(request => request.Schedules).FirstOrDefaultAsync();
-                if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+                if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy đơn");
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var account = await _accountService.Get(account => account.IsActive && account.Id == userId).Include(account => account.Role)
+                                .Include(account => account.StaffAssignStorages).FirstOrDefaultAsync();
+                if(account == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản");
 
 
+
+                if(account.Role.Name == "Office Staff")
+                {
+                    if(model.OrderAdditionalFees.Count == 0)
+                    {
+                        order.Status = (int)OrderStatus.Da_xuat_kho;
+                        var orderDetails = order.OrderDetails;
+                        // Lấy hết đồ trong order ra
+                        IDictionary<Guid, Export> exports = new Dictionary<Guid, Export>();
+                        Export export = null;
+                        foreach (var orderDetail in orderDetails)
+                        {
+                            if (orderDetail.ImportId != null)
+                            {
+                                Guid? floorId = null;
+                                if (orderDetail.TransferDetails.Count == 0) 
+                                    floorId = orderDetail.ImportId;
+                                else
+                                    floorId = orderDetail.TransferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer.FloorToId).FirstOrDefault();
+                                if(exports.Count == 0)
+                                {
+                                    export = new Export()
+                                    {
+                                        CreatedBy = userId,
+                                        CreatedDate = DateTime.Now,
+                                        FloorId = floorId,
+                                        DeliveryBy = model.DeliveryBy,
+                                        ReturnAddress = model.ReturnAddress,
+                                    };
+                                    exports.Add((Guid)floorId, export);
+                                }
+                                else
+                                {
+                                    if(!exports.Keys.Contains((Guid)floorId))
+                                    {
+                                        export = new Export()
+                                        {
+                                            CreatedBy = userId,
+                                            CreatedDate = DateTime.Now,
+                                            FloorId = floorId,
+                                            DeliveryBy = model.DeliveryBy,
+                                            ReturnAddress = model.ReturnAddress,
+                                        };
+                                        exports.Add((Guid)floorId, export);
+                                    }
+                                    else
+                                        export = exports[(Guid)floorId];
+                                }
+                                orderDetail.Export = export;
+                                await _orderDetailService.UpdateAsync(orderDetail);
+                            }
+                        }
+                        return await GetById(model.OrderId, new List<int>());
+                    }
+                }
                 var requests = order.Requests;
                 foreach (var request in requests)
                 {
@@ -492,7 +550,7 @@ namespace RSSMS.DataService.Services
                     }
                     if (request.Status == (int)RequestStatus.Dang_van_chuyen) request.Status = (int)RequestStatus.Hoan_thanh;
                 }
-                if(model.OrderAdditionalFees != null)
+                if (model.OrderAdditionalFees != null)
                 {
                     var orderAddtionalFee = model.OrderAdditionalFees.AsQueryable().ProjectTo<OrderAdditionalFee>(_mapper.ConfigurationProvider);
                     order.OrderAdditionalFees = orderAddtionalFee.ToList();
@@ -501,32 +559,8 @@ namespace RSSMS.DataService.Services
 
                 order.Requests = requests;
 
-
-                var orderDetails = order.OrderDetails;
                 
-                foreach (var orderDetail in orderDetails)
-                {
-                    if (orderDetail.ImportId != null)
-                    {
-                        Guid? floorId = null;
-                        if (orderDetail.TrasnferDetails.Count == 0) floorId = orderDetail.ImportId;
-                        else
-                        {
-                            Transfer transfer = orderDetail.TrasnferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault();
-                            floorId = transfer.FloorToId;
-                        }
-                        Export export = new Export()
-                        {
-                            CreatedBy = userId,
-                            CreatedDate = DateTime.Now,
-                            FloorId = floorId
-                        };
-                    }
-                }
-                    
-
                 order.Status = model.Status;
-                order.OrderDetails = orderDetails;
                 order.ModifiedDate = DateTime.Now;
                 order.ModifiedBy = userId;
                 await UpdateAsync(order);
@@ -832,7 +866,7 @@ namespace RSSMS.DataService.Services
                             FloorToId = orderDetailToAssignFloor.FloorId,
 
                         };
-                        TrasnferDetail transferDetail = new TrasnferDetail()
+                        TransferDetail transferDetail = new TransferDetail()
                         {
                             OrderDetailId = orderDetailToAssignFloor.OrderDetailId,
                             Transfer = transfer
@@ -841,9 +875,9 @@ namespace RSSMS.DataService.Services
                         var oldOrderDetail = orderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssignFloor.OrderDetailId).FirstOrDefault();
                         if (oldOrderDetail != null)
                         {
-                            List<TrasnferDetail> transferDetailList = new List<TrasnferDetail>();
+                            List<TransferDetail> transferDetailList = new List<TransferDetail>();
                             transferDetailList.Add(transferDetail);
-                            oldOrderDetail.TrasnferDetails = transferDetailList;
+                            oldOrderDetail.TransferDetails = transferDetailList;
                             await _orderDetailService.UpdateAsync(oldOrderDetail);
                         }
 

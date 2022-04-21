@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace RSSMS.DataService.Models
 {
-    public partial class TrasnferDetail
+    public partial class TransferDetail
     {
         public Guid Id { get; set; }
         public Guid? OrderDetailId { get; set; }
