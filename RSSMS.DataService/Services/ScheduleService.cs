@@ -75,6 +75,7 @@ namespace RSSMS.DataService.Services
                         scheduleToCreate.StaffId = userIds[i];
                         scheduleToCreate.RequestId = schedules[j].RequestId;
                         scheduleToCreate.ScheduleTime = _utilService.StringToTime(schedules[j].ScheduleTime);
+                        scheduleToCreate.Status = 1;
                         await CreateAsync(scheduleToCreate);
                         var schedule = Get(x => x.Id == scheduleToCreate.Id).Include(x => x.Request).FirstOrDefault();
                         schedule.Request.Status = 2;

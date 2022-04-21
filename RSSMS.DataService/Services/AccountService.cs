@@ -279,6 +279,10 @@ namespace RSSMS.DataService.Services
                 Role role = _roleService.Get(role => role.Id == model.RoleId).First();
                 if (role == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập chức vụ");
 
+                var account = await Get(account => account.Phone == model.Phone).FirstOrDefaultAsync();
+                if(account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Số điện thoại bị trùng");
+                account = await Get(account => account.Email == model.Email && account.IsActive).FirstOrDefaultAsync();
+                if (account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email đã tồn tại");
                 // Create user to firebase
                 var autho = new FirebaseAuthProvider(new FirebaseConfig(FirebaseKeyConstant.apiKEY));
                 User us = null;
@@ -292,9 +296,8 @@ namespace RSSMS.DataService.Services
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, e.Message);
                 }
 
-                var account = await Get(account => account.Email == model.Email && account.IsActive).FirstOrDefaultAsync();
-                if (account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email đã tồn tại");
-
+                
+                
                 // Create user to database
 
                 var userCreate = _mapper.Map<Account>(model);

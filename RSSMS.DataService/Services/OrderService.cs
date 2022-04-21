@@ -374,7 +374,7 @@ namespace RSSMS.DataService.Services
                 //
                 Request request = _requestService.Get(request => request.Id == model.RequestId).Include(request => request.Schedules).FirstOrDefault();
                 request.OrderId = order.Id;
-                request.Status = 3;
+                request.Status = (int)RequestStatus.Hoan_thanh;
                 var schedules = request.Schedules;
                 request.Schedules = schedules.Select(schedule => { schedule.Status = 2; return schedule; }).ToList();
 
@@ -492,6 +492,15 @@ namespace RSSMS.DataService.Services
                 {
                     if(model.OrderAdditionalFees == null)
                     {
+                        var deliveryAccount = await _accountService.Get(account => account.IsActive && account.Id == model.DeliveryBy).Include(account => account.Role)
+                                                                .Include(account => account.Schedules).FirstOrDefaultAsync();
+                        if(deliveryAccount == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản người vận chuyển");
+                        if(deliveryAccount.Role.Name != "Delivery Staff") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người nhận không phải người vận chuyển");
+                        var requestReturnOrder = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tra_don && request.Status == (int)RequestStatus.Da_xu_ly).FirstOrDefault();
+                        if(requestReturnOrder != null)
+                            if( deliveryAccount.Schedules.Where(schedule => schedule.IsActive && schedule.RequestId == requestReturnOrder.Id).FirstOrDefault() == null ) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người vận chuyển không có lịch trả đơn này");
+
+                        
                         order.Status = (int)OrderStatus.Da_xuat_kho;
                         var orderDetails = order.OrderDetails;
                         // Lấy hết đồ trong order ra
