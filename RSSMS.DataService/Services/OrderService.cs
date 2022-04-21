@@ -274,7 +274,7 @@ namespace RSSMS.DataService.Services
                         if (service.Type != (int)ServiceType.Phu_kien)
                         {
                             if(typeService == 1) typeService = (int)service.Type;
-                            if (typeService != -1 && typeService != service.Type) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể đặt 1 đơn 2 loại dịch vụ chính");
+                            if (typeService != 1 && typeService != service.Type) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể đặt 1 đơn 2 loại dịch vụ chính");
                         }
                         serviceHeight += Decimal.ToDouble((decimal)service.Height);
                         serviceWidth += Decimal.ToDouble((decimal)service.Width);
