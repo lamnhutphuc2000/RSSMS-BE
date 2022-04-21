@@ -248,7 +248,8 @@ namespace RSSMS.DataService.Services
                 bool isMany = false;
 
 
-
+                decimal totalPrice = 0;
+                decimal month = Math.Ceiling((decimal)model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days / 30);
                 // service list chứa list service người dùng đặt
                 List<Cuboid> cuboid = new List<Cuboid>();
 
@@ -270,19 +271,28 @@ namespace RSSMS.DataService.Services
                     {
                         var service = await _serviceService.GetById(serviceId.ServiceId);
                         if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
-                        if (service.Type != 1) typeService = (int)service.Type;
+                        if (service.Type != (int)ServiceType.Phu_kien)
+                        {
+                            if(typeService == 1) typeService = (int)service.Type;
+                            if (typeService != -1 && typeService != service.Type) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể đặt 1 đơn 2 loại dịch vụ chính");
+                        }
                         serviceHeight += Decimal.ToDouble((decimal)service.Height);
                         serviceWidth += Decimal.ToDouble((decimal)service.Width);
                         serviceLength += Decimal.ToDouble((decimal)service.Length);
                         serviceVolumne = (int)serviceId.Amount * serviceHeight * serviceLength * serviceWidth;
-
+                        totalPrice += (decimal)service.Price * month * serviceId.Amount;
                     }
                     if(!((decimal)orderDetail.Height == 0 && (decimal)orderDetail.Width ==0 && (decimal)orderDetail.Length == 0))
                         cuboid.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, Guid.NewGuid()));
                     if (serviceHeight < height || serviceLength < length || serviceWidth < width || serviceVolumne < volumne)
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail is bigger than service");
                 }
-
+                if(model.OrderAdditionalFees != null)
+                    if(model.OrderAdditionalFees.Count > 0)
+                        foreach(var orderAddtionalFee in model.OrderAdditionalFees)
+                            totalPrice += (decimal)orderAddtionalFee.Price;
+                
+                if(totalPrice != model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);

@@ -422,9 +422,9 @@ namespace RSSMS.DataService.Services
             do
             {
                 // request chiếm kho
-                var requestsNeedSpace = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Gia_han_don || request.Type == (int)RequestType.Tao_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen)).ToList();
+                var requestsNeedSpace = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Gia_han_don || request.Type == (int)RequestType.Tao_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly)).ToList();
                 // request chiếm nhân viên
-                var requestsNeedDeliver = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen)).ToList();
+                var requestsNeedDeliver = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly)).ToList();
                 result = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, dateFrom, dateTo, isMany, cuboids, requestsNeedSpace, isCustomerDelivery);
                 var staffs = await _accountService.GetStaff(storageList[i].Id, accessToken, new List<string> { "Delivery Staff" }, dateFrom, deliveryTimes, false);
                 if (result)
@@ -472,9 +472,9 @@ namespace RSSMS.DataService.Services
             do
             {
                 // request chiếm kho
-                var requestsNeedSpace = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Gia_han_don || request.Type == (int)RequestType.Tao_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen)).ToList();
+                var requestsNeedSpace = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Gia_han_don || request.Type == (int)RequestType.Tao_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly )).ToList();
                 // request chiếm nhân viên
-                var requestsNeedDeliver = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen)).ToList();
+                var requestsNeedDeliver = requestsAssignToStorage.Where(request => request.StorageId == storageList[i].Id && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_xu_ly )).ToList();
 
                 isAvailable = await _areaService.CheckAreaAvailable(storageList[i].Id, spaceType, dateFrom, dateTo, isMany, cuboids, requestsNeedSpace, isCustomerDelivery);
                 var staffs = await _accountService.GetStaff(storageList[i].Id, accessToken, new List<string> { "Delivery Staff" }, dateFrom, deliveryTimes, false);
