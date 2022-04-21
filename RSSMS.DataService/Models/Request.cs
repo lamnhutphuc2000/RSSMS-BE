@@ -32,12 +32,13 @@ namespace RSSMS.DataService.Models
         public Guid? CreatedBy { get; set; }
         public Guid? ModifiedBy { get; set; }
         public string ReturnAddress { get; set; }
+        public decimal? TotalPrice { get; set; }
+        public DateTime? OldReturnDate { get; set; }
+        public decimal? DepositFee { get; set; }
         public DateTime? ReturnDate { get; set; }
         public TimeSpan? ReturnTime { get; set; }
         public string CancelReason { get; set; }
         public DateTime? CancelDate { get; set; }
-        public decimal? TotalPrice { get; set; }
-        public DateTime? OldReturnDate { get; set; }
 
         public virtual Account CreatedByNavigation { get; set; }
         public virtual Order Order { get; set; }

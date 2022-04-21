@@ -285,6 +285,8 @@ namespace RSSMS.DataService.Services
 
                 if (model.Type == (int)RequestType.Tao_don) // customer tao yeu cau tao don
                 {
+                    
+
                     // check xem yêu cầu tạo đơn giữ đồ thuê hay kho tự quản => dẫn tới cần sử dụng space gì
                     int spaceType = 0;
                     if (model.TypeOrder == (int)OrderType.Kho_tu_quan) spaceType = 1;
@@ -320,6 +322,7 @@ namespace RSSMS.DataService.Services
                     }
 
                     if(totalPrice < model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
+                    if(model.DepositFee != (totalPrice * 50 / 100)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không đúng");
                     var checkResult = await CheckStorageAvailable(spaceType, isMany, (int)model.TypeOrder, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, model.StorageId, (bool)model.IsCustomerDelivery, null, accessToken, new List<string> { model.DeliveryTime }, false);
                     if (!checkResult) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
 
