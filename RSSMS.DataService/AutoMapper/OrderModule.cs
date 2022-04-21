@@ -28,6 +28,7 @@ namespace RSSMS.DataService.AutoMapper
                 .ForMember(des => des.ExportDay, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Export != null ? src.OrderDetails.FirstOrDefault().Export.CreatedDate : null))
                 .ForMember(des => des.ExportDeliveryBy, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Export != null ? src.OrderDetails.FirstOrDefault().Export.DeliveryByNavigation.Name : null))
                 .ForMember(des => des.ExportReturnAddress, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Export != null ? src.OrderDetails.FirstOrDefault().Export.ReturnAddress : null))
+                .ForMember(des => des.ExportCode, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Export != null ? src.OrderDetails.FirstOrDefault().Export.Code : null))
                 .ForMember(des => des.StorageAddress, opt => opt.MapFrom(src => src.Storage.Address))
                 .ForMember(des => des.ImportStaff, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.CreatedByNavigation.Name : null))
                 .ForMember(des => des.ImportDay, opt => opt.MapFrom(src => src.OrderDetails.FirstOrDefault().Import != null ? src.OrderDetails.FirstOrDefault().Import.CreatedDate  : null))
