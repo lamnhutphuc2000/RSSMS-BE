@@ -28,7 +28,7 @@ namespace RSSMS.DataService.Services
     {
         Task<DynamicModelResponse<RequestViewModel>> GetAll(RequestViewModel model, IList<int> RequestTypes, IList<int> RequestStatus, string[] fields, int page, int size, string accessToken);
         Task<RequestByIdViewModel> GetById(Guid id, string accessToken);
-        Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken);
+        Task<RequestByIdViewModel> Create(RequestCreateViewModel model, string accessToken);
         Task<RequestUpdateViewModel> Update(Guid id, RequestUpdateViewModel model, string accessToken);
         Task<RequestViewModel> Delete(Guid id);
         Task<RequestByIdViewModel> AssignStorage(RequestAssignStorageViewModel model, string accessToken);
@@ -272,7 +272,7 @@ namespace RSSMS.DataService.Services
 
         }
 
-        public async Task<RequestCreateViewModel> Create(RequestCreateViewModel model, string accessToken)
+        public async Task<RequestByIdViewModel> Create(RequestCreateViewModel model, string accessToken)
         {
             try
             {
@@ -343,7 +343,7 @@ namespace RSSMS.DataService.Services
                     });
 
                     await _firebaseService.PushOrderNoti("New request arrive!", null, request.Id);
-                    return model;
+                    return await GetById(request.Id,accessToken);
                 }
 
 
@@ -372,7 +372,7 @@ namespace RSSMS.DataService.Services
 
                     await _firebaseService.PushCancelRequestNoti("Delivery staff " + user.Name + " canceled schedule on " + model.CancelDay, user.Id);
 
-                    return model;
+                    return await GetById(request.Id, accessToken);
                 }
 
 
@@ -603,7 +603,7 @@ namespace RSSMS.DataService.Services
                         model.OrderId,
                         RequestId = request.Id
                     });
-                    return model;
+                    return await GetById(request.Id, accessToken);
                 }
                 Order order = null;
                 Request newRequest = null;
@@ -646,14 +646,14 @@ namespace RSSMS.DataService.Services
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not assigned yet");
 
                     var staffAssignInStorage = newRequest.Order.Storage.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager" && x.IsActive).FirstOrDefault();
-                    if (staffAssignInStorage == null) return model;
+                    if (staffAssignInStorage == null) return await GetById(request.Id, accessToken);
                     await _firebaseService.SendNoti("Customer " + userId + " take back the order: " + model.OrderId, userId, staffAssignInStorage.Staff.DeviceTokenId, request.Id, new
                     {
                         Content = "Customer " + userId + " take back the order: " + model.OrderId,
                         model.OrderId,
                         RequestId = request.Id
                     });
-                    return model;
+                    return await GetById(request.Id, accessToken);
                 }
 
 
@@ -682,7 +682,7 @@ namespace RSSMS.DataService.Services
                     RequestId = request.Id
                 });
 
-                return model;
+                return await GetById(request.Id, accessToken);
             }
             catch (ErrorResponse e)
             {

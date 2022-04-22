@@ -68,7 +68,7 @@ namespace RSSMS.API.Controllers
         [HttpPost]
         [Authorize(Roles = "Delivery Staff, Customer, Manager, Office Staff")]
         [MapToApiVersion("1")]
-        [ProducesResponseType(typeof(RequestCreateViewModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(RequestByIdViewModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Add(RequestCreateViewModel model)
