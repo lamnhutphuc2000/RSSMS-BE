@@ -322,7 +322,8 @@ namespace RSSMS.DataService.Services
                     }
 
                     if(totalPrice < model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
-                    if(model.DepositFee != (totalPrice * 50 / 100)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không đúng");
+                    if(model.DepositFee == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không được trống");
+                    if (model.DepositFee != (totalPrice * 50 / 100)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không đúng");
                     var checkResult = await CheckStorageAvailable(spaceType, isMany, (int)model.TypeOrder, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, model.StorageId, (bool)model.IsCustomerDelivery, null, accessToken, new List<string> { model.DeliveryTime }, false);
                     if (!checkResult) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
 
@@ -898,9 +899,10 @@ namespace RSSMS.DataService.Services
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
 
-                var entity = await Get(x => x.Id == id && x.IsActive == true).FirstOrDefaultAsync();
+                var entity = await Get(x => x.Id == id && x.IsActive == true && x.Status != 0).FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
 
+                entity.ModifiedBy = userId;
                 entity.Status = 0;
                 entity.CancelReason = model.CancelReason;
                 await UpdateAsync(entity);
@@ -1062,7 +1064,7 @@ namespace RSSMS.DataService.Services
                     }
                 }
 
-                var requestsAssignStorage = await Get(request => request.IsActive && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don || request.Type == (int)RequestType.Gia_han_don )&& (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen || request.Status == (int)RequestStatus.Da_xu_ly))
+                var requestsAssignStorage = await Get(request => request.IsActive && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don || request.Type == (int)RequestType.Gia_han_don )&& (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen || request.Status == (int)RequestStatus.Dang_xu_ly))
                                            .Include(request => request.Order).ThenInclude(order => order.OrderDetails)
                                            .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
                 requestsAssignStorage = requestsAssignStorage.Where(request => (request.DeliveryDate <= model.DeliveryDate && request.ReturnDate >= model.DeliveryDate) || (model.DeliveryDate <= request.DeliveryDate && model.ReturnDate >= request.DeliveryDate)).ToList();

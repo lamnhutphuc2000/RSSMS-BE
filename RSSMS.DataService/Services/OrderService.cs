@@ -246,7 +246,7 @@ namespace RSSMS.DataService.Services
                 int spaceType = 0;
                 if (model.Type == (int)OrderType.Kho_tu_quan) spaceType = 1;
                 bool isMany = false;
-
+                bool isMainService = false;
 
                 decimal totalPrice = 0;
                 decimal month = Math.Ceiling((decimal)model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days / 30);
@@ -273,14 +273,18 @@ namespace RSSMS.DataService.Services
                         if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
                         if (service.Type != (int)ServiceType.Phu_kien)
                         {
-                            if(typeService == 1) typeService = (int)service.Type;
+                            isMainService = true;
+                            totalPrice += (decimal)service.Price * month * serviceId.Amount;
+                            if (typeService == 1) typeService = (int)service.Type;
                             if (typeService != 1 && typeService != service.Type) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể đặt 1 đơn 2 loại dịch vụ chính");
                         }
+                        if (service.Type == (int)ServiceType.Phu_kien)
+                            totalPrice += (decimal)service.Price * serviceId.Amount;
                         serviceHeight += Decimal.ToDouble((decimal)service.Height);
                         serviceWidth += Decimal.ToDouble((decimal)service.Width);
                         serviceLength += Decimal.ToDouble((decimal)service.Length);
                         serviceVolumne = (int)serviceId.Amount * serviceHeight * serviceLength * serviceWidth;
-                        totalPrice += (decimal)service.Price * month * serviceId.Amount;
+                        
                     }
                     if(!((decimal)orderDetail.Height == 0 && (decimal)orderDetail.Width ==0 && (decimal)orderDetail.Length == 0))
                         cuboid.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, Guid.NewGuid()));
@@ -292,7 +296,8 @@ namespace RSSMS.DataService.Services
                         foreach(var orderAddtionalFee in model.OrderAdditionalFees)
                             totalPrice += (decimal)orderAddtionalFee.Price;
                 
-                if(totalPrice != model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
+                if(!isMainService) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa chọn dịch vụ chính");
+                if (totalPrice != model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);

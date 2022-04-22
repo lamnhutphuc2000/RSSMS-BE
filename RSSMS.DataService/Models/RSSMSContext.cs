@@ -443,6 +443,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.DeliveryDate).HasColumnType("date");
 
+                entity.Property(e => e.DepositFee).HasColumnType("decimal(18, 3)");
+
                 entity.Property(e => e.Note).HasMaxLength(255);
 
                 entity.Property(e => e.OldReturnDate).HasColumnType("date");

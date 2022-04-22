@@ -52,7 +52,8 @@ namespace RSSMS.DataService.Services
 
                 if (orderDetailDontHaveTransfer.Count > 0)
                     foreach (var orderDetail in orderDetailDontHaveTransfer)
-                        orderDetailToAdd.Add(_mapper.Map<OrderDetailInFloorViewModel>(orderDetail));
+                        if(orderDetail.Import.FloorId == floorId)
+                            orderDetailToAdd.Add(_mapper.Map<OrderDetailInFloorViewModel>(orderDetail));
 
 
                 if (orderDetailHaveTransfer.Count > 0)
