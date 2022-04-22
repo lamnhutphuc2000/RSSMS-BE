@@ -139,7 +139,7 @@ namespace RSSMS.DataService.Services
                         .Select(g => new ScheduleViewModel
                         {
                             ScheduleDay = g.Key,
-                            Requests = g.Where(x => x.ScheduleDay == g.Key).Select(x => x.Request).ToList()
+                            Requests = g.Where(x => x.ScheduleDay == g.Key).Select(x => x.Request).ToList().Sort()
                         }).AsQueryable().PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
                 }
                 else

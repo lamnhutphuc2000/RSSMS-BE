@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace RSSMS.DataService.ViewModels.Requests
 {
-    public class RequestScheduleViewModel
+    public class RequestScheduleViewModel : IComparable<RequestScheduleViewModel>
     {
         public Guid Id { get; set; }
         public Guid? OrderId { get; set; }
@@ -29,5 +32,22 @@ namespace RSSMS.DataService.ViewModels.Requests
         public DateTime? ToDate { get; set; }
         public string Note { get; set; }
         public DateTime? CreatedDate { get; set; }
+
+        public int CompareTo([AllowNull] RequestScheduleViewModel other)
+        {
+            IDictionary<string, int> deliveryString = new Dictionary<string,int>();
+
+            deliveryString.Add("8am - 10am", 0);
+            deliveryString.Add("10am - 12pm", 1);
+            deliveryString.Add("12pm - 2pm", 2);
+            deliveryString.Add("2pm - 4pm", 3);
+            deliveryString.Add("4pm - 6pm", 4);
+
+            if (deliveryString[DeliveryTime] > deliveryString[other.DeliveryTime])
+                return 1;
+            if (deliveryString[DeliveryTime] == deliveryString[other.DeliveryTime])
+                return 0;
+            return -1;
+        }
     }
 }
