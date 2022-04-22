@@ -34,7 +34,7 @@ namespace RSSMS.DataService.Models
         public string ReturnAddress { get; set; }
         public decimal? TotalPrice { get; set; }
         public DateTime? OldReturnDate { get; set; }
-        public decimal? DepositFee { get; set; }
+        public decimal? AdvanceMoney { get; set; }
         public DateTime? ReturnDate { get; set; }
         public TimeSpan? ReturnTime { get; set; }
         public string CancelReason { get; set; }

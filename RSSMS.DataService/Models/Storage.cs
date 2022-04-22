@@ -25,7 +25,6 @@ namespace RSSMS.DataService.Models
         public decimal Length { get; set; }
         public bool IsActive { get; set; }
         public Guid? ModifiedBy { get; set; }
-        public TimeSpan? Time { get; set; }
 
         public virtual ICollection<Area> Areas { get; set; }
         public virtual ICollection<Order> Orders { get; set; }

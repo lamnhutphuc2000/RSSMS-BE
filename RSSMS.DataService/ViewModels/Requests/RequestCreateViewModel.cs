@@ -17,7 +17,7 @@ namespace RSSMS.DataService.ViewModels.Requests
         public DateTime? ReturnDate { get; set; }
         public string ReturnAddress { get; set; }
         public string ReturnTime { get; set; }
-        public decimal? DepositFee { get; set; }
+        public decimal? AdvanceMoney { get; set; }
         public string CancelReason { get; set; }
         public DateTime? CancelDay { get; set; }
         public bool? IsPaid { get; set; }

@@ -323,8 +323,8 @@ namespace RSSMS.DataService.Services
                     }
 
                     if(totalPrice < model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
-                    if(model.DepositFee == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không được trống");
-                    if (model.DepositFee != (totalPrice * 50 / 100)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không đúng");
+                    if(model.AdvanceMoney == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không được trống");
+                    if (model.AdvanceMoney != (totalPrice * 50 / 100)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không đúng");
                     var checkResult = await CheckStorageAvailable(spaceType, isMany, (int)model.TypeOrder, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, model.StorageId, (bool)model.IsCustomerDelivery, null, accessToken, new List<string> { model.DeliveryTime }, false);
                     if (!checkResult) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
 

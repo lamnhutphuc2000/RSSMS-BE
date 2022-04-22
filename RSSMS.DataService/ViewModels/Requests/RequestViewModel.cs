@@ -10,7 +10,7 @@ namespace RSSMS.DataService.ViewModels.Requests
         public static string[] Fields = {
             "Id","OrderId","OrderName","UserId","Type","TypeOrder","Status","Note","DeliveryStaffName","DeliveryDate","IsCustomerDelivery"
                 ,"StorageId","StorageName","DeliveryTime","DeliveryAddress","ReturnAddress","ReturnDate","ReturnTime","ReturnAddress"
-                ,"FromDate","ToDate","DeliveryStaffPhone"
+                ,"FromDate","ToDate","DeliveryStaffPhone","AdvanceMoney"
                 ,"CustomerName","CustomerPhone","RequestDetails","Schedules","CreatedDate","CancelDate"
         };
         [BindNever]
@@ -59,6 +59,8 @@ namespace RSSMS.DataService.ViewModels.Requests
         public DateTime? ToDate { get; set; }
         [BindNever]
         public string Note { get; set; }
+        [BindNever]
+        public decimal? AdvanceMoney { get; set; }
         [BindNever]
         public DateTime? CancelDate { get; set; }
         [BindNever]

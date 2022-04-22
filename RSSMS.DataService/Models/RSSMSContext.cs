@@ -433,6 +433,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.AdvanceMoney).HasColumnType("decimal(18, 3)");
+
                 entity.Property(e => e.CancelDate).HasColumnType("datetime");
 
                 entity.Property(e => e.CancelReason).HasMaxLength(255);
@@ -442,8 +444,6 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.DeliveryAddress).HasMaxLength(255);
 
                 entity.Property(e => e.DeliveryDate).HasColumnType("date");
-
-                entity.Property(e => e.DepositFee).HasColumnType("decimal(18, 3)");
 
                 entity.Property(e => e.Note).HasMaxLength(255);
 
