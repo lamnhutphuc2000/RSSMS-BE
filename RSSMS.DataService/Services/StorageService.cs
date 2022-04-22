@@ -439,7 +439,7 @@ namespace RSSMS.DataService.Services
                             foreach (var time in deliveryTimes)
                                 timeSpan.Add(_utilService.StringToTime(time));
                         }
-                        var requestsNeedToDeli = requestsNeedDeliver.Where(request => !(bool)request.IsCustomerDelivery && request.TypeOrder == (int)OrderType.Giu_do_thue && timeSpan.Contains((TimeSpan)request.DeliveryTime)).ToList();
+                        var requestsNeedToDeli = requestsNeedDeliver.Where(request => !(bool)request.IsCustomerDelivery && request.DeliveryDate.Value.Date == dateFrom.Date && request.TypeOrder == (int)OrderType.Giu_do_thue && timeSpan.Contains((TimeSpan)request.DeliveryTime)).ToList();
                         if (requestsNeedToDeli.Count() + 1 <= staffs.Count())
                         {
                             deliFlag = true;
@@ -490,7 +490,7 @@ namespace RSSMS.DataService.Services
                             foreach (var time in deliveryTimes)
                                 timeSpan.Add(_utilService.StringToTime(time));
                         }
-                        var requestsNeedToDeli = requestsNeedDeliver.Where(request => !(bool)request.IsCustomerDelivery && request.TypeOrder == (int)OrderType.Giu_do_thue && timeSpan.Contains((TimeSpan)request.DeliveryTime)).ToList();
+                        var requestsNeedToDeli = requestsNeedDeliver.Where(request => !(bool)request.IsCustomerDelivery && request.DeliveryDate.Value.Date == dateFrom.Date && request.TypeOrder == (int)OrderType.Giu_do_thue && timeSpan.Contains((TimeSpan)request.DeliveryTime)).ToList();
                         if (requestsNeedToDeli.Count() + 1 <= staffs.Count())
                         {
                             StorageViewModel storage = _mapper.Map<StorageViewModel>(storageList[i]);

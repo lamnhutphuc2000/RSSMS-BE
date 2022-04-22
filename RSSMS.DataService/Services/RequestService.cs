@@ -313,11 +313,12 @@ namespace RSSMS.DataService.Services
                             if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
                             if (service.Type != (int)ServiceType.Phu_kien)
                             {
+                                totalPrice += service.Price * month;
                                 if (serviceType == -1) serviceType = (int)service.Type;
                                 if(serviceType != -1 && serviceType != service.Type) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể đặt 1 đơn 2 loại dịch vụ chính");
                                 cuboid.Add(new Cuboid((decimal)service.Width, (decimal)service.Height, (decimal)service.Length, 0, service.Id + i.ToString()));
                             }
-                            totalPrice += service.Price * month;
+                            if(service.Type == (int)ServiceType.Phu_kien) totalPrice += service.Price;
                         }
                     }
 
