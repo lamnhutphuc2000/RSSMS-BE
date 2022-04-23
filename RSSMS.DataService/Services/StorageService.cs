@@ -498,7 +498,7 @@ namespace RSSMS.DataService.Services
                             if(distance != null)
                             {
                                 storage.DeliveryDistance = distance.rows[0].elements[0].distance.text;
-                                storage.DeliveryFee = serviceDeliveryFee * Math.Ceiling(Convert.ToDecimal(storage.DeliveryDistance));
+                                storage.DeliveryFee = serviceDeliveryFee * Math.Ceiling(Convert.ToDecimal(storage.DeliveryDistance.Split(' ')[0]));
                             }
                                 
                             result.Add(storage);

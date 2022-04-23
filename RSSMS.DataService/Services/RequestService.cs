@@ -255,6 +255,11 @@ namespace RSSMS.DataService.Services
                 if ((role == "Delivery Staff" || role == "Office Staff") && storageId == null)
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên chưa vào kho");
                 var result = await request.ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
+                if(!string.IsNullOrWhiteSpace(result.Note))
+                {
+                    var maxServiceDeliveryFee = result.RequestDetails.Select(requestDetail => requestDetail.ServiceDeliveryFee).Max();
+                    result.DeliveryFee = maxServiceDeliveryFee * Math.Ceiling(Convert.ToDecimal(result.Note.Split(' ')[0]));
+                }
                 if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
                 if (result.Type != 2) return result;
                 var orderHistoryExtension = _orderHistoryExtensionService.Get(orderHistory => orderHistory.RequestId == result.Id).FirstOrDefault();

@@ -55,6 +55,8 @@ namespace RSSMS.DataService.ViewModels.Requests
         public string DeliveryStaffPhone { get; set; }
         [JsonProperty("note")]
         public string Note { get; set; }
+        [JsonProperty("deliveryFee")]
+        public decimal? DeliveryFee { get; set; }
         [JsonProperty("cancelBy")]
         public string CancelBy { get; set; }
         [JsonProperty("cancelByPhone")]
