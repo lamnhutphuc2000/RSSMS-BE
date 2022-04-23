@@ -328,8 +328,8 @@ namespace RSSMS.DataService.Services
                             if(service.Type == (int)ServiceType.Phu_kien) totalPrice += service.Price;
                         }
                     }
-                    
-                    totalPrice += serviceDeliveryFee * Math.Ceiling(Convert.ToDecimal(model.Note.Split(' ')[0]));
+                    if(!string.IsNullOrWhiteSpace(model.Note))
+                        totalPrice += serviceDeliveryFee * Math.Ceiling(Convert.ToDecimal(model.Note.Split(' ')[0]));
 
                     if (totalPrice < model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
                     if(model.AdvanceMoney == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không được trống");
