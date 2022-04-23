@@ -5,5 +5,6 @@
         public const int DefaultPaging = 250;
         public const int LimitPaging = 100;
         public const int DefaultPage = 1;
+
     }
 }
