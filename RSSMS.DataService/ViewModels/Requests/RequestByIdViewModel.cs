@@ -27,6 +27,8 @@ namespace RSSMS.DataService.ViewModels.Requests
         public DateTime? DeliveryDate { get; set; }
         [JsonProperty("deliveryTime")]
         public string DeliveryTime { get; set; }
+        [JsonProperty("advanceMoney")]
+        public decimal? AdvanceMoney { get; set; }
         [JsonProperty("deliveryAddress")]
         public string DeliveryAddress { get; set; }
         [JsonProperty("isCustomerDelivery")]
@@ -71,7 +73,5 @@ namespace RSSMS.DataService.ViewModels.Requests
         public DateTime? OldReturnDate { get; set; }
         [JsonProperty("dequestDetails")]
         public virtual ICollection<RequestDetailViewModel> RequestDetails { get; set; }
-        //[BindNever]
-        //public virtual ICollection<ScheduleViewModel> Schedules { get; set; }
     }
 }

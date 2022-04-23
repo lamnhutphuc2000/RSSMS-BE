@@ -28,14 +28,6 @@ namespace RSSMS.DataService.ViewModels.Orders
         public string ReturnAddress { get; set; }
         [JsonProperty("totalPrice")]
         public decimal? TotalPrice { get; set; }
-        [JsonProperty("additionalFee")]
-        public double? AdditionalFee { get; set; }
-        [JsonProperty("additionalFeeDescription")]
-        public string AdditionalFeeDescription { get; set; }
-        [JsonProperty("compensationFee")]
-        public decimal? CompensationFee { get; set; }
-        [JsonProperty("compensationDescription")]
-        public string CompensationDescription { get; set; }
         [JsonProperty("rejectedReason")]
         public string RejectedReason { get; set; }
         [JsonProperty("type")]
