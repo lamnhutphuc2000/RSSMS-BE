@@ -309,6 +309,7 @@ namespace RSSMS.DataService.Services
                     decimal totalPrice = 0;
                     decimal month = Math.Ceiling((decimal)model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days/ 30);
                     int serviceType = -1;
+                    decimal serviceDeliveryFee = 0;
                     for (int i = 0; i < services.Count; i++)
                     {
                         for (int j = 0; j < services[i].Amount; j++)
@@ -318,6 +319,7 @@ namespace RSSMS.DataService.Services
                             if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
                             if (service.Type != (int)ServiceType.Phu_kien)
                             {
+                                if (serviceDeliveryFee < service.DeliveryFee) serviceDeliveryFee = (decimal)service.DeliveryFee;
                                 totalPrice += service.Price * month;
                                 if (serviceType == -1) serviceType = (int)service.Type;
                                 if(serviceType != -1 && serviceType != service.Type) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể đặt 1 đơn 2 loại dịch vụ chính");
@@ -326,8 +328,10 @@ namespace RSSMS.DataService.Services
                             if(service.Type == (int)ServiceType.Phu_kien) totalPrice += service.Price;
                         }
                     }
+                    
+                    totalPrice += serviceDeliveryFee * Math.Ceiling(Convert.ToDecimal(model.Note.Split(' ')[0]));
 
-                    if(totalPrice < model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
+                    if (totalPrice < model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
                     if(model.AdvanceMoney == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không được trống");
                     if (model.AdvanceMoney != (totalPrice * 50 / 100)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không đúng");
                     var checkResult = await CheckStorageAvailable(spaceType, isMany, (int)model.TypeOrder, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, model.StorageId, (bool)model.IsCustomerDelivery, null, accessToken, new List<string> { model.DeliveryTime }, false);
