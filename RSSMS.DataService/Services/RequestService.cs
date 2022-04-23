@@ -899,6 +899,7 @@ namespace RSSMS.DataService.Services
                 }).ToList();
                 if(services.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Chưa đặt bất kì sản phẩm nào.");
                 // service list chứa list service người dùng đặt
+                decimal maxServiceDeliveryFee = 0;
                 List<Cuboid> cuboid = new List<Cuboid>();
                 for (int i = 0; i < services.Count; i++)
                 {
@@ -908,7 +909,11 @@ namespace RSSMS.DataService.Services
                         if (!service.IsActive) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Dịch vụ không tồn tại");
                         if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
                         if (service.Type != (int)ServiceType.Phu_kien)
-                            cuboid.Add(new Cuboid((decimal)service.Width, (decimal)service.Height, (decimal)service.Length, 0, service.Id + i.ToString()));
+                        {
+                            if (maxServiceDeliveryFee < service.DeliveryFee) maxServiceDeliveryFee = (decimal)service.DeliveryFee;
+                            cuboid.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id + i.ToString()));
+                        }
+                            
                         if (service.Type == (int)ServiceType.Kho) spaceType = (int)SpaceType.Dien_tich;
                     }
                 }
@@ -920,7 +925,7 @@ namespace RSSMS.DataService.Services
 
 
 
-                result = await _storageService.GetStorageAvailable(null, spaceType, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, isMany, cuboid, requestsAssignStorage, (bool) model.IsCustomerDelivery, accessToken, new List<string> { model.DeliveryTime }, model.DeliveryAddress);
+                result = await _storageService.GetStorageAvailable(null, spaceType, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, isMany, cuboid, requestsAssignStorage, (bool) model.IsCustomerDelivery, accessToken, new List<string> { model.DeliveryTime }, model.DeliveryAddress, maxServiceDeliveryFee);
 
 
                 if (result.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không có kho còn chỗ trống.");

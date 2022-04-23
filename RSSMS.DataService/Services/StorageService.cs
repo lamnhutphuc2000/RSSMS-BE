@@ -35,7 +35,7 @@ namespace RSSMS.DataService.Services
         Task<IDictionary<Guid, List<FloorGetByIdViewModel>>> GetFloorWithStorage(Guid? storageId, int spaceType, DateTime date, bool isMany);
         Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken);
         Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, bool isCreateOrder);
-        Task<List<StorageViewModel>> GetStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, string deliveryAddress);
+        Task<List<StorageViewModel>> GetStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, string deliveryAddress, decimal serviceDeliveryFee);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -457,7 +457,7 @@ namespace RSSMS.DataService.Services
             return result;
         }
 
-        public async Task<List<StorageViewModel>> GetStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, string deliveryAddress)
+        public async Task<List<StorageViewModel>> GetStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, string deliveryAddress, decimal serviceDeliveryFee)
         {
             List<StorageViewModel> result = new List<StorageViewModel>();
             bool isAvailable = false;
@@ -496,7 +496,11 @@ namespace RSSMS.DataService.Services
                             StorageViewModel storage = _mapper.Map<StorageViewModel>(storageList[i]);
                             DistanceViewModel distance = await GetDistanceFromCustomerToStorage(deliveryAddress, storage.Address);
                             if(distance != null)
+                            {
                                 storage.DeliveryDistance = distance.rows[0].elements[0].distance.text;
+                                storage.DeliveryFee = serviceDeliveryFee * Math.Ceiling(Convert.ToDecimal(storage.DeliveryDistance));
+                            }
+                                
                             result.Add(storage);
                         }
                     } else
