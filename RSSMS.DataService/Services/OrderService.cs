@@ -502,8 +502,11 @@ namespace RSSMS.DataService.Services
                 if(account == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản");
 
 
+                if(model.Status == (int)OrderStatus.Da_thanh_ly)
+                    if(order.Status != (int)OrderStatus.Da_xuat_kho)
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể thanh lý đơn chưa xuất kho hoặc chưa hết hạn");
 
-                if(account.Role.Name == "Office Staff")
+                if (account.Role.Name == "Office Staff")
                 {
                     if(model.OrderAdditionalFees == null)
                     {
@@ -613,8 +616,8 @@ namespace RSSMS.DataService.Services
             {
                 var orderIds = model.Select(order => order.Id);
                 var orders = await Get(order => orderIds.Contains(order.Id) && order.IsActive).ToListAsync();
-                if (orders == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
-                if (orders.Count < model.Count) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order not found");
+                if (orders == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy đơn");
+                if (orders.Count < model.Count) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy đơn");
 
                 foreach (var order in orders)
                 {
