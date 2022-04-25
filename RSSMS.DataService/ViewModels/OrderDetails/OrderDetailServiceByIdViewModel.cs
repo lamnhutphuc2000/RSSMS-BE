@@ -15,7 +15,7 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public int? ServiceType { get; set; }
         [JsonProperty("amount")]
         public int Amount { get; set; }
-        [JsonProperty("totalPrice")]
-        public decimal TotalPrice { get; set; }
+        [JsonProperty("price")]
+        public decimal Price { get; set; }
     }
 }

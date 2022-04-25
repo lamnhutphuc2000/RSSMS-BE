@@ -350,7 +350,7 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
-                entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 3)");
+                entity.Property(e => e.Price).HasColumnType("decimal(18, 3)");
 
                 entity.HasOne(d => d.OrderDetail)
                     .WithMany(p => p.OrderDetailServiceMaps)
@@ -477,6 +477,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Note).HasMaxLength(255);
 
+                entity.Property(e => e.Price).HasColumnType("decimal(18, 3)");
+
                 entity.HasOne(d => d.Request)
                     .WithMany(p => p.RequestDetails)
                     .HasForeignKey(d => d.RequestId)
@@ -490,9 +492,9 @@ namespace RSSMS.DataService.Models
 
             modelBuilder.Entity<RequestTimeline>(entity =>
             {
-                entity.HasNoKey();
-
                 entity.ToTable("RequestTimeline");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
@@ -503,7 +505,7 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Name).HasMaxLength(50);
 
                 entity.HasOne(d => d.Request)
-                    .WithMany()
+                    .WithMany(p => p.RequestTimelines)
                     .HasForeignKey(d => d.RequestId)
                     .HasConstraintName("FK_RequestTimeline_Request");
             });

@@ -11,7 +11,7 @@ namespace RSSMS.DataService.Models
         public Guid? RequestId { get; set; }
         public Guid? ServiceId { get; set; }
         public int? Amount { get; set; }
-        public double? Price { get; set; }
+        public decimal? Price { get; set; }
         public string Note { get; set; }
 
         public virtual Request Request { get; set; }

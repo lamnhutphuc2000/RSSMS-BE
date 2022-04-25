@@ -11,6 +11,7 @@ namespace RSSMS.DataService.Models
         {
             Notifications = new HashSet<Notification>();
             RequestDetails = new HashSet<RequestDetail>();
+            RequestTimelines = new HashSet<RequestTimeline>();
             Schedules = new HashSet<Schedule>();
         }
 
@@ -44,6 +45,7 @@ namespace RSSMS.DataService.Models
         public virtual Storage Storage { get; set; }
         public virtual ICollection<Notification> Notifications { get; set; }
         public virtual ICollection<RequestDetail> RequestDetails { get; set; }
+        public virtual ICollection<RequestTimeline> RequestTimelines { get; set; }
         public virtual ICollection<Schedule> Schedules { get; set; }
     }
 }

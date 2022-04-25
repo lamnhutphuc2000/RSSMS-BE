@@ -477,7 +477,7 @@ namespace RSSMS.DataService.Services
                             var serviceExtend = new OrderHistoryExtensionServiceMap()
                             {
                                 Amount = service.Amount,
-                                Price = service.TotalPrice,
+                                Price = service.Price,
                                 Serviceid = service.ServiceId,
                                 OrderHistoryExtensionId = orderExtend.Id
                             };
