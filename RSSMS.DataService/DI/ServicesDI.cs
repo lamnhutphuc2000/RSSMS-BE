@@ -61,6 +61,9 @@ namespace RSSMS.DataService.DI
             services.AddScoped<IStorageRepository, StorageRepository>();
             services.AddScoped<IStorageService, StorageService>();
 
+            services.AddScoped<IRequestTimelineRepository, RequestTimelineRepository>();
+            services.AddScoped<IRequestTimelineService, RequestTimelineService>();
+
             services.AddScoped<IFirebaseService, FirebaseService>();
         }
     }
