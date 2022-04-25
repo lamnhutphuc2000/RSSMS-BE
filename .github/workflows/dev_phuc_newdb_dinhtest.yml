@@ -53,5 +53,5 @@ jobs:
         with:
           app-name: 'dinhTest'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_0B0199073C3246A6AA9D735F74E6DA4D }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_81CEE01CB5244209A1294DED214FD7EC }}
           package: .
