@@ -14,7 +14,7 @@ namespace RSSMS.DataService.ViewModels.RequestDetail
         [JsonProperty("amount")]
         public int? Amount { get; set; }
         [JsonProperty("price")]
-        public double? Price { get; set; }
+        public decimal? Price { get; set; }
         [JsonProperty("serviceName")]
         public string ServiceName { get; set; }
         [JsonProperty("serviceDeliveryFee")]

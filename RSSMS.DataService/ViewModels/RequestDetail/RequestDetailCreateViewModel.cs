@@ -6,7 +6,7 @@ namespace RSSMS.DataService.ViewModels.RequestDetail
     {
         public Guid ServiceId { get; set; }
         public int Amount { get; set; }
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         public string Note { get; set; }
     }
 }
