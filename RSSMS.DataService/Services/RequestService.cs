@@ -288,6 +288,8 @@ namespace RSSMS.DataService.Services
                 Guid? storageId = null;
                 if (role == "Office Staff") storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
                 Request request = null;
+                Order order = null;
+                Request newRequest = null;
 
                 if (model.Type == (int)RequestType.Tao_don) // customer tao yeu cau tao don
                 {
@@ -398,7 +400,8 @@ namespace RSSMS.DataService.Services
                         .Include(request => request.Order).ThenInclude(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).Select(request => request.Order).FirstOrDefault();
                     if(orderToExtend == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy đơn cần gia hạn");
 
-
+                    if(model.IsPaid == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa thanh toán");
+                    if (model.IsPaid == false) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa thanh toán");
                     var orderDetails = orderToExtend.OrderDetails.ToList();
                     int typeService = 1;
                     int spaceType = 0;
@@ -441,8 +444,10 @@ namespace RSSMS.DataService.Services
 
                     request = _mapper.Map<Request>(model);
                     request.CreatedBy = userId;
-
+                    request.Status = (int)RequestStatus.Hoan_thanh;
                     await CreateAsync(request);
+
+                    order = Get(request => request.Id == request.Id).Include(request => request.Order).Select(request => request.Order).FirstOrDefault();
 
                     await _requestTimelineService.CreateAsync(new RequestTimeline
                     {
@@ -450,22 +455,70 @@ namespace RSSMS.DataService.Services
                         CreatedDate = DateTime.Now,
                         CreatedBy = userId,
                         Datetime = DateTime.Now,
-                        Name = "Yêu cầu gia hạn đơn chờ xác nhận"
+                        Name = "Gia hạn đơn"
                     });
+
+                    OrderHistoryExtension orderExtend = new OrderHistoryExtension();
+                    orderExtend.OldReturnDate = (DateTime)request.Order.ReturnDate;
+                    orderExtend.PaidDate = DateTime.Now;
+                    orderExtend.TotalPrice = (decimal)request.TotalPrice;
+                    orderExtend.ModifiedBy = userId;
+                    orderExtend.RequestId = request.Id;
+                    orderExtend.OrderId = order.Id;
+                    orderExtend.ReturnDate = (DateTime)request.ReturnDate;
+                    await _orderHistoryExtensionService.CreateAsync(orderExtend);
+
+                    List<OrderHistoryExtensionServiceMap> orderExtendService = new List<OrderHistoryExtensionServiceMap>();
+                    orderDetails = request.Order.OrderDetails.ToList();
+                    foreach (var orderDetail in orderDetails)
+                    {
+                        foreach (var service in orderDetail.OrderDetailServiceMaps.ToList())
+                        {
+                            var serviceExtend = new OrderHistoryExtensionServiceMap()
+                            {
+                                Amount = service.Amount,
+                                Price = service.TotalPrice,
+                                Serviceid = service.ServiceId,
+                                OrderHistoryExtensionId = orderExtend.Id
+                            };
+                            orderExtendService.Add(serviceExtend);
+                        }
+                    }
+                    if (orderExtendService.Count > 0)
+                    {
+                        orderExtend.OrderHistoryExtensionServiceMaps = orderExtendService;
+                        order.ReturnDate = orderExtend.ReturnDate;
+                        orderExtend.Order = order;
+                        await _orderHistoryExtensionService.UpdateAsync(orderExtend);
+                    }
+                    var orderHistoryExtend = request.Order.OrderHistoryExtensions.Where(x => x.RequestId == request.Id).FirstOrDefault();
+                    if (orderHistoryExtend == null)
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy thông tin gia hạn đơn");
+                    orderHistoryExtend.PaidDate = DateTime.Now;
+                    orderHistoryExtend.ModifiedBy = userId;
+                    await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
+
+                    order = orderHistoryExtend.Order;
+                    order.ReturnDate = orderHistoryExtend.ReturnDate;
+                    order.IsPaid = (bool)model.IsPaid;
+                    order.ModifiedBy = userId;
+                    order.ModifiedDate = DateTime.Now;
+                    orderHistoryExtend.Order = order;
+                    await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
+
 
                     var requestTmp = Get(x => x.Id == request.Id).Include(x => x.Order).ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staffAssign => staffAssign.Staff.Role.Name == "Manager" && staffAssign.IsActive)).ThenInclude(staffAssignInStorage => staffAssignInStorage.Staff).Select(x => x.Order.Storage.StaffAssignStorages.FirstOrDefault()).FirstOrDefault();
 
 
-                    await _firebaseService.SendNoti("Customer " + userId + " expand the order: " + model.OrderId, userId, requestTmp.Staff.DeviceTokenId, request.Id, new
+                    await _firebaseService.SendNoti("Khách " + userId + " gia hạn đơn: " + order.Name, userId, requestTmp.Staff.DeviceTokenId, request.Id, new
                     {
-                        Content = "Customer " + userId + " expand the order: " + model.OrderId,
+                        Content = "Khách " + userId + " gia hạn đơn: " + order.Name,
                         model.OrderId,
                         RequestId = request.Id
                     });
                     return await GetById(request.Id, accessToken);
                 }
-                Order order = null;
-                Request newRequest = null;
+                
                 if (model.Type == (int)RequestType.Tra_don) // rut do ve
                 {
                     if(model.IsCustomerDelivery != null)
@@ -569,45 +622,6 @@ namespace RSSMS.DataService.Services
 
                 request.Status = model.Status;
 
-                if (request.Type == (int)RequestType.Gia_han_don)
-                {
-
-
-                    OrderHistoryExtension orderExtend = new OrderHistoryExtension();
-                    orderExtend.OldReturnDate = (DateTime)request.Order.ReturnDate;
-                    orderExtend.PaidDate = DateTime.Now;
-                    orderExtend.TotalPrice = (decimal)request.TotalPrice;
-                    orderExtend.ModifiedBy = userId;
-                    orderExtend.RequestId = request.Id;
-                    orderExtend.OrderId = (Guid)request.OrderId;
-                    orderExtend.ReturnDate = (DateTime)request.ReturnDate;
-                    await _orderHistoryExtensionService.CreateAsync(orderExtend);
-
-                    List<OrderHistoryExtensionServiceMap> orderExtendService = new List<OrderHistoryExtensionServiceMap>();
-                    var orderDetails = request.Order.OrderDetails.ToList();
-                    foreach (var orderDetail in orderDetails)
-                    {
-                        foreach (var service in orderDetail.OrderDetailServiceMaps.ToList())
-                        {
-                            var serviceExtend = new OrderHistoryExtensionServiceMap()
-                            {
-                                Amount = service.Amount,
-                                Price = service.TotalPrice,
-                                Serviceid = service.ServiceId,
-                                OrderHistoryExtensionId = orderExtend.Id
-                            };
-                            orderExtendService.Add(serviceExtend);
-                        }
-                    }
-                    if (orderExtendService.Count > 0)
-                    {
-                        orderExtend.OrderHistoryExtensionServiceMaps = orderExtendService;
-                        var order = orderExtend.Order;
-                        order.ReturnDate = orderExtend.ReturnDate;
-                        orderExtend.Order = order;
-                        await _orderHistoryExtensionService.UpdateAsync(orderExtend);
-                    }
-                }
 
 
 

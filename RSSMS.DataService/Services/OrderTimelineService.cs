@@ -45,7 +45,6 @@ namespace RSSMS.DataService.Services
                 if (timelines.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy dòng thời gian");
 
 
-
                 var rs = new DynamicModelResponse<OrderTimelinesViewModel>
                 {
 
