@@ -19,6 +19,10 @@ namespace RSSMS.DataService.ViewModels.Requests
         public string CustomerName { get; set; }
         [JsonProperty("customerPhone")]
         public string CustomerPhone { get; set; }
+        [JsonProperty("storageName")]
+        public string StorageName { get; set; }
+        [JsonProperty("storageAddress")]
+        public string StorageAddress { get; set; }
         [JsonProperty("totalPrice")]
         public decimal? TotalPrice { get; set; }
         [JsonProperty("isPaid")]

@@ -32,6 +32,8 @@ namespace RSSMS.DataService.AutoMapper
 
             mc.CreateMap<RequestByIdViewModel, Request>();
             mc.CreateMap<Request, RequestByIdViewModel>()
+                .ForMember(des => des.StorageName, otp => otp.MapFrom(src => src.Storage.Name))
+                .ForMember(des => des.StorageAddress, otp => otp.MapFrom(src => src.Storage.Address))
                 .ForMember(des => des.CustomerId, opt => opt.MapFrom(src => src.CreatedByNavigation.Role.Name == "Customer" ? src.CreatedBy : null))
                 .ForMember(des => des.DeliveryTime, opt => opt.MapFrom(src => src.DeliveryTime != null ? TimeUtilStatic.TimeToString((TimeSpan)src.DeliveryTime) : ""))
                 .ForMember(des => des.CustomerName, opt => opt.MapFrom(src => src.CreatedByNavigation.Role.Name == "Customer" ? src.CreatedByNavigation.Name : null))
