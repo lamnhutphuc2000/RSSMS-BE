@@ -494,7 +494,7 @@ namespace RSSMS.DataService.Models
             {
                 entity.ToTable("RequestTimeline");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
