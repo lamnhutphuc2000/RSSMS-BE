@@ -51,11 +51,12 @@ namespace RSSMS
             } 
             else
             {
-                app.UseSwaggerUI(options =>
-                {
-                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-                    options.RoutePrefix = string.Empty;
-                });
+                app.UseDeveloperExceptionPage();
+                //app.UseSwaggerUI(options =>
+                //{
+                //    options.SwaggerEndpoint("/swagger/swagger.json", "v1");
+                //    options.RoutePrefix = string.Empty;
+                //});
             }
             app.UseCors(builder => builder
                 .AllowAnyOrigin()
