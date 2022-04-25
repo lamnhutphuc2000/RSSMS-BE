@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
+using System.Collections.Generic;
+using System.Text;
 
-namespace RSSMS.DataService.ViewModels.OrderTimelines
+namespace RSSMS.DataService.ViewModels.RequestTimelinesViewModel
 {
-    public class OrderTimelinesViewModel
+    public class RequestTimelinesViewModel
     {
         public static string[] Fields = {
             "OrderId","RequestId","Datetime","Name","Description"};

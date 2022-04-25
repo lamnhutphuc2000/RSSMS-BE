@@ -22,9 +22,11 @@ namespace RSSMS.DataService.Services
     public class OrderTimelineService : BaseService<OrderTimeline>, IOrderTimelineService
     {
         private readonly IMapper _mapper;
-        public OrderTimelineService(IUnitOfWork unitOfWork, IOrderTimelineRepository repository, IMapper mapper) : base(unitOfWork, repository)
+        private readonly IRequestTimelineService _requestTimelineService;
+        public OrderTimelineService(IUnitOfWork unitOfWork, IOrderTimelineRepository repository, IMapper mapper, IRequestTimelineService requestTimelineService) : base(unitOfWork, repository)
         {
             _mapper = mapper;
+            _requestTimelineService = requestTimelineService;
         }
 
 
@@ -33,12 +35,14 @@ namespace RSSMS.DataService.Services
             try
             {
                 var orderId = model.OrderId;
+                if(orderId == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
                 model.OrderId = null;
-                var timelines = Get(timeline => timeline.OrderId == orderId).OrderByDescending(timeline => timeline.Datetime)
-                                    .ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider)
-                                    .DynamicFilter(model)
+                var requestTimelines = await _requestTimelineService.Get(timeline => timeline.Request.OrderId == orderId).ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider).ToListAsync();
+                var orderTimelines = await Get(timeline => timeline.OrderId == orderId).ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider).ToListAsync();
+                requestTimelines.AddRange(orderTimelines);
+                var timelines = requestTimelines.AsQueryable().OrderByDescending(timeline => timeline.Datetime).DynamicFilter(model)
                                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-                if (timelines.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Timelines not found");
+                if (timelines.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy dòng thời gian");
 
 
 

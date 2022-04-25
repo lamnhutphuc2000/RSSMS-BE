@@ -509,7 +509,8 @@ namespace RSSMS.DataService.Services
 
                 if (role == "Manager")
                     staffs = staffs.Where(account => account.Role.Name != "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-
+                if (role == "Office Staff")
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Thủ kho không thể coi tài khoản người dùng");
                 // Nhân viên không thuộc kho nào
                 if (storageId == null && !getFromAllStorage)
                     staffs = staffs.Where(account => (account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() == 0) || account.Role.Name == "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);

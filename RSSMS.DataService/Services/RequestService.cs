@@ -47,7 +47,7 @@ namespace RSSMS.DataService.Services
         private readonly IFirebaseService _firebaseService;
         private readonly IStaffAssignStorageService _staffAssignStoragesService;
         private readonly IOrderHistoryExtensionService _orderHistoryExtensionService;
-        private readonly IOrderTimelineService _orderTimelineService;
+        private readonly IRequestTimelineService _requestTimelineService;
         private readonly IAccountService _accountService;
         private readonly IStorageService _storageService;
         private readonly IServiceService _serviceService;
@@ -56,7 +56,7 @@ namespace RSSMS.DataService.Services
             , IScheduleService scheduleService
             , IFirebaseService firebaseService, IStaffAssignStorageService staffAssignStoragesService
             , IOrderHistoryExtensionService orderHistoryExtensionService
-            , IOrderTimelineService orderTimelineService
+            , IRequestTimelineService requestTimelineService
             , IAccountService accountService
             , IStorageService storageService
             , IServiceService serviceService
@@ -68,7 +68,7 @@ namespace RSSMS.DataService.Services
             _firebaseService = firebaseService;
             _staffAssignStoragesService = staffAssignStoragesService;
             _orderHistoryExtensionService = orderHistoryExtensionService;
-            _orderTimelineService = orderTimelineService;
+            _requestTimelineService = requestTimelineService;
             _accountService = accountService;
             _storageService = storageService;
             _serviceService = serviceService;
@@ -344,8 +344,9 @@ namespace RSSMS.DataService.Services
                     if (role == "Office Staff") request.StorageId = storageId;
                     await CreateAsync(request);
 
-                    await _orderTimelineService.CreateAsync(new OrderTimeline
+                    await _requestTimelineService.CreateAsync(new RequestTimeline
                     {
+                        RequestId = request.Id,
                         CreatedDate = DateTime.Now,
                         CreatedBy = userId,
                         Datetime = DateTime.Now,
@@ -443,8 +444,9 @@ namespace RSSMS.DataService.Services
 
                     await CreateAsync(request);
 
-                    await _orderTimelineService.CreateAsync(new OrderTimeline
+                    await _requestTimelineService.CreateAsync(new RequestTimeline
                     {
+                        RequestId = request.Id,
                         CreatedDate = DateTime.Now,
                         CreatedBy = userId,
                         Datetime = DateTime.Now,
@@ -484,8 +486,9 @@ namespace RSSMS.DataService.Services
                     await CreateAsync(request);
                     var requestCreated = Get(x => x.Id == request.Id).Include(request => request.Order).FirstOrDefault();
 
-                    await _orderTimelineService.CreateAsync(new OrderTimeline
+                    await _requestTimelineService.CreateAsync(new RequestTimeline
                     {
+                        RequestId = request.Id,
                         CreatedDate = DateTime.Now,
                         CreatedBy = userId,
                         Datetime = DateTime.Now,
@@ -616,8 +619,9 @@ namespace RSSMS.DataService.Services
                     if (request.Type == (int)RequestType.Tao_don) name = "Nhân viên đang tới lấy hàng";
                     if (request.Type == (int)RequestType.Tra_don) name = "Nhân viên đang tới trả hàng";
                     if (model.Description.Length > 0) name = model.Description;
-                    await _orderTimelineService.CreateAsync(new OrderTimeline
+                    await _requestTimelineService.CreateAsync(new RequestTimeline
                     {
+                        RequestId = request.Id,
                         CreatedDate = DateTime.Now,
                         CreatedBy = userId,
                         Datetime = DateTime.Now,
@@ -724,8 +728,9 @@ namespace RSSMS.DataService.Services
                 if (request.Type == (int)RequestType.Tao_don) name = "Yêu cầu tạo đơn đã xử lý";
                 if (request.Type == (int)RequestType.Gia_han_don) name = "Yêu cầu gia hạn đơn đã được xử lý";
                 if (request.Type == (int)RequestType.Tra_don) name = "Yêu cầu rút đồ về đă được xử lý";
-                await _orderTimelineService.CreateAsync(new OrderTimeline
+                await _requestTimelineService.CreateAsync(new RequestTimeline
                 {
+                    RequestId = request.Id,
                     CreatedDate = DateTime.Now,
                     CreatedBy = userId,
                     Datetime = DateTime.Now,
@@ -794,8 +799,9 @@ namespace RSSMS.DataService.Services
                     notiName = "trả hàng";
                 }
 
-                await _orderTimelineService.CreateAsync(new OrderTimeline
+                await _requestTimelineService.CreateAsync(new RequestTimeline
                 {
+                    RequestId = request.Id,
                     CreatedDate = DateTime.Now,
                     CreatedBy = userId,
                     Datetime = DateTime.Now,

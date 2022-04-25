@@ -19,9 +19,7 @@ namespace RSSMS.DataService.AutoMapper
                 .ForMember(des => des.SpaceToName, opt => opt.MapFrom(src => src.Transfer.FloorTo.Space.Name))
                 .ForMember(des => des.FloorToName, opt => opt.MapFrom(src => src.Transfer.FloorTo.Name))
                 .ForMember(des => des.CreatedDate, opt => opt.MapFrom(src => src.Transfer.CreatedDate))
-                .ForMember(des => des.StaffName, opt => opt.MapFrom(src => src.Transfer.CreatedByNavigation.Name))
-                ;
-
+                .ForMember(des => des.StaffName, opt => opt.MapFrom(src => src.Transfer.CreatedByNavigation.Name));
 
         }
     }
