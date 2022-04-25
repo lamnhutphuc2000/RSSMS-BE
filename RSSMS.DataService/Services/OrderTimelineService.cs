@@ -34,7 +34,7 @@ namespace RSSMS.DataService.Services
             {
                 var orderId = model.OrderId;
                 model.OrderId = null;
-                var timelines = Get(timeline => timeline.Request.OrderId == orderId).OrderByDescending(timeline => timeline.Datetime)
+                var timelines = Get(timeline => timeline.OrderId == orderId).OrderByDescending(timeline => timeline.Datetime)
                                     .ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider)
                                     .DynamicFilter(model)
                                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);

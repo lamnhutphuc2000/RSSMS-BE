@@ -33,6 +33,7 @@ namespace RSSMS.DataService.Models
         public virtual DbSet<OrderTimeline> OrderTimelines { get; set; }
         public virtual DbSet<Request> Requests { get; set; }
         public virtual DbSet<RequestDetail> RequestDetails { get; set; }
+        public virtual DbSet<RequestTimeline> RequestTimelines { get; set; }
         public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<Schedule> Schedules { get; set; }
         public virtual DbSet<Service> Services { get; set; }
@@ -258,8 +259,6 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
-                entity.Property(e => e.AdditionalFeeDescription).HasMaxLength(255);
-
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.DeliveryAddress).HasMaxLength(255);
@@ -299,6 +298,8 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Description).HasMaxLength(255);
+
+                entity.Property(e => e.Price).HasColumnType("decimal(18, 3)");
 
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderAdditionalFees)
@@ -391,6 +392,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.Price).HasColumnType("decimal(18, 3)");
+
                 entity.HasOne(d => d.OrderHistoryExtension)
                     .WithMany(p => p.OrderHistoryExtensionServiceMaps)
                     .HasForeignKey(d => d.OrderHistoryExtensionId)
@@ -420,11 +423,6 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.OrderTimelines)
                     .HasForeignKey(d => d.OrderId)
                     .HasConstraintName("FK_OrderTimeline_Order");
-
-                entity.HasOne(d => d.Request)
-                    .WithMany(p => p.OrderTimelines)
-                    .HasForeignKey(d => d.RequestId)
-                    .HasConstraintName("FK_OrderTimeline_Request");
             });
 
             modelBuilder.Entity<Request>(entity =>
@@ -488,6 +486,26 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.RequestDetails)
                     .HasForeignKey(d => d.ServiceId)
                     .HasConstraintName("FK_RequestDetail_Service1");
+            });
+
+            modelBuilder.Entity<RequestTimeline>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToTable("RequestTimeline");
+
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.Property(e => e.Datetime).HasColumnType("datetime");
+
+                entity.Property(e => e.Description).HasMaxLength(25);
+
+                entity.Property(e => e.Name).HasMaxLength(50);
+
+                entity.HasOne(d => d.Request)
+                    .WithMany()
+                    .HasForeignKey(d => d.RequestId)
+                    .HasConstraintName("FK_RequestTimeline_Request");
             });
 
             modelBuilder.Entity<Role>(entity =>
@@ -623,6 +641,11 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.HasOne(d => d.CreatedByNavigation)
+                    .WithMany(p => p.Transfers)
+                    .HasForeignKey(d => d.CreatedBy)
+                    .HasConstraintName("FK_Transfer_Account");
 
                 entity.HasOne(d => d.FloorFrom)
                     .WithMany(p => p.TransferFloorFroms)

@@ -18,6 +18,7 @@ namespace RSSMS.DataService.Models
         public DateTime? CreatedDate { get; set; }
         public Guid? CreatedBy { get; set; }
 
+        public virtual Account CreatedByNavigation { get; set; }
         public virtual Floor FloorFrom { get; set; }
         public virtual Floor FloorTo { get; set; }
         public virtual ICollection<TransferDetail> TransferDetails { get; set; }

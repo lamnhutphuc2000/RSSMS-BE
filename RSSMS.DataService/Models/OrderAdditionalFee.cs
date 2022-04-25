@@ -11,7 +11,7 @@ namespace RSSMS.DataService.Models
         public Guid? OrderId { get; set; }
         public int? Type { get; set; }
         public string Description { get; set; }
-        public double? Price { get; set; }
+        public decimal? Price { get; set; }
 
         public virtual Order Order { get; set; }
     }

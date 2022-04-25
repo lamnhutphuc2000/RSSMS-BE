@@ -17,6 +17,7 @@ namespace RSSMS.API.App_Start
                 mc.ConfigImageModule();
                 mc.ConfigNotificationModule();
                 mc.ConfigOrderAdditionalFeeModule();
+                mc.ConfigTransferDetailModule();
                 mc.ConfigOrderDetailModule();
                 mc.ConfigOrderDetailServiceMapModule();
                 mc.ConfigOrderHistoryExtensionModule();

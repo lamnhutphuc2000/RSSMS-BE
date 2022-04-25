@@ -255,12 +255,13 @@ namespace RSSMS.DataService.Services
                 if ((role == "Delivery Staff" || role == "Office Staff") && storageId == null)
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên chưa vào kho");
                 var result = await request.ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
-                if(!string.IsNullOrWhiteSpace(result.Note))
+                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
+                if (!string.IsNullOrWhiteSpace(result.Note))
                 {
                     var maxServiceDeliveryFee = result.RequestDetails.Select(requestDetail => requestDetail.ServiceDeliveryFee).Max();
                     result.DeliveryFee = maxServiceDeliveryFee * Math.Ceiling(Convert.ToDecimal(result.Note.Split(' ')[0]));
                 }
-                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
+                
                 if (result.Type != 2) return result;
                 var orderHistoryExtension = _orderHistoryExtensionService.Get(orderHistory => orderHistory.RequestId == result.Id).FirstOrDefault();
                 if (orderHistoryExtension != null) result.TotalPrice = orderHistoryExtension.TotalPrice;
@@ -346,7 +347,6 @@ namespace RSSMS.DataService.Services
                     await _orderTimelineService.CreateAsync(new OrderTimeline
                     {
                         CreatedDate = DateTime.Now,
-                        RequestId = request.Id,
                         CreatedBy = userId,
                         Datetime = DateTime.Now,
                         Name = "Yêu cầu tạo đơn chờ xác nhận"
@@ -445,7 +445,6 @@ namespace RSSMS.DataService.Services
 
                     await _orderTimelineService.CreateAsync(new OrderTimeline
                     {
-                        RequestId = request.Id,
                         CreatedDate = DateTime.Now,
                         CreatedBy = userId,
                         Datetime = DateTime.Now,
@@ -487,7 +486,6 @@ namespace RSSMS.DataService.Services
 
                     await _orderTimelineService.CreateAsync(new OrderTimeline
                     {
-                        RequestId = request.Id,
                         CreatedDate = DateTime.Now,
                         CreatedBy = userId,
                         Datetime = DateTime.Now,
@@ -591,7 +589,7 @@ namespace RSSMS.DataService.Services
                             var serviceExtend = new OrderHistoryExtensionServiceMap()
                             {
                                 Amount = service.Amount,
-                                Price = (double)service.TotalPrice,
+                                Price = service.TotalPrice,
                                 Serviceid = service.ServiceId,
                                 OrderHistoryExtensionId = orderExtend.Id
                             };
@@ -620,7 +618,6 @@ namespace RSSMS.DataService.Services
                     if (model.Description.Length > 0) name = model.Description;
                     await _orderTimelineService.CreateAsync(new OrderTimeline
                     {
-                        RequestId = request.Id,
                         CreatedDate = DateTime.Now,
                         CreatedBy = userId,
                         Datetime = DateTime.Now,
@@ -729,7 +726,6 @@ namespace RSSMS.DataService.Services
                 if (request.Type == (int)RequestType.Tra_don) name = "Yêu cầu rút đồ về đă được xử lý";
                 await _orderTimelineService.CreateAsync(new OrderTimeline
                 {
-                    RequestId = request.Id,
                     CreatedDate = DateTime.Now,
                     CreatedBy = userId,
                     Datetime = DateTime.Now,
@@ -800,7 +796,6 @@ namespace RSSMS.DataService.Services
 
                 await _orderTimelineService.CreateAsync(new OrderTimeline
                 {
-                    RequestId = request.Id,
                     CreatedDate = DateTime.Now,
                     CreatedBy = userId,
                     Datetime = DateTime.Now,

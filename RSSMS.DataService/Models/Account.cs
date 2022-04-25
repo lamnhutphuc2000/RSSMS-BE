@@ -18,6 +18,7 @@ namespace RSSMS.DataService.Models
             Requests = new HashSet<Request>();
             Schedules = new HashSet<Schedule>();
             StaffAssignStorages = new HashSet<StaffAssignStorage>();
+            Transfers = new HashSet<Transfer>();
         }
 
         public Guid Id { get; set; }
@@ -45,5 +46,6 @@ namespace RSSMS.DataService.Models
         public virtual ICollection<Request> Requests { get; set; }
         public virtual ICollection<Schedule> Schedules { get; set; }
         public virtual ICollection<StaffAssignStorage> StaffAssignStorages { get; set; }
+        public virtual ICollection<Transfer> Transfers { get; set; }
     }
 }

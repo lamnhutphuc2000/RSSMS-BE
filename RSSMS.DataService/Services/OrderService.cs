@@ -69,6 +69,9 @@ namespace RSSMS.DataService.Services
             try
             {
                 var result = await Get(x => x.Id == id && x.IsActive)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer).ThenInclude(transfer => transfer.CreatedByNavigation)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer).ThenInclude(transfer => transfer.FloorFrom).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer).ThenInclude(transfer => transfer.FloorTo).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Export).ThenInclude(export => export.CreatedByNavigation)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Export).ThenInclude(export => export.DeliveryByNavigation)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.CreatedByNavigation)
@@ -397,7 +400,6 @@ namespace RSSMS.DataService.Services
 
                 await _orderTimelineService.CreateAsync(new OrderTimeline
                 {
-                    RequestId = model.RequestId,
                     CreatedDate = DateTime.Now,
                     CreatedBy = userId,
                     Datetime = DateTime.Now,
@@ -788,7 +790,6 @@ namespace RSSMS.DataService.Services
                 await UpdateAsync(order);
                 await _orderTimelineService.CreateAsync(new OrderTimeline
                 {
-                    RequestId = request.Id,
                     CreatedDate = DateTime.Now,
                     CreatedBy = userId,
                     Datetime = DateTime.Now,

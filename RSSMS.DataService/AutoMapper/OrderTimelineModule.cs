@@ -10,7 +10,6 @@ namespace RSSMS.DataService.AutoMapper
         {
             mc.CreateMap<OrderTimeline, OrderTimelinesViewModel>()
                 .ForMember(des => des.Id, opt => opt.MapFrom(src => src.Id))
-                .ForMember(des => des.OrderId, opt => opt.MapFrom(src => src.Request.OrderId))
                 .ForMember(des => des.Datetime, opt => opt.MapFrom(src => src.Datetime));
         }
     }

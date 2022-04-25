@@ -264,6 +264,8 @@ namespace RSSMS.DataService.Services
                 AreaDetailViewModel area = await GetById(id);
                 if (area.Used > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Khu vực đang được sử dụng");
 
+                if(area.Available > 0 && area.Type != model.Type)
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể thay đổi loại khu vực khi đang có không gian trống");
                 // check area update size
                 if (entity.Height != model.Height || entity.Length != model.Length || entity.Width != model.Width)
                 {

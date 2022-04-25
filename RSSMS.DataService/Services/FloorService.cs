@@ -44,7 +44,8 @@ namespace RSSMS.DataService.Services
                     .Include(orderDetail => orderDetail.Import).ThenInclude(import => import.Floor).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
                     .Include(orderDetail => orderDetail.TransferDetails).ThenInclude(transferDetail => transferDetail.Transfer).ThenInclude(transfer => transfer.FloorTo).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
                     .Include(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(orderDetailService => orderDetailService.Service)
-                    .Include(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer).ToListAsync();
+                    .Include(orderDetail => orderDetail.Order).ThenInclude(order => order.Customer)
+                    .Include(orderDetail => orderDetail.Images).ToListAsync();
 
                 var orderDetailHaveTransfer = orderDetails.Where(orderDetail => orderDetail.TransferDetails.Count > 0).ToList();
                 var orderDetailDontHaveTransfer = orderDetails.Where(orderDetail => orderDetail.TransferDetails.Count == 0).ToList();
