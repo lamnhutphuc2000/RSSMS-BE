@@ -452,8 +452,9 @@ namespace RSSMS.DataService.Services
                 }
                 i++;
             } while (i < storageList.Count);
-            if(!result) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
             if (!deliFlag && !isCustomerDelivery && spaceType == (int)SpaceType.Ke && !isCreateOrder) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không đủ nhân viên vận chuyển");
+            if (!result) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
+            
             return result;
         }
 

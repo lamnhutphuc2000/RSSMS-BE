@@ -38,7 +38,7 @@ namespace RSSMS.DataService.ViewModels.Orders
         public decimal? TotalPrice { get; set; }
         [JsonProperty("additionalFee")]
         [BindNever]
-        public double? AdditionalFee { get; set; }
+        public decimal? AdditionalFee { get; set; }
         [JsonProperty("additionalFeeDescription")]
         [BindNever]
         public string AdditionalFeeDescription { get; set; }

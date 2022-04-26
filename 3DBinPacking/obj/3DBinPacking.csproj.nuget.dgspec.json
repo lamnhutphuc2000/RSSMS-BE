@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\RSSMS-BE\\3DBinPacking\\3DBinPacking.csproj": {}
+    "D:\\Study\\Capstone\\Project\\BE\\RSSMS-BE\\3DBinPacking\\3DBinPacking.csproj": {}
   },
   "projects": {
-    "D:\\RSSMS-BE\\3DBinPacking\\3DBinPacking.csproj": {
+    "D:\\Study\\Capstone\\Project\\BE\\RSSMS-BE\\3DBinPacking\\3DBinPacking.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\RSSMS-BE\\3DBinPacking\\3DBinPacking.csproj",
+        "projectUniqueName": "D:\\Study\\Capstone\\Project\\BE\\RSSMS-BE\\3DBinPacking\\3DBinPacking.csproj",
         "projectName": "3DBinPacking",
-        "projectPath": "D:\\RSSMS-BE\\3DBinPacking\\3DBinPacking.csproj",
-        "packagesPath": "C:\\Users\\Treater\\.nuget\\packages\\",
-        "outputPath": "D:\\RSSMS-BE\\3DBinPacking\\obj\\",
+        "projectPath": "D:\\Study\\Capstone\\Project\\BE\\RSSMS-BE\\3DBinPacking\\3DBinPacking.csproj",
+        "packagesPath": "C:\\Users\\Asus\\.nuget\\packages\\",
+        "outputPath": "D:\\Study\\Capstone\\Project\\BE\\RSSMS-BE\\3DBinPacking\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Treater\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Asus\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -54,7 +54,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.300\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.202\\RuntimeIdentifierGraph.json"
         }
       }
     }

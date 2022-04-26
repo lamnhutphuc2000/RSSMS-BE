@@ -68,21 +68,25 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                var result = await Get(x => x.Id == id && x.IsActive)
-                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer).ThenInclude(transfer => transfer.CreatedByNavigation)
-                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer).ThenInclude(transfer => transfer.FloorFrom).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area)
-                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer).ThenInclude(transfer => transfer.FloorTo).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area)
-                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Export).ThenInclude(export => export.CreatedByNavigation)
-                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Export).ThenInclude(export => export.DeliveryByNavigation)
-                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.CreatedByNavigation)
-                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.DeliveryByNavigation)
+                var tmp = await Get(order => order.Id == id && order.IsActive)
+                    .Include(order => order.Customer)
                     .Include(order => order.Storage)
-                    .Include(order => order.OrderDetails).Include(floor => floor.OrderDetails)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
                     .Include(order => order.Requests)
                     .Include(order => order.OrderAdditionalFees)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
-                    .ProjectTo<OrderByIdViewModel>(_mapper.ConfigurationProvider)
                     .FirstOrDefaultAsync();
+                var tmp2 = await Get(x => x.Id == id && x.IsActive)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Export).ThenInclude(import => import.DeliveryByNavigation)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Export).ThenInclude(import => import.CreatedByNavigation)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.CreatedByNavigation)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.DeliveryByNavigation)
+                    .FirstOrDefaultAsync();
+                tmp.OrderDetails = tmp2.OrderDetails;
+                var result = _mapper.Map<OrderByIdViewModel>(tmp);
                 if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
                 var request = result.Requests;
                 if (requestTypes.Count == 0) return result;
@@ -253,6 +257,7 @@ namespace RSSMS.DataService.Services
 
                 decimal totalPrice = 0;
                 decimal month = Math.Ceiling((decimal)model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days / 30);
+                if (spaceType == 1) month = (model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value).Days / 30);
                 // service list chứa list service người dùng đặt
                 List<Cuboid> cuboid = new List<Cuboid>();
 
@@ -688,15 +693,21 @@ namespace RSSMS.DataService.Services
                     .Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefault();
                 if(acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
                 if(acc.Role.Name != "Office Staff") throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không phải nhân viên thủ kho");
+                var deliveryStaff = _accountService.Get(account => account.IsActive && account.Id == model.DeliveryId).Include(account => account.Schedules).ThenInclude(schedule => schedule.Request).FirstOrDefault();
+                if(deliveryStaff == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy nhân viên vận chuyển");
                 var orderDetailIds = model.OrderDetailAssignFloor.Select(orderDetailAssign => orderDetailAssign.OrderDetailId).ToList();
+
                 var orders = Get(order => order.IsActive)
-                    .Include(order => order.OrderDetails)
-                    .Where(order => order.OrderDetails.Any(orderDetail => orderDetailIds.Contains(orderDetail.Id)))
-                    .Include(order => order.Requests)
-                    .ToList().AsQueryable()
-                    .ToList();
+                     .Include(order => order.OrderDetails)
+                     .Where(order => order.OrderDetails.Any(orderDetail => orderDetailIds.Contains(orderDetail.Id)))
+                     .Include(order => order.Requests)
+                     .ToList().AsQueryable()
+                     .ToList();
                 if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
                 if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Các món đồ không thuộc cùng 1 đơn");
+                var schedule = deliveryStaff.Schedules.Where(schedule => schedule.IsActive && schedule.Request.OrderId == orders.FirstOrDefault().Id).FirstOrDefault();
+                if(schedule == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Sai nhân viên vận chuyển");
+
                 var order = orders.First();
                 if(order.Status != (int)OrderStatus.Dang_van_chuyen) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Đơn không đang vận chuyển");
 
