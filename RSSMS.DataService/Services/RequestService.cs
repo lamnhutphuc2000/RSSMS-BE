@@ -152,11 +152,13 @@ namespace RSSMS.DataService.Services
                 {
                     var storageIds = account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).Select(staffAssign => staffAssign.StorageId).ToList();
                     var staff = _staffAssignStoragesService.Get(staffAssignStorage => storageIds.Contains(staffAssignStorage.StorageId)).Select(a => a.StaffId).ToList();
-                    requests = requests.Where(request => storageIds.Contains((Guid)request.StorageId) || storageIds.Contains((Guid)request.Order.StorageId))
+                    
+                    requests = requests.Where(request => storageIds.Contains((Guid)request.StorageId) || storageIds.Contains((Guid)request.Order.StorageId) || request.CreatedByNavigation.StaffAssignStorages.Where(staff => staff.IsActive && storageIds.Contains((Guid)staff.StorageId)).FirstOrDefault() != null )
                         .Include(request => request.Schedules)
                         .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
                         .Include(request => request.Storage)
                         .Include(request => request.Order).ThenInclude(order => order.Storage);
+                    
                 }
                 if (role == "Office Staff")
                 {
@@ -311,7 +313,9 @@ namespace RSSMS.DataService.Services
                     }).ToList();
                     decimal totalPrice = 0;
                     decimal month = Math.Ceiling((decimal)model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days/ 30);
+
                     if (spaceType == 1) month = (model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days / 30);
+
                     int serviceType = -1;
                     decimal serviceDeliveryFee = 0;
                     for (int i = 0; i < services.Count; i++)
@@ -449,7 +453,7 @@ namespace RSSMS.DataService.Services
                     request.Status = (int)RequestStatus.Hoan_thanh;
                     await CreateAsync(request);
 
-                    order = Get(request => request.Id == request.Id).Include(request => request.Order).Select(request => request.Order).FirstOrDefault();
+                    order = request.Order;
 
                     await _requestTimelineService.CreateAsync(new RequestTimeline
                     {
