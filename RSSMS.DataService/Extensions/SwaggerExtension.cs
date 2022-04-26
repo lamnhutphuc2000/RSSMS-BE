@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 
 namespace RSSMS.DataService.Extensions
 {
@@ -56,9 +58,11 @@ namespace RSSMS.DataService.Extensions
                         new List<string>()
                     }
                 });
-
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 var filePath = Path.Combine(System.AppContext.BaseDirectory, "RSSMS.API.xml");
-                c.IncludeXmlComments(filePath);
+                c.IncludeXmlComments(xmlPath);
             });
         }
         public static void ConfigureSwagger(this IApplicationBuilder app, IApiVersionDescriptionProvider provider)
