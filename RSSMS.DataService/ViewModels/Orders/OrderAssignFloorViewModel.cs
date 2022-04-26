@@ -6,7 +6,7 @@ namespace RSSMS.DataService.ViewModels.Orders
 {
     public class OrderAssignFloorViewModel
     {
-        public Guid DeliveryId { get; set; }
+        public Guid? DeliveryId { get; set; }
         public virtual ICollection<OrderDetailAssignFloorViewModel> OrderDetailAssignFloor { get; set; }
     }
 }

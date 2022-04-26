@@ -519,13 +519,17 @@ namespace RSSMS.DataService.Services
                 {
                     if (model.OrderAdditionalFees == null)
                     {
-                        var deliveryAccount = await _accountService.Get(account => account.IsActive && account.Id == model.DeliveryBy).Include(account => account.Role)
+                        if (model.DeliveryBy != null)
+                        {
+                            var deliveryAccount = await _accountService.Get(account => account.IsActive && account.Id == model.DeliveryBy).Include(account => account.Role)
                                                                 .Include(account => account.Schedules).FirstOrDefaultAsync();
-                        if (deliveryAccount == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản người vận chuyển");
-                        if (deliveryAccount.Role.Name != "Delivery Staff") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người nhận không phải người vận chuyển");
-                        var requestReturnOrder = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tra_don && request.Status == (int)RequestStatus.Da_xu_ly).FirstOrDefault();
-                        if (requestReturnOrder != null)
-                            if (deliveryAccount.Schedules.Where(schedule => schedule.IsActive && schedule.RequestId == requestReturnOrder.Id).FirstOrDefault() == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người vận chuyển không có lịch trả đơn này");
+                            if (deliveryAccount == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản người vận chuyển");
+                            if (deliveryAccount.Role.Name != "Delivery Staff") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người nhận không phải người vận chuyển");
+                            var requestReturnOrder = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tra_don && request.Status == (int)RequestStatus.Da_xu_ly).FirstOrDefault();
+                            if (requestReturnOrder != null)
+                                if (deliveryAccount.Schedules.Where(schedule => schedule.IsActive && schedule.RequestId == requestReturnOrder.Id).FirstOrDefault() == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người vận chuyển không có lịch trả đơn này");
+
+                        }
 
 
                         order.Status = (int)OrderStatus.Da_xuat_kho;
@@ -695,8 +699,9 @@ namespace RSSMS.DataService.Services
                     .Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefault();
                 if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
                 if (acc.Role.Name != "Office Staff") throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không phải nhân viên thủ kho");
-                var deliveryStaff = _accountService.Get(account => account.IsActive && account.Id == model.DeliveryId).Include(account => account.Schedules).ThenInclude(schedule => schedule.Request).FirstOrDefault();
-                if (deliveryStaff == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy nhân viên vận chuyển");
+
+
+
                 var orderDetailIds = model.OrderDetailAssignFloor.Select(orderDetailAssign => orderDetailAssign.OrderDetailId).ToList();
 
                 var orders = Get(order => order.IsActive)
@@ -707,9 +712,16 @@ namespace RSSMS.DataService.Services
                      .ToList();
                 if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
                 if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Các món đồ không thuộc cùng 1 đơn");
-                Schedule schedule = deliveryStaff.Schedules.Where(schedule => schedule.IsActive && schedule.Request.OrderId == orders.FirstOrDefault().Id).FirstOrDefault();
-                if (orders.FirstOrDefault().Type != (int)OrderType.Kho_tu_quan)
-                    if (schedule == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Sai nhân viên vận chuyển");
+
+                Account deliveryStaff = null;
+                if (model.DeliveryId != null)
+                {
+                    deliveryStaff = _accountService.Get(account => account.IsActive && account.Id == model.DeliveryId).Include(account => account.Schedules).ThenInclude(schedule => schedule.Request).FirstOrDefault();
+                    if (deliveryStaff == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy nhân viên vận chuyển");
+                    Schedule schedule = deliveryStaff.Schedules.Where(schedule => schedule.IsActive && schedule.Request.OrderId == orders.FirstOrDefault().Id).FirstOrDefault();
+                    if (orders.FirstOrDefault().Type != (int)OrderType.Kho_tu_quan)
+                        if (schedule == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Sai nhân viên vận chuyển");
+                }
 
 
                 var order = orders.First();

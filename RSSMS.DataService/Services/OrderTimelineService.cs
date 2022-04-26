@@ -37,10 +37,10 @@ namespace RSSMS.DataService.Services
                 var orderId = model.OrderId;
                 if (orderId == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
                 model.OrderId = null;
-                var requestTimelines = await _requestTimelineService.Get(timeline => timeline.Request.OrderId == orderId).ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider).ToListAsync();
-                var orderTimelines = await Get(timeline => timeline.OrderId == orderId).ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider).ToListAsync();
-                requestTimelines.AddRange(orderTimelines);
-                var timelines = requestTimelines.AsQueryable().OrderByDescending(timeline => timeline.Datetime).DynamicFilter(model)
+                var requestTimelines = _requestTimelineService.Get(timeline => timeline.Request.OrderId == orderId).ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider);
+                var orderTimelines = Get(timeline => timeline.OrderId == orderId).ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider);
+                requestTimelines.Union(orderTimelines);
+                var timelines = requestTimelines.OrderByDescending(timeline => timeline.Datetime).DynamicFilter(model)
                                     .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
                 if (timelines.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy dòng thời gian");
 
