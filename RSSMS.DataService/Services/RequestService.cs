@@ -311,6 +311,7 @@ namespace RSSMS.DataService.Services
                     }).ToList();
                     decimal totalPrice = 0;
                     decimal month = Math.Ceiling((decimal)model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days/ 30);
+                    if (spaceType == 1) month = (model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days / 30);
                     int serviceType = -1;
                     decimal serviceDeliveryFee = 0;
                     for (int i = 0; i < services.Count; i++)
@@ -411,6 +412,7 @@ namespace RSSMS.DataService.Services
 
                     decimal totalPrice = 0;
                     decimal month = Math.Ceiling((decimal)model.ReturnDate.Value.Date.Subtract(model.OldReturnDate.Value.Date).Days / 30);
+                    if (spaceType == 1) month = (model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days / 30);
                     // service list chứa list service người dùng đặt
                     List<Cuboid> cuboid = new List<Cuboid>();
 

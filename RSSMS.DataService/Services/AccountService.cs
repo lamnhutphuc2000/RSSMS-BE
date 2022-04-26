@@ -190,16 +190,8 @@ namespace RSSMS.DataService.Services
                     accounts = accounts.Where(account => account.StaffAssignStorages.Any(staffAssignStorage => storageIds.Contains(staffAssignStorage.StorageId)) || account.StaffAssignStorages.Count == 0)
                         .Include(accounts => accounts.Role);
                 }
-                if (role == "Office staff")
-                {
-                    if (secureToken.Claims.First(claim => claim.Type == "storage_id").Value != null)
-                    {
-                        storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
-                        accounts = accounts.Where(account => account.Role.Name != "Manager" && account.Role.Name != "Customer").Include(accounts => accounts.Role);
-                        accounts = accounts.Where(account => account.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId) || account.StaffAssignStorages.Count == 0)
-                            .Include(accounts => accounts.Role);
-                    }
-                }
+                if (role == "Office Staff")
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Thủ kho không thể coi tài khoản người dùng");
 
                 var result = accounts.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model).PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
@@ -509,8 +501,7 @@ namespace RSSMS.DataService.Services
 
                 if (role == "Manager")
                     staffs = staffs.Where(account => account.Role.Name != "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-                if (role == "Office Staff")
-                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Thủ kho không thể coi tài khoản người dùng");
+                
                 // Nhân viên không thuộc kho nào
                 if (storageId == null && !getFromAllStorage)
                     staffs = staffs.Where(account => (account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() == 0) || account.Role.Name == "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
