@@ -707,8 +707,10 @@ namespace RSSMS.DataService.Services
                      .ToList();
                 if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
                 if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Các món đồ không thuộc cùng 1 đơn");
-                var schedule = deliveryStaff.Schedules.Where(schedule => schedule.IsActive && schedule.Request.OrderId == orders.FirstOrDefault().Id).FirstOrDefault();
-                if (schedule == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Sai nhân viên vận chuyển");
+                Schedule schedule = deliveryStaff.Schedules.Where(schedule => schedule.IsActive && schedule.Request.OrderId == orders.FirstOrDefault().Id).FirstOrDefault();
+                if (orders.FirstOrDefault().Type != (int)OrderType.Kho_tu_quan)
+                    if (schedule == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Sai nhân viên vận chuyển");
+
 
                 var order = orders.First();
                 if (order.Status != (int)OrderStatus.Dang_van_chuyen) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Đơn không đang vận chuyển");
