@@ -18,7 +18,7 @@ namespace RSSMS.DataService.ViewModels.Schedules
         {
 
             get { return _Requests; }
-            set {_Requests = value;_Requests.Sort();}
+            set { _Requests = value; _Requests.Sort(); }
         }
         public virtual RequestScheduleViewModel Request { get; set; }
         public string Address { get; set; }

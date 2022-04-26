@@ -1,9 +1,6 @@
 ﻿using AutoMapper;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.ViewModels.Imports;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace RSSMS.DataService.AutoMapper
 {

@@ -35,7 +35,7 @@ namespace RSSMS.DataService.Services
             try
             {
                 var orderId = model.OrderId;
-                if(orderId == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
+                if (orderId == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
                 model.OrderId = null;
                 var requestTimelines = await _requestTimelineService.Get(timeline => timeline.Request.OrderId == orderId).ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider).ToListAsync();
                 var orderTimelines = await Get(timeline => timeline.OrderId == orderId).ProjectTo<OrderTimelinesViewModel>(_mapper.ConfigurationProvider).ToListAsync();

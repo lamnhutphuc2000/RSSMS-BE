@@ -67,7 +67,7 @@ namespace RSSMS.DataService.Services
                 space = Get(space => space.Id == spaceToCreate.Id).Include(space => space.Area).First();
                 var area = space.Area;
 
-                if(model.FloorWidth > area.Width || model.FloorLength > area.Length)
+                if (model.FloorWidth > area.Width || model.FloorLength > area.Length)
                 {
                     var floors = spaceToCreate.Floors.ToList();
                     for (int i = 0; i < floors.Count; i++)
@@ -267,7 +267,7 @@ namespace RSSMS.DataService.Services
                 if (result.Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy không gian");
                 foreach (var space in result)
                     space.Floors = await _floorsService.GetFloorInSpace((Guid)space.Id, date);
-                
+
 
                 var rs = new DynamicModelResponse<SpaceViewModel>
                 {

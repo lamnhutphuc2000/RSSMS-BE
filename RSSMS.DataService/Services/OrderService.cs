@@ -121,8 +121,8 @@ namespace RSSMS.DataService.Services
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
                     .Include(order => order.OrderAdditionalFees);
 
-                
-                
+
+
 
                 if (dateFrom != null && dateTo != null)
                 {
@@ -173,9 +173,9 @@ namespace RSSMS.DataService.Services
                         .Include(order => order.OrderAdditionalFees);
                 }
                 var tmps = order.ToList();
-                foreach(var tmp in tmps)
+                foreach (var tmp in tmps)
                 {
-                    if(tmp.Status < 5)
+                    if (tmp.Status < 5)
                     {
                         if ((tmp.ReturnDate - DateTime.Now).Value.Days < 0)
                         {
@@ -203,7 +203,7 @@ namespace RSSMS.DataService.Services
                             .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
                             .Include(order => order.OrderAdditionalFees);
                 }
-                    
+
                 var result = order.OrderByDescending(order => order.CreatedDate)
                     .ProjectTo<OrderViewModel>(_mapper.ConfigurationProvider).DynamicFilter(model)
                         .PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
@@ -294,19 +294,19 @@ namespace RSSMS.DataService.Services
                         serviceWidth += Decimal.ToDouble((decimal)service.Width);
                         serviceLength += Decimal.ToDouble((decimal)service.Length);
                         serviceVolumne = (int)serviceId.Amount * serviceHeight * serviceLength * serviceWidth;
-                        
+
                     }
-                    if(!((decimal)orderDetail.Height == 0 && (decimal)orderDetail.Width ==0 && (decimal)orderDetail.Length == 0))
+                    if (!((decimal)orderDetail.Height == 0 && (decimal)orderDetail.Width == 0 && (decimal)orderDetail.Length == 0))
                         cuboid.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length, 0, Guid.NewGuid()));
                     if (serviceHeight < height || serviceLength < length || serviceWidth < width || serviceVolumne < volumne)
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail is bigger than service");
                 }
-                if(model.OrderAdditionalFees != null)
-                    if(model.OrderAdditionalFees.Count > 0)
-                        foreach(var orderAddtionalFee in model.OrderAdditionalFees)
+                if (model.OrderAdditionalFees != null)
+                    if (model.OrderAdditionalFees.Count > 0)
+                        foreach (var orderAddtionalFee in model.OrderAdditionalFees)
                             totalPrice += (decimal)orderAddtionalFee.Price;
-                
-                if(!isMainService) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa chọn dịch vụ chính");
+
+                if (!isMainService) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa chọn dịch vụ chính");
                 if (totalPrice != model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
@@ -508,26 +508,26 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var account = await _accountService.Get(account => account.IsActive && account.Id == userId).Include(account => account.Role)
                                 .Include(account => account.StaffAssignStorages).FirstOrDefaultAsync();
-                if(account == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản");
+                if (account == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản");
 
 
-                if(model.Status == (int)OrderStatus.Da_thanh_ly)
-                    if(order.Status != (int)OrderStatus.Da_xuat_kho)
+                if (model.Status == (int)OrderStatus.Da_thanh_ly)
+                    if (order.Status != (int)OrderStatus.Da_xuat_kho)
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể thanh lý đơn chưa xuất kho hoặc chưa hết hạn");
 
                 if (account.Role.Name == "Office Staff")
                 {
-                    if(model.OrderAdditionalFees == null)
+                    if (model.OrderAdditionalFees == null)
                     {
                         var deliveryAccount = await _accountService.Get(account => account.IsActive && account.Id == model.DeliveryBy).Include(account => account.Role)
                                                                 .Include(account => account.Schedules).FirstOrDefaultAsync();
-                        if(deliveryAccount == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản người vận chuyển");
-                        if(deliveryAccount.Role.Name != "Delivery Staff") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người nhận không phải người vận chuyển");
+                        if (deliveryAccount == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản người vận chuyển");
+                        if (deliveryAccount.Role.Name != "Delivery Staff") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người nhận không phải người vận chuyển");
                         var requestReturnOrder = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tra_don && request.Status == (int)RequestStatus.Da_xu_ly).FirstOrDefault();
-                        if(requestReturnOrder != null)
-                            if( deliveryAccount.Schedules.Where(schedule => schedule.IsActive && schedule.RequestId == requestReturnOrder.Id).FirstOrDefault() == null ) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người vận chuyển không có lịch trả đơn này");
+                        if (requestReturnOrder != null)
+                            if (deliveryAccount.Schedules.Where(schedule => schedule.IsActive && schedule.RequestId == requestReturnOrder.Id).FirstOrDefault() == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người vận chuyển không có lịch trả đơn này");
 
-                        
+
                         order.Status = (int)OrderStatus.Da_xuat_kho;
                         var orderDetails = order.OrderDetails;
                         // Lấy hết đồ trong order ra
@@ -538,11 +538,11 @@ namespace RSSMS.DataService.Services
                             if (orderDetail.ImportId != null)
                             {
                                 Guid? floorId = null;
-                                if (orderDetail.TransferDetails.Count == 0) 
+                                if (orderDetail.TransferDetails.Count == 0)
                                     floorId = orderDetail.Import.FloorId;
                                 else
                                     floorId = orderDetail.TransferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer.FloorToId).FirstOrDefault();
-                                if(exports.Count == 0)
+                                if (exports.Count == 0)
                                 {
                                     export = new Export()
                                     {
@@ -557,7 +557,7 @@ namespace RSSMS.DataService.Services
                                 }
                                 else
                                 {
-                                    if(!exports.Keys.Contains((Guid)floorId))
+                                    if (!exports.Keys.Contains((Guid)floorId))
                                     {
                                         export = new Export()
                                         {
@@ -601,7 +601,7 @@ namespace RSSMS.DataService.Services
 
                 order.Requests = requests;
 
-                
+
                 order.Status = model.Status;
                 order.ModifiedDate = DateTime.Now;
                 order.ModifiedBy = userId;
@@ -693,10 +693,10 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var acc = _accountService.Get(account => account.IsActive && account.Id == userId)
                     .Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefault();
-                if(acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
-                if(acc.Role.Name != "Office Staff") throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không phải nhân viên thủ kho");
+                if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
+                if (acc.Role.Name != "Office Staff") throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không phải nhân viên thủ kho");
                 var deliveryStaff = _accountService.Get(account => account.IsActive && account.Id == model.DeliveryId).Include(account => account.Schedules).ThenInclude(schedule => schedule.Request).FirstOrDefault();
-                if(deliveryStaff == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy nhân viên vận chuyển");
+                if (deliveryStaff == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy nhân viên vận chuyển");
                 var orderDetailIds = model.OrderDetailAssignFloor.Select(orderDetailAssign => orderDetailAssign.OrderDetailId).ToList();
 
                 var orders = Get(order => order.IsActive)
@@ -708,10 +708,10 @@ namespace RSSMS.DataService.Services
                 if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
                 if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Các món đồ không thuộc cùng 1 đơn");
                 var schedule = deliveryStaff.Schedules.Where(schedule => schedule.IsActive && schedule.Request.OrderId == orders.FirstOrDefault().Id).FirstOrDefault();
-                if(schedule == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Sai nhân viên vận chuyển");
+                if (schedule == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Sai nhân viên vận chuyển");
 
                 var order = orders.First();
-                if(order.Status != (int)OrderStatus.Dang_van_chuyen) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Đơn không đang vận chuyển");
+                if (order.Status != (int)OrderStatus.Dang_van_chuyen) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Đơn không đang vận chuyển");
 
                 // Check xem tầng còn đủ chỗ không
                 var orderDetails = order.OrderDetails;
@@ -724,7 +724,7 @@ namespace RSSMS.DataService.Services
 
                 // Check xem nhân viên thuộc kho hay không
                 var storageId = _floorService.Get(floor => floor.Id == orderDetailToAssignFloorList.First().FloorId).Include(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage).Select(floor => floor.Space.Area.StorageId).FirstOrDefault();
-                if(acc.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.StorageId == storageId).FirstOrDefault() == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Nhân viên không thuộc kho");
+                if (acc.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.StorageId == storageId).FirstOrDefault() == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Nhân viên không thuộc kho");
 
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
@@ -796,7 +796,7 @@ namespace RSSMS.DataService.Services
                             orderDetail.Import = import;
                             orderDetail.ImportCode = import.Code + " - " + index;
                         }
-                    
+
                 }
                 order.OrderDetails = orderDetails;
                 order.Status = (int)OrderStatus.Da_luu_kho;

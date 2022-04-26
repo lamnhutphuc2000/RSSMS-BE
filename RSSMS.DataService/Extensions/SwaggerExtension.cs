@@ -59,7 +59,7 @@ namespace RSSMS.DataService.Extensions
                     }
                 });
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                
+
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 var filePath = Path.Combine(System.AppContext.BaseDirectory, "RSSMS.API.xml");
                 c.IncludeXmlComments(xmlPath);

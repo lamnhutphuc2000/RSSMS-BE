@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -35,7 +34,7 @@ namespace RSSMS.DataService.ViewModels.Requests
 
         public int CompareTo([AllowNull] RequestScheduleViewModel other)
         {
-            IDictionary<string, int> deliveryString = new Dictionary<string,int>();
+            IDictionary<string, int> deliveryString = new Dictionary<string, int>();
 
             deliveryString.Add("8am - 10am", 0);
             deliveryString.Add("10am - 12pm", 1);

@@ -333,7 +333,7 @@ namespace RSSMS.DataService.Services
                                             });
                         foreach (var request in requestByDateTime)
                         {
-                            if(staffAssigned == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên được thêm sẽ không đủ với các yêu cầu đã được tiếp nhận");
+                            if (staffAssigned == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên được thêm sẽ không đủ với các yêu cầu đã được tiếp nhận");
                             if (request.Requests?.Count > staffAssigned.Count)
                                 throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên được thêm sẽ không đủ với các yêu cầu đã được tiếp nhận");
                         }
@@ -454,7 +454,7 @@ namespace RSSMS.DataService.Services
             } while (i < storageList.Count);
             if (!deliFlag && !isCustomerDelivery && spaceType == (int)SpaceType.Ke && !isCreateOrder) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không đủ nhân viên vận chuyển");
             if (!result) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
-            
+
             return result;
         }
 
@@ -496,15 +496,16 @@ namespace RSSMS.DataService.Services
                         {
                             StorageViewModel storage = _mapper.Map<StorageViewModel>(storageList[i]);
                             DistanceViewModel distance = await GetDistanceFromCustomerToStorage(deliveryAddress, storage.Address);
-                            if(distance != null)
+                            if (distance != null)
                             {
                                 storage.DeliveryDistance = distance.rows[0].elements[0].distance.text;
                                 storage.DeliveryFee = serviceDeliveryFee * Math.Ceiling(Convert.ToDecimal(storage.DeliveryDistance.Split(' ')[0]));
                             }
-                                
+
                             result.Add(storage);
                         }
-                    } else
+                    }
+                    else
                         result.Add(_mapper.Map<StorageViewModel>(storageList[i]));
                 }
                 isAvailable = false;
@@ -515,7 +516,7 @@ namespace RSSMS.DataService.Services
 
         private async Task<DistanceViewModel> GetDistanceFromCustomerToStorage(string deliveryAddress, string storageAddress)
         {
-            DistanceViewModel result= null;
+            DistanceViewModel result = null;
 
             // Điểm bắt đầu
             string origin = null;
@@ -537,7 +538,7 @@ namespace RSSMS.DataService.Services
                 if (geometry.results.Count() > 0)
                     origin = geometry.results[0].geometry.location.lat + "," + geometry.results[0].geometry.location.lng;
             }
-            
+
             response = await client.GetAsync(
                 $"/geocode?address={storageAddress}&api_key={key}"
                 );

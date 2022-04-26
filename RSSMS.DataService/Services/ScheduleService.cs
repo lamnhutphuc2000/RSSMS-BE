@@ -105,7 +105,7 @@ namespace RSSMS.DataService.Services
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
                 (int, IQueryable<ScheduleViewModel>) result = (0, null);
                 var account = _accountService.Get(account => account.Id == userId && account.IsActive).Include(account => account.StaffAssignStorages).FirstOrDefault();
-                if(account == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản");
+                if (account == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản");
                 if (model.DateFrom == null || model.DateTo == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Ngày bắt đầu và ngày kết thúc không thể để trống");
 
                 if (role == "Delivery Staff")
@@ -145,7 +145,7 @@ namespace RSSMS.DataService.Services
                 else
                 {
                     var storageIds = account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).Select(account => account.StorageId).ToList();
-                    if(storageIds == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên chưa được phân công vào kho");
+                    if (storageIds == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên chưa được phân công vào kho");
                     var schedules = Get(x => x.IsActive && (storageIds.Contains((Guid)x.Request.StorageId) || storageIds.Contains((Guid)x.Request.Order.StorageId)))
                             .Where(x => x.ScheduleDay.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Date <= model.DateTo.Value.Date).Include(x => x.Request)
                             .ThenInclude(request => request.Order)

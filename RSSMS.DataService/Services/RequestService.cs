@@ -1,5 +1,4 @@
-﻿using _3DBinPacking.Enum;
-using _3DBinPacking.Model;
+﻿using _3DBinPacking.Model;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
@@ -10,9 +9,7 @@ using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.Utilities;
-using RSSMS.DataService.ViewModels.Floors;
 using RSSMS.DataService.ViewModels.Notifications;
-using RSSMS.DataService.ViewModels.OrderDetails;
 using RSSMS.DataService.ViewModels.Requests;
 using RSSMS.DataService.ViewModels.Storages;
 using System;
@@ -103,7 +100,7 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
                 var account = _accountService.Get(account => account.Id == userId && account.IsActive).Include(account => account.StaffAssignStorages).FirstOrDefault();
-                if(account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
+                if (account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
                 var requests = Get(request => request.IsActive)
                     .Include(request => request.Schedules)
                     .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
@@ -140,7 +137,7 @@ namespace RSSMS.DataService.Services
                             .Include(request => request.Order).ThenInclude(order => order.Storage);
                     }
                 }
-                if(role == "Admin")
+                if (role == "Admin")
                 {
                     requests = requests.Where(request => request.CreatedByNavigation.Role.Name == "Customer")
                         .Include(request => request.Schedules)
@@ -152,13 +149,13 @@ namespace RSSMS.DataService.Services
                 {
                     var storageIds = account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).Select(staffAssign => staffAssign.StorageId).ToList();
                     var staff = _staffAssignStoragesService.Get(staffAssignStorage => storageIds.Contains(staffAssignStorage.StorageId)).Select(a => a.StaffId).ToList();
-                    
-                    requests = requests.Where(request => storageIds.Contains((Guid)request.StorageId) || storageIds.Contains((Guid)request.Order.StorageId) || request.CreatedByNavigation.StaffAssignStorages.Where(staff => staff.IsActive && storageIds.Contains((Guid)staff.StorageId)).FirstOrDefault() != null )
+
+                    requests = requests.Where(request => storageIds.Contains((Guid)request.StorageId) || storageIds.Contains((Guid)request.Order.StorageId) || request.CreatedByNavigation.StaffAssignStorages.Where(staff => staff.IsActive && storageIds.Contains((Guid)staff.StorageId)).FirstOrDefault() != null)
                         .Include(request => request.Schedules)
                         .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
                         .Include(request => request.Storage)
                         .Include(request => request.Order).ThenInclude(order => order.Storage);
-                    
+
                 }
                 if (role == "Office Staff")
                 {
@@ -263,7 +260,7 @@ namespace RSSMS.DataService.Services
                     var maxServiceDeliveryFee = result.RequestDetails.Select(requestDetail => requestDetail.ServiceDeliveryFee).Max();
                     result.DeliveryFee = maxServiceDeliveryFee * Math.Ceiling(Convert.ToDecimal(result.Note.Split(' ')[0]));
                 }
-                
+
                 if (result.Type != 2) return result;
                 var orderHistoryExtension = _orderHistoryExtensionService.Get(orderHistory => orderHistory.RequestId == result.Id).FirstOrDefault();
                 if (orderHistoryExtension != null) result.TotalPrice = orderHistoryExtension.TotalPrice;
@@ -295,7 +292,7 @@ namespace RSSMS.DataService.Services
 
                 if (model.Type == (int)RequestType.Tao_don) // customer tao yeu cau tao don
                 {
-                    
+
 
                     // check xem yêu cầu tạo đơn giữ đồ thuê hay kho tự quản => dẫn tới cần sử dụng space gì
                     int spaceType = 0;
@@ -312,7 +309,7 @@ namespace RSSMS.DataService.Services
                         Amount = requestDetail.Amount
                     }).ToList();
                     decimal totalPrice = 0;
-                    decimal month = Math.Ceiling((decimal)model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days/ 30);
+                    decimal month = Math.Ceiling((decimal)model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days / 30);
 
                     if (spaceType == 1) month = (model.ReturnDate.Value.Date.Subtract(model.DeliveryDate.Value.Date).Days / 30);
 
@@ -330,17 +327,17 @@ namespace RSSMS.DataService.Services
                                 if (serviceDeliveryFee < service.DeliveryFee) serviceDeliveryFee = (decimal)service.DeliveryFee;
                                 totalPrice += service.Price * month;
                                 if (serviceType == -1) serviceType = (int)service.Type;
-                                if(serviceType != -1 && serviceType != service.Type) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể đặt 1 đơn 2 loại dịch vụ chính");
+                                if (serviceType != -1 && serviceType != service.Type) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể đặt 1 đơn 2 loại dịch vụ chính");
                                 cuboid.Add(new Cuboid((decimal)service.Width, (decimal)service.Height, (decimal)service.Length, 0, service.Id + i.ToString()));
                             }
-                            if(service.Type == (int)ServiceType.Phu_kien) totalPrice += service.Price;
+                            if (service.Type == (int)ServiceType.Phu_kien) totalPrice += service.Price;
                         }
                     }
-                    if(!string.IsNullOrWhiteSpace(model.Note))
+                    if (!string.IsNullOrWhiteSpace(model.Note))
                         totalPrice += serviceDeliveryFee * Math.Ceiling(Convert.ToDecimal(model.Note.Split(' ')[0]));
 
                     if (totalPrice < model.TotalPrice) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tổng tiền lỗi");
-                    if(model.AdvanceMoney == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không được trống");
+                    if (model.AdvanceMoney == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không được trống");
                     if (model.AdvanceMoney != (totalPrice * 50 / 100)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tiền cọc không đúng");
                     var checkResult = await CheckStorageAvailable(spaceType, isMany, (int)model.TypeOrder, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, cuboid, model.StorageId, (bool)model.IsCustomerDelivery, null, accessToken, new List<string> { model.DeliveryTime }, false);
                     if (!checkResult) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kho không còn chỗ chứa");
@@ -361,7 +358,7 @@ namespace RSSMS.DataService.Services
                     });
 
                     await _firebaseService.PushOrderNoti("New request arrive!", null, request.Id);
-                    return await GetById(request.Id,accessToken);
+                    return await GetById(request.Id, accessToken);
                 }
 
 
@@ -403,9 +400,9 @@ namespace RSSMS.DataService.Services
                 {
                     var orderToExtend = Get(request => request.OrderId == model.OrderId)
                         .Include(request => request.Order).ThenInclude(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).Select(request => request.Order).FirstOrDefault();
-                    if(orderToExtend == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy đơn cần gia hạn");
+                    if (orderToExtend == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy đơn cần gia hạn");
 
-                    if(model.IsPaid == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa thanh toán");
+                    if (model.IsPaid == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa thanh toán");
                     if (model.IsPaid == false) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa thanh toán");
                     var orderDetails = orderToExtend.OrderDetails.ToList();
                     int typeService = 1;
@@ -524,10 +521,10 @@ namespace RSSMS.DataService.Services
                     });
                     return await GetById(request.Id, accessToken);
                 }
-                
+
                 if (model.Type == (int)RequestType.Tra_don) // rut do ve
                 {
-                    if(model.IsCustomerDelivery != null)
+                    if (model.IsCustomerDelivery != null)
                     {
                         if (!(bool)model.IsCustomerDelivery)
                         {
@@ -536,7 +533,7 @@ namespace RSSMS.DataService.Services
                             if (staffs.Count < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không còn đủ nhân viên vào thời điểm trả đơn");
                         }
                     }
-                    
+
 
 
                     request = _mapper.Map<Request>(model);
@@ -927,7 +924,7 @@ namespace RSSMS.DataService.Services
                     ServiceId = requestDetail.ServiceId,
                     Amount = requestDetail.Amount
                 }).ToList();
-                if(services.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Chưa đặt bất kì sản phẩm nào.");
+                if (services.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Chưa đặt bất kì sản phẩm nào.");
                 // service list chứa list service người dùng đặt
                 decimal maxServiceDeliveryFee = 0;
                 List<Cuboid> cuboid = new List<Cuboid>();
@@ -943,19 +940,19 @@ namespace RSSMS.DataService.Services
                             if (maxServiceDeliveryFee < service.DeliveryFee) maxServiceDeliveryFee = (decimal)service.DeliveryFee;
                             cuboid.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id + i.ToString()));
                         }
-                            
+
                         if (service.Type == (int)ServiceType.Kho) spaceType = (int)SpaceType.Dien_tich;
                     }
                 }
 
-                var requestsAssignStorage = await Get(request => request.IsActive && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don || request.Type == (int)RequestType.Gia_han_don )&& (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen || request.Status == (int)RequestStatus.Dang_xu_ly))
+                var requestsAssignStorage = await Get(request => request.IsActive && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don || request.Type == (int)RequestType.Gia_han_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen || request.Status == (int)RequestStatus.Dang_xu_ly))
                                            .Include(request => request.Order).ThenInclude(order => order.OrderDetails)
                                            .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service).ToListAsync();
                 requestsAssignStorage = requestsAssignStorage.Where(request => (request.DeliveryDate <= model.DeliveryDate && request.ReturnDate >= model.DeliveryDate) || (model.DeliveryDate <= request.DeliveryDate && model.ReturnDate >= request.DeliveryDate)).ToList();
 
 
 
-                result = await _storageService.GetStorageAvailable(null, spaceType, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, isMany, cuboid, requestsAssignStorage, (bool) model.IsCustomerDelivery, accessToken, new List<string> { model.DeliveryTime }, model.DeliveryAddress, maxServiceDeliveryFee);
+                result = await _storageService.GetStorageAvailable(null, spaceType, (DateTime)model.DeliveryDate, (DateTime)model.ReturnDate, isMany, cuboid, requestsAssignStorage, (bool)model.IsCustomerDelivery, accessToken, new List<string> { model.DeliveryTime }, model.DeliveryAddress, maxServiceDeliveryFee);
 
 
                 if (result.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không có kho còn chỗ trống.");
@@ -971,6 +968,6 @@ namespace RSSMS.DataService.Services
             }
         }
 
-        
+
     }
 }

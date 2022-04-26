@@ -272,7 +272,7 @@ namespace RSSMS.DataService.Services
                 if (role == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập chức vụ");
 
                 var account = await Get(account => account.Phone == model.Phone).FirstOrDefaultAsync();
-                if(account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Số điện thoại bị trùng");
+                if (account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Số điện thoại bị trùng");
                 account = await Get(account => account.Email == model.Email && account.IsActive).FirstOrDefaultAsync();
                 if (account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email đã tồn tại");
                 // Create user to firebase
@@ -288,8 +288,8 @@ namespace RSSMS.DataService.Services
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, e.Message);
                 }
 
-                
-                
+
+
                 // Create user to database
 
                 var userCreate = _mapper.Map<Account>(model);
@@ -501,7 +501,7 @@ namespace RSSMS.DataService.Services
 
                 if (role == "Manager")
                     staffs = staffs.Where(account => account.Role.Name != "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-                
+
                 // Nhân viên không thuộc kho nào
                 if (storageId == null && !getFromAllStorage)
                     staffs = staffs.Where(account => (account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() == 0) || account.Role.Name == "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
@@ -518,10 +518,10 @@ namespace RSSMS.DataService.Services
                     if (deliveryTimes.Count > 0)
                     {
                         foreach (var time in deliveryTimes)
-                            if(!string.IsNullOrWhiteSpace(time))
+                            if (!string.IsNullOrWhiteSpace(time))
                                 timeSpan.Add(_utilService.StringToTime(time));
                         // delivery staff busy in the time
-                        if(timeSpan.Count > 0)
+                        if (timeSpan.Count > 0)
                             staffs = staffs.Where(account => account.Schedules.Where(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).FirstOrDefault() == null).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
                     }
                     //delivery staff busy in the day
