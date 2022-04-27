@@ -448,7 +448,7 @@ namespace RSSMS.DataService.Services
             var token = new JwtSecurityToken(
                 issuer: SecretKeyConstant.ISSUER,
                 audience: SecretKeyConstant.ISSUER,
-                expires: DateTime.Now.AddMinutes(60),
+                expires: DateTime.Now.AddMonths(1),
                 claims: authClaims,
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
                 );
@@ -490,16 +490,16 @@ namespace RSSMS.DataService.Services
             try
             {
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-                var uid = secureToken.Claims.First(claim => claim.Type == "user_id").Value;
-                var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var account = Get(account => account.IsActive && (Guid)account.Id == userId).Include(account => account.Role).FirstOrDefault();
 
 
                 var staffs = Get(account => account.IsActive && account.Role.Name != "Admin" && account.Role.Name != "Customer").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
                 if (roleName.Count > 0) staffs = Get(account => account.IsActive && roleName.Contains(account.Role.Name)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-                if (role == "Admin")
+                if (account.Role.Name == "Admin")
                     staffs = staffs.Where(account => account.Role.Name == "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
 
-                if (role == "Manager")
+                if (account.Role.Name == "Manager")
                     staffs = staffs.Where(account => account.Role.Name != "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
 
                 // Nhân viên không thuộc kho nào
@@ -518,13 +518,20 @@ namespace RSSMS.DataService.Services
                     if (deliveryTimes.Count > 0)
                     {
                         foreach (var time in deliveryTimes)
+                        {
                             if (!string.IsNullOrWhiteSpace(time))
                                 timeSpan.Add(_utilService.StringToTime(time));
-                        // delivery staff busy in the time
+                        }
+                            
+                        // delivery staff not busy in the time
                         if (timeSpan.Count > 0)
+                        {
+                            var tmp2 = staffs.ToList();
                             staffs = staffs.Where(account => account.Schedules.Where(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).FirstOrDefault() == null).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                            var tmp = staffs.ToList();
+                        }
                     }
-                    //delivery staff busy in the day
+                    //delivery staff not busy in the day
                     staffs = staffs.Where(account => account.Schedules.Where(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && !schedule.IsActive && schedule.Status == 6).FirstOrDefault() == null).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
                 }
                 var result = await staffs.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToListAsync();

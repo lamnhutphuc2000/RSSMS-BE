@@ -10,6 +10,7 @@ namespace RSSMS.DataService.Models
         public Request()
         {
             Notifications = new HashSet<Notification>();
+            OrderTimelines = new HashSet<OrderTimeline>();
             RequestDetails = new HashSet<RequestDetail>();
             RequestTimelines = new HashSet<RequestTimeline>();
             Schedules = new HashSet<Schedule>();
@@ -32,18 +33,20 @@ namespace RSSMS.DataService.Models
         public Guid? CreatedBy { get; set; }
         public Guid? ModifiedBy { get; set; }
         public string ReturnAddress { get; set; }
-        public decimal? TotalPrice { get; set; }
-        public DateTime? OldReturnDate { get; set; }
-        public decimal? AdvanceMoney { get; set; }
         public DateTime? ReturnDate { get; set; }
         public TimeSpan? ReturnTime { get; set; }
         public string CancelReason { get; set; }
         public DateTime? CancelDate { get; set; }
+        public decimal? TotalPrice { get; set; }
+        public DateTime? OldReturnDate { get; set; }
+        public decimal? DepositFee { get; set; }
+        public decimal? AdvanceMoney { get; set; }
 
         public virtual Account CreatedByNavigation { get; set; }
         public virtual Order Order { get; set; }
         public virtual Storage Storage { get; set; }
         public virtual ICollection<Notification> Notifications { get; set; }
+        public virtual ICollection<OrderTimeline> OrderTimelines { get; set; }
         public virtual ICollection<RequestDetail> RequestDetails { get; set; }
         public virtual ICollection<RequestTimeline> RequestTimelines { get; set; }
         public virtual ICollection<Schedule> Schedules { get; set; }

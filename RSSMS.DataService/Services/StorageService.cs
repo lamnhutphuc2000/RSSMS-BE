@@ -68,8 +68,11 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidateDecimal(model.Height, " chiều cao kho");
                 _utilService.ValidateDecimal(model.Length, " chiều dài kho");
 
+                var geometry = await GetGeometry(model.Address);
                 var storage = _mapper.Map<Storage>(model);
                 var image = model.Image;
+                storage.Lat = geometry.results.First().geometry.location.lat;
+                storage.Lng = geometry.results.First().geometry.location.lng;
                 await CreateAsync(storage);
                 if (image != null)
                 {
@@ -111,10 +114,21 @@ namespace RSSMS.DataService.Services
                 var areas = entity.Areas;
                 foreach (var area in areas)
                     if (await _areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage is in used");
-                if (entity.Orders.Where(order => !order.IsActive || order.Status != 0 || order.Status != 6 || order.Status != 7).Count() > 0)
-                    throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn đơn đang được gán vào");
-                if (entity.Requests.Where(request => !request.IsActive || request.Status != 0 || request.Status != 3 || request.Status != 4 || request.Status != 5).Count() > 0)
-                    throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn đơn yêu cầu đang được gán vào");
+                var orders = entity.Orders;
+                if(orders.Count > 0)
+                {
+                    if(orders.Where(order => order.IsActive && (order.Status == (int)OrderStatus.Dang_van_chuyen || order.Status == (int)OrderStatus.Da_luu_kho
+                    || order.Status == (int)OrderStatus.Sap_qua_han || order.Status == (int)OrderStatus.Da_qua_han)).FirstOrDefault() != null)
+                        throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn đơn đang được gán vào");
+                }
+                var requests = entity.Requests;
+                if(requests.Count > 0)
+                {
+                    if(requests.Where(request => request.IsActive && (request.Status == (int)RequestStatus.Dang_xu_ly 
+                    || request.Status == (int)RequestStatus.Da_xu_ly || request.Status == 6) && (request.Status == (int)RequestStatus.Dang_van_chuyen && request.Type == (int)RequestType.Tao_don)).FirstOrDefault() != null)
+                        throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn đơn yêu cầu đang được gán vào");
+                }
+                    
                 if (entity.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.Staff.Role.Name != "Manager").Count() > 0)
                     throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn nhân viên đang được gán vào");
                 entity.IsActive = false;
@@ -226,6 +240,9 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidateDecimal(model.Height, " chiều cao kho");
                 _utilService.ValidateDecimal(model.Length, " chiều dài kho");
 
+                var geometry = await GetGeometry(model.Address);
+                
+
                 if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage Id not matched");
 
                 var entity = await Get(storage => storage.Id == id && storage.IsActive).Include(a => a.Areas).FirstOrDefaultAsync();
@@ -258,6 +275,8 @@ namespace RSSMS.DataService.Services
                         if (url != null) updateEntity.ImageUrl = url;
                     }
                 }
+                updateEntity.Lat = geometry.results.First().geometry.location.lat;
+                updateEntity.Lng = geometry.results.First().geometry.location.lng;
                 await UpdateAsync(updateEntity);
 
                 return _mapper.Map<StorageUpdateViewModel>(updateEntity);
@@ -495,14 +514,16 @@ namespace RSSMS.DataService.Services
                         if (requestsNeedToDeli.Count() + 1 <= staffs.Count())
                         {
                             StorageViewModel storage = _mapper.Map<StorageViewModel>(storageList[i]);
-                            DistanceViewModel distance = await GetDistanceFromCustomerToStorage(deliveryAddress, storage.Address);
+                            DistanceViewModel distance = await GetDistanceFromCustomerToStorage(deliveryAddress, storageList[i].Lat + ","+ storageList[i].Lng);
                             if (distance != null)
                             {
                                 storage.DeliveryDistance = distance.rows[0].elements[0].distance.text;
-                                storage.DeliveryFee = serviceDeliveryFee * Math.Ceiling(Convert.ToDecimal(storage.DeliveryDistance.Split(' ')[0]));
+                                if (!storage.DeliveryDistance.Contains('k'))
+                                    storage.DeliveryFee = serviceDeliveryFee * 1;
+                                else
+                                    storage.DeliveryFee = serviceDeliveryFee * Math.Ceiling(Convert.ToDecimal(storage.DeliveryDistance.Split(' ')[0]));
+                                result.Add(storage);
                             }
-
-                            result.Add(storage);
                         }
                     }
                     else
@@ -513,16 +534,34 @@ namespace RSSMS.DataService.Services
             } while (i < storageList.Count);
             return result;
         }
+        private async Task<GeometryViewModel> GetGeometry(string address)
+        {
+            string key = "vF13WydeN0TEyp6GKIP9MpMp6ndkCojaa8VRfhHB";
+            GeometryViewModel geometry = new GeometryViewModel();
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri("https://rsapi.goong.io/");
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+            HttpResponseMessage response = await client.GetAsync(
+                $"/geocode?address={address}&api_key={key}"
+                );
+            if (response.IsSuccessStatusCode)
+            {
+                geometry = await response.Content.ReadAsAsync<GeometryViewModel>();
+                return geometry;
+            }
+            else throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Địa chỉ không hợp lệ");
+        }
 
-        private async Task<DistanceViewModel> GetDistanceFromCustomerToStorage(string deliveryAddress, string storageAddress)
+        private async Task<DistanceViewModel> GetDistanceFromCustomerToStorage(string deliveryAddress, string destination)
         {
             DistanceViewModel result = null;
 
             // Điểm bắt đầu
             string origin = null;
             // Điểm đến
-            string destination = null;
-            string key = "9gAZdEIcBCUAYj8o3p7EcCepH30zYGgK1Pw3LULV";
+            string key = "vF13WydeN0TEyp6GKIP9MpMp6ndkCojaa8VRfhHB";
             GeometryViewModel geometry = new GeometryViewModel();
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri("https://rsapi.goong.io/");
@@ -538,16 +577,8 @@ namespace RSSMS.DataService.Services
                 if (geometry.results.Count() > 0)
                     origin = geometry.results[0].geometry.location.lat + "," + geometry.results[0].geometry.location.lng;
             }
-
-            response = await client.GetAsync(
-                $"/geocode?address={storageAddress}&api_key={key}"
-                );
-            if (response.IsSuccessStatusCode)
-            {
-                geometry = await response.Content.ReadAsAsync<GeometryViewModel>();
-                if (geometry.results.Count() > 0)
-                    destination = geometry.results[0].geometry.location.lat + "," + geometry.results[0].geometry.location.lng;
-            }
+            else
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Địa chỉ giao nhận không hợp lệ");
 
 
             // tính quãng đường

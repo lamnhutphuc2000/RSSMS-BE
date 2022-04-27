@@ -531,8 +531,10 @@ namespace RSSMS.DataService.Services
 
                         }
 
-
-                        order.Status = (int)OrderStatus.Da_xuat_kho;
+                        if(order.Type == (int)OrderType.Giu_do_thue)
+                            order.Status = (int)OrderStatus.Da_xuat_kho;
+                        if (order.Type == (int)OrderType.Kho_tu_quan)
+                            order.Status = (int)OrderStatus.Hoan_thanh;
                         var orderDetails = order.OrderDetails;
                         // Lấy hết đồ trong order ra
                         IDictionary<Guid, Export> exports = new Dictionary<Guid, Export>();

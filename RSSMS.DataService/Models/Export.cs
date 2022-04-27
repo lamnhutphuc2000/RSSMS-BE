@@ -16,8 +16,8 @@ namespace RSSMS.DataService.Models
         public Guid? FloorId { get; set; }
         public DateTime? CreatedDate { get; set; }
         public Guid? CreatedBy { get; set; }
-        public string Code { get; set; }
         public Guid? DeliveryBy { get; set; }
+        public string Code { get; set; }
         public string ReturnAddress { get; set; }
 
         public virtual Account CreatedByNavigation { get; set; }

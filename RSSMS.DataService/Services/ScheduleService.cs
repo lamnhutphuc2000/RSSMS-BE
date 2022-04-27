@@ -44,14 +44,21 @@ namespace RSSMS.DataService.Services
             try
             {
                 var userIds = model.UserIds;
-                if (userIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "User id null");
+                if (userIds.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy nhân viên");
                 var schedules = model.Schedules;
-                if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Schedules null");
-                var listSchedules = Get().Include(x => x.Request).ThenInclude(request => request.Order).ToList();
+                if (schedules.Count <= 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy giờ lịch");
+                var listSchedules = Get(schedule => schedule.IsActive && schedule.ScheduleDay.Date == model.ScheduleDay.Value.Date).Include(x => x.Request).ThenInclude(request => request.Order).ToList();
 
-                var schedulesAssigned = listSchedules.Where(x => x.IsActive && schedules.Any(a => a.RequestId == x.RequestId) && x.ScheduleDay.Date == model.ScheduleDay.Value.Date);
+                var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.RequestId == x.RequestId));
 
 
+                if(userIds.Count() > 0)
+                {
+                    HashSet<Guid> hashset = new HashSet<Guid>();
+                    IEnumerable<Guid> duplicates = userIds.Where(e => !hashset.Add(e));
+                    if(duplicates.Count() > 0)
+                        throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trùng nhân viên");
+                }
 
                 foreach (var scheduleAssigned in schedulesAssigned)
                 {

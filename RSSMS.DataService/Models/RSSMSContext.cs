@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
@@ -257,6 +259,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.AdditionalFeeDescription).HasMaxLength(255);
+
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.DeliveryAddress).HasMaxLength(255);
@@ -311,7 +315,7 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
-                entity.Property(e => e.ExportNote).HasMaxLength(50);
+                entity.Property(e => e.ExportNote).HasMaxLength(10);
 
                 entity.Property(e => e.Height).HasColumnType("decimal(18, 3)");
 
@@ -421,6 +425,11 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.OrderTimelines)
                     .HasForeignKey(d => d.OrderId)
                     .HasConstraintName("FK_OrderTimeline_Order");
+
+                entity.HasOne(d => d.Request)
+                    .WithMany(p => p.OrderTimelines)
+                    .HasForeignKey(d => d.RequestId)
+                    .HasConstraintName("FK_OrderTimeline_Request");
             });
 
             modelBuilder.Entity<Request>(entity =>
@@ -440,6 +449,8 @@ namespace RSSMS.DataService.Models
                 entity.Property(e => e.DeliveryAddress).HasMaxLength(255);
 
                 entity.Property(e => e.DeliveryDate).HasColumnType("date");
+
+                entity.Property(e => e.DepositFee).HasColumnType("decimal(18, 3)");
 
                 entity.Property(e => e.Note).HasMaxLength(255);
 
@@ -505,6 +516,7 @@ namespace RSSMS.DataService.Models
                 entity.HasOne(d => d.Request)
                     .WithMany(p => p.RequestTimelines)
                     .HasForeignKey(d => d.RequestId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_RequestTimeline_Request");
             });
 
@@ -625,7 +637,11 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.ImageUrl).HasMaxLength(255);
 
+                entity.Property(e => e.Lat).HasColumnName("lat");
+
                 entity.Property(e => e.Length).HasColumnType("decimal(18, 3)");
+
+                entity.Property(e => e.Lng).HasColumnName("lng");
 
                 entity.Property(e => e.Name)
                     .IsRequired()

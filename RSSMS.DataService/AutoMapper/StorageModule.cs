@@ -11,7 +11,7 @@ namespace RSSMS.DataService.AutoMapper
         {
             mc.CreateMap<Storage, StorageViewModel>()
                 .ForMember(des => des.DeliveryFee, opt => opt.MapFrom(des => (decimal?)0))
-                .ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager" && x.IsActive).FirstOrDefault() != null ? des.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager").FirstOrDefault().Staff.Name : null));
+                .ForMember(des => des.ManagerName, opt => opt.MapFrom(des => des.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager" && x.IsActive).FirstOrDefault() != null ? des.StaffAssignStorages.Where(x => x.Staff.Role.Name == "Manager" && x.IsActive).FirstOrDefault().Staff.Name : null));
             mc.CreateMap<StorageViewModel, Storage>();
 
 
