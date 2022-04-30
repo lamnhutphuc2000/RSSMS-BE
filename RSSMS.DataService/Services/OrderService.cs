@@ -824,6 +824,7 @@ namespace RSSMS.DataService.Services
                             orderDetail.ImportNote = orderDetailToAssign.ImportNote;
                             orderDetail.Import = import;
                             orderDetail.ImportCode = import.Code + " - " + index;
+                            orderDetails.Add(orderDetail);
                         }
                         if (isMany)
                             parameter = new BinPackParameter(floorWithOrderDetail.Width, 1, floorWithOrderDetail.Length, cuboids);
