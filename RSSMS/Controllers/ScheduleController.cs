@@ -52,7 +52,8 @@ namespace RSSMS.API.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Add(ScheduleCreateViewModel model)
         {
-            return Ok(await _scheduleService.Create(model));
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            return Ok(await _scheduleService.Create(model,accessToken));
         }
     }
 }

@@ -15,7 +15,10 @@ namespace RSSMS.DataService.AutoMapper
             mc.CreateMap<ServicesOrderViewModel, OrderDetail>();
 
             mc.CreateMap<OrderDetailViewModel, OrderDetail>()
+                .ForMember(des => des.Status, opt => opt.MapFrom(src => 1))
                 .ForMember(des => des.OrderDetailServiceMaps, opt => opt.MapFrom(src => src.OrderDetailServices));
+
+            mc.CreateMap<OrderDetail, OrderDetailViewModel>();
 
             mc.CreateMap<OrderDetailViewModel, OrderDetailByIdViewModel>();
 

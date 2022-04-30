@@ -68,7 +68,7 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                var tmp = await Get(order => order.Id == id && order.IsActive)
+                var orderFirst = await Get(order => order.Id == id && order.IsActive)
                     .Include(order => order.Customer)
                     .Include(order => order.Storage)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
@@ -76,7 +76,7 @@ namespace RSSMS.DataService.Services
                     .Include(order => order.OrderAdditionalFees)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
                     .FirstOrDefaultAsync();
-                var tmp2 = await Get(x => x.Id == id && x.IsActive)
+                var orderSecond = await Get(x => x.Id == id && x.IsActive)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer)
@@ -85,8 +85,8 @@ namespace RSSMS.DataService.Services
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.CreatedByNavigation)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.DeliveryByNavigation)
                     .FirstOrDefaultAsync();
-                tmp.OrderDetails = tmp2.OrderDetails;
-                var result = _mapper.Map<OrderByIdViewModel>(tmp);
+                orderFirst.OrderDetails = orderSecond.OrderDetails;
+                var result = _mapper.Map<OrderByIdViewModel>(orderFirst);
                 if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order id not found");
                 var request = result.Requests;
                 if (requestTypes.Count == 0) return result;
@@ -407,6 +407,7 @@ namespace RSSMS.DataService.Services
 
                 await _orderTimelineService.CreateAsync(new OrderTimeline
                 {
+                    OrderId = order.Id,
                     CreatedDate = DateTime.Now,
                     CreatedBy = userId,
                     Datetime = DateTime.Now,
@@ -493,7 +494,6 @@ namespace RSSMS.DataService.Services
         }
 
 
-
         public async Task<OrderByIdViewModel> Done(OrderDoneViewModel model, string accessToken)
         {
             try
@@ -523,12 +523,13 @@ namespace RSSMS.DataService.Services
                         {
                             var deliveryAccount = await _accountService.Get(account => account.IsActive && account.Id == model.DeliveryBy).Include(account => account.Role)
                                                                 .Include(account => account.Schedules).FirstOrDefaultAsync();
-                            if (deliveryAccount == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản người vận chuyển");
-                            if (deliveryAccount.Role.Name != "Delivery Staff") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người nhận không phải người vận chuyển");
-                            var requestReturnOrder = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tra_don && request.Status == (int)RequestStatus.Da_xu_ly).FirstOrDefault();
-                            if (requestReturnOrder != null)
-                                if (deliveryAccount.Schedules.Where(schedule => schedule.IsActive && schedule.RequestId == requestReturnOrder.Id).FirstOrDefault() == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người vận chuyển không có lịch trả đơn này");
-
+                            if (deliveryAccount == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản người nhận đơn");
+                            if (deliveryAccount.Role.Name == "Delivery Staff")
+                            {
+                                var requestReturnOrder = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tra_don && request.Status == (int)RequestStatus.Da_xu_ly).FirstOrDefault();
+                                if (requestReturnOrder != null)
+                                    if (deliveryAccount.Schedules.Where(schedule => schedule.IsActive && schedule.RequestId == requestReturnOrder.Id).FirstOrDefault() == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Người vận chuyển không có lịch trả đơn này");
+                            }
                         }
 
                         if(order.Type == (int)OrderType.Giu_do_thue)
@@ -580,10 +581,18 @@ namespace RSSMS.DataService.Services
                                         export = exports[(Guid)floorId];
                                 }
                                 orderDetail.Export = export;
-                                await _orderDetailService.UpdateAsync(orderDetail);
                             }
                         }
+                        order.OrderDetails = orderDetails;
                         await UpdateAsync(order);
+                        await _orderTimelineService.CreateAsync(new OrderTimeline()
+                        {
+                            OrderId = order.Id,
+                            CreatedBy = account.Id,
+                            CreatedDate = DateTime.Now,
+                            Datetime = DateTime.Now,
+                            Name = "Đã xuất kho"
+                        });
                         return await GetById(model.OrderId, new List<int>());
                     }
                 }
@@ -700,7 +709,7 @@ namespace RSSMS.DataService.Services
                 var acc = _accountService.Get(account => account.IsActive && account.Id == userId)
                     .Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefault();
                 if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
-                if (acc.Role.Name != "Office Staff") throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không phải nhân viên thủ kho");
+                if (acc.Role.Name != "Office Staff") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không phải nhân viên thủ kho");
 
 
 
@@ -715,77 +724,37 @@ namespace RSSMS.DataService.Services
                 if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
                 if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Các món đồ không thuộc cùng 1 đơn");
 
-                Account deliveryStaff = null;
+                Account deliveryTo = null;
                 if (model.DeliveryId != null)
                 {
-                    deliveryStaff = _accountService.Get(account => account.IsActive && account.Id == model.DeliveryId).Include(account => account.Schedules).ThenInclude(schedule => schedule.Request).FirstOrDefault();
-                    if (deliveryStaff == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy nhân viên vận chuyển");
-                    Schedule schedule = deliveryStaff.Schedules.Where(schedule => schedule.IsActive && schedule.Request.OrderId == orders.FirstOrDefault().Id).FirstOrDefault();
-                    if (orders.FirstOrDefault().Type != (int)OrderType.Kho_tu_quan)
-                        if (schedule == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Sai nhân viên vận chuyển");
+                    deliveryTo = _accountService.Get(account => account.IsActive && account.Id == model.DeliveryId)
+                        .Include(account => account.Role)
+                        .Include(account => account.Schedules).ThenInclude(schedule => schedule.Request).FirstOrDefault();
+                    if(deliveryTo.Role.Name == "Delivery Staff")
+                    {
+                        if (deliveryTo == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy nhân viên vận chuyển");
+                        Schedule schedule = deliveryTo.Schedules.Where(schedule => schedule.IsActive && schedule.Request.OrderId == orders.FirstOrDefault().Id).FirstOrDefault();
+                        if (orders.FirstOrDefault().Type != (int)OrderType.Kho_tu_quan)
+                            if (schedule == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Sai nhân viên vận chuyển");
+                    }
                 }
 
 
                 var order = orders.First();
-                if (order.Status != (int)OrderStatus.Dang_van_chuyen) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Đơn không đang vận chuyển");
+                if (order.Status != (int)OrderStatus.Dang_van_chuyen) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Đơn không đang vận chuyển");
+
+                
 
                 // Check xem tầng còn đủ chỗ không
-                var orderDetails = order.OrderDetails;
                 bool isMany = false;
                 foreach (var orderDetailAssign in model.OrderDetailAssignFloor)
                     if (orderDetailAssign.ServiceType == (int)ServiceType.Gui_theo_dien_tich)
-                        isMany = true;
-                var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tao_don && request.Status == 3).First();
-                var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
-
-                // Check xem nhân viên thuộc kho hay không
-                var storageId = _floorService.Get(floor => floor.Id == orderDetailToAssignFloorList.First().FloorId).Include(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage).Select(floor => floor.Space.Area.StorageId).FirstOrDefault();
-                if (acc.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.StorageId == storageId).FirstOrDefault() == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Nhân viên không thuộc kho");
-
-                foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
-                {
-                    var floor = await _floorService.GetById(orderDetailToAssignFloor.FloorId);
-                    var orderDetail = orderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssignFloor.OrderDetailId).First();
-                    var orderDetailSize = (double)(orderDetail.Height * orderDetail.Width * orderDetail.Length);
-                    if (orderDetail.Height > floor.Height) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
-                    if (orderDetail.Width > floor.Width) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
-                    if (orderDetail.Length > floor.Length) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
-                    var floorWithOrderDetail = await _floorService.GetFloorWithOrderDetail(floor.Id);
-
-                    var oldOrderDetails = floorWithOrderDetail.OrderDetails.ToList();
-
-                    if (orderDetail.Height != 0 && orderDetail.Length != 0 && orderDetail.Width != 0)
                     {
-                        // Check kho tự quản
-                        if (request.TypeOrder == (int)OrderType.Kho_tu_quan)
-                            if (oldOrderDetails.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tầng đã được sử dụng");
-
-                        List<Cuboid> cuboids = new List<Cuboid>();
-                        for (int i = 0; i < oldOrderDetails.Count; i++)
-                        {
-                            if (isMany) cuboids.Add(new Cuboid((decimal)oldOrderDetails[i].Width, 1, (decimal)oldOrderDetails[i].Length));
-                            else cuboids.Add(new Cuboid((decimal)oldOrderDetails[i].Width, (decimal)oldOrderDetails[i].Height, (decimal)oldOrderDetails[i].Length));
-                        }
-                        BinPackParameter parameter = null;
-                        if (isMany)
-                        {
-                            cuboids.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length));
-                            parameter = new BinPackParameter(floor.Width, 1, floor.Length, cuboids);
-                        }
-                        else
-                        {
-                            cuboids.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length));
-                            parameter = new BinPackParameter(floor.Width, floor.Height, floor.Length, cuboids);
-                        }
-
-                        var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
-                        var result = binPacker.Pack(parameter);
-                        if (result.BestResult.Count > 1)
-                            throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size is overload");
+                        isMany = true;
+                        break;
                     }
-
-                }
-
+                var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tao_don && request.Status == (int)RequestStatus.Hoan_thanh).First();
+                var orderDetailToAssignFloorList = model.OrderDetailAssignFloor.GroupBy(orderDetail => orderDetail.FloorId).Select(orderDetail => orderDetail);
 
 
                 DateTime now = DateTime.Now;
@@ -793,32 +762,86 @@ namespace RSSMS.DataService.Services
                 order.ModifiedBy = userId;
                 order.ModifiedDate = now;
                 string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                string code = now.Year + now.Month + now.Day + now.Hour + now.Minute + "";
+                List<OrderDetail> orderDetails = new List<OrderDetail>();
+                OrderDetail orderDetail = null;
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
-                    Random random = new Random();
-                    Import import = new Import()
+                    if(orderDetailToAssignFloor.Key == null)
                     {
-                        CreatedBy = acc.Id,
-                        FloorId = orderDetailToAssignFloor.FloorId,
-                        DeliveryBy = model.DeliveryId,
-                        CreatedDate = now,
-                        Code = now.Day + now.Month + now.Year + now.Minute + now.Hour + new string(Enumerable.Repeat(chars, 5).Select(s => s[random.Next(s.Length)]).ToArray())
-                    };
-                    int index = 0;
-                    foreach (var orderDetail in orderDetails)
-                        if (orderDetail.Id == orderDetailToAssignFloor.OrderDetailId)
+                        foreach(var orderDetailNotAssign in orderDetailToAssignFloor)
                         {
-                            orderDetail.ImportNote = orderDetailToAssignFloor.ImportNote;
+                            orderDetail = order.OrderDetails.Where(orderDetail => orderDetail.Id == orderDetailNotAssign.OrderDetailId).FirstOrDefault();
+                            orderDetail.Note = orderDetailNotAssign.ImportNote;
+                            orderDetail.Status = 0;
+                            orderDetails.Add(orderDetail);
+                        }
+                    }
+                    else
+                    {
+                        Random random = new Random();
+                        Import import = new Import()
+                        {
+                            CreatedBy = acc.Id,
+                            FloorId = orderDetailToAssignFloor.Key,
+                            DeliveryBy = model.DeliveryId,
+                            CreatedDate = now,
+                            Code = code + new string(Enumerable.Repeat(chars, 5).Select(s => s[random.Next(s.Length)]).ToArray())
+                        };
+                        int index = 0;
+
+                        var floorWithOrderDetail = await _floorService.GetFloorWithOrderDetail((Guid)orderDetailToAssignFloor.Key);
+                        var oldOrderDetails = floorWithOrderDetail.OrderDetails.ToList();
+                        BinPackParameter parameter = null;
+                        var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                        List<Cuboid> cuboids = new List<Cuboid>();
+                        for (int i = 0; i < oldOrderDetails.Count; i++)
+                        {
+                            if (isMany) cuboids.Add(new Cuboid((decimal)oldOrderDetails[i].Width, 1, (decimal)oldOrderDetails[i].Length));
+                            else cuboids.Add(new Cuboid((decimal)oldOrderDetails[i].Width, (decimal)oldOrderDetails[i].Height, (decimal)oldOrderDetails[i].Length));
+                        }
+
+                        foreach (var orderDetailToAssign in orderDetailToAssignFloor)
+                        {
+                            orderDetail = order.OrderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssign.OrderDetailId).FirstOrDefault();
+                            var orderDetailSize = (double)(orderDetail.Height * orderDetail.Width * orderDetail.Length);
+                            if (orderDetail.Height > floorWithOrderDetail.Height) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
+                            if (orderDetail.Width > floorWithOrderDetail.Width) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
+                            if (orderDetail.Length > floorWithOrderDetail.Length) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
+
+                            if (orderDetail.Height != 0 && orderDetail.Length != 0 && orderDetail.Width != 0)
+                            {
+                                // Check kho tự quản
+                                if (request.TypeOrder == (int)OrderType.Kho_tu_quan)
+                                    if (oldOrderDetails.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tầng đã được sử dụng");
+                                if (isMany)
+                                    cuboids.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length));
+                                else
+                                    cuboids.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length));
+                                
+                            }
+                            
+                            orderDetail.ImportNote = orderDetailToAssign.ImportNote;
                             orderDetail.Import = import;
                             orderDetail.ImportCode = import.Code + " - " + index;
                         }
+                        if (isMany)
+                            parameter = new BinPackParameter(floorWithOrderDetail.Width, 1, floorWithOrderDetail.Length, cuboids);
+                        else
+                            parameter = new BinPackParameter(floorWithOrderDetail.Width, floorWithOrderDetail.Height, floorWithOrderDetail.Length, cuboids);
+                        var result = binPacker.Pack(parameter);
+                        if (result.BestResult.Count > 1)
+                            throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Đồ không đặt vừa kho");
 
+                    }
                 }
+
                 order.OrderDetails = orderDetails;
                 order.Status = (int)OrderStatus.Da_luu_kho;
                 await UpdateAsync(order);
                 await _orderTimelineService.CreateAsync(new OrderTimeline
                 {
+                    OrderId = order.Id,
                     CreatedDate = DateTime.Now,
                     CreatedBy = userId,
                     Datetime = DateTime.Now,
@@ -827,10 +850,11 @@ namespace RSSMS.DataService.Services
 
 
                 return _mapper.Map<OrderViewModel>(order);
+                
             }
             catch (InvalidOperationException)
             {
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order heigh, width, length overload");
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ đơn vượt quá giới hạn lưu trữ");
             }
             catch (ErrorResponse e)
             {
@@ -845,6 +869,13 @@ namespace RSSMS.DataService.Services
         {
             try
             {
+                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var acc = _accountService.Get(account => account.IsActive && account.Id == userId)
+                    .Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefault();
+                if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
+                if (acc.Role.Name != "Office Staff") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không phải nhân viên thủ kho");
+
                 var orderDetailIds = model.OrderDetailAssignFloor.Select(orderDetailAssign => orderDetailAssign.OrderDetailId).ToList();
                 var orders = Get(order => order.IsActive)
                     .Include(order => order.OrderDetails)
@@ -852,102 +883,94 @@ namespace RSSMS.DataService.Services
                     .Include(order => order.Requests)
                     .ToList().AsQueryable()
                     .ToList();
-                if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Order not found");
-                if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Order detail not in the same order");
+                if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
+                if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Đồ không cùng một đơn");
                 var order = orders.First();
 
-
-                var orderDetails = order.OrderDetails;
+                // Check xem tầng còn đủ chỗ không
                 bool isMany = false;
+                if(order.OrderDetails.Where(orderDetail => orderDetail.Status != 0 && orderDetail.ExportId == null && orderDetail.ImportId != null).Count() == 0)
+                    throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đồ có thể đặt trên đơn");
                 foreach (var orderDetailAssign in model.OrderDetailAssignFloor)
                     if (orderDetailAssign.ServiceType == (int)ServiceType.Gui_theo_dien_tich)
+                    {
                         isMany = true;
-                var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tao_don && request.Status == 3).First();
-                var orderDetailToAssignFloorList = model.OrderDetailAssignFloor;
-                foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
-                {
-                    var floor = await _floorService.GetById(orderDetailToAssignFloor.FloorId);
-                    var orderDetail = orderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssignFloor.OrderDetailId).First();
-                    var orderDetailSize = (double)(orderDetail.Height * orderDetail.Width * orderDetail.Length);
-                    if (orderDetail.Height > floor.Height) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
-                    if (orderDetail.Width > floor.Width) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
-                    if (orderDetail.Length > floor.Length) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size not enough for order detail");
-                    var floorWithOrderDetail = await _floorService.GetFloorWithOrderDetail(floor.Id);
-
-                    var oldOrderDetails = floorWithOrderDetail.OrderDetails.ToList();
-
-                    if (orderDetail.Height != 0 && orderDetail.Length != 0 && orderDetail.Width != 0)
-                    {
-                        // Check kho tự quản
-                        if (request.TypeOrder == (int)OrderType.Kho_tu_quan)
-                            if (oldOrderDetails.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor đã được xài");
-
-                        List<Cuboid> cuboids = new List<Cuboid>();
-                        for (int i = 0; i < oldOrderDetails.Count; i++)
-                        {
-                            if (isMany) cuboids.Add(new Cuboid((decimal)oldOrderDetails[i].Width, 1, (decimal)oldOrderDetails[i].Length));
-                            else cuboids.Add(new Cuboid((decimal)oldOrderDetails[i].Width, (decimal)oldOrderDetails[i].Height, (decimal)oldOrderDetails[i].Length));
-                        }
-                        BinPackParameter parameter = null;
-                        if (isMany)
-                        {
-                            cuboids.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length));
-                            parameter = new BinPackParameter(floor.Width, 1, floor.Length, cuboids);
-                        }
-                        else
-                        {
-                            cuboids.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length));
-                            parameter = new BinPackParameter(floor.Width, floor.Height, floor.Length, cuboids);
-                        }
-
-                        var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
-                        var result = binPacker.Pack(parameter);
-                        if (result.BestResult.Count > 1)
-                            throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Floor size is overload");
+                        break;
                     }
-
-                }
-
-
-
-
-
-                var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
-                var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tao_don && request.Status == (int)RequestStatus.Hoan_thanh).First();
+                var orderDetailGroupByFloor = model.OrderDetailAssignFloor.GroupBy(orderDetail => orderDetail.FloorId)
+                                                                                .Select(orderDetail => orderDetail);
+                Guid newFloor = Guid.Empty;
+                OrderDetail orderDetail = null;
                 DateTime now = DateTime.Now;
-                order.ModifiedBy = userId;
-                order.ModifiedDate = now;
-                foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
+                List<OrderDetail> orderDetails = new List<OrderDetail>();
+                foreach (var orderDetailByFloor in orderDetailGroupByFloor)
                 {
-                    if (orderDetailToAssignFloor.OldFloorId != null)
+                    
+                    if (newFloor == Guid.Empty || newFloor != orderDetailByFloor.Key) newFloor = orderDetailByFloor.Key;
+                    
+                    var floorWithOrderDetail = await _floorService.GetFloorWithOrderDetail(newFloor);
+                    var oldOrderDetails = floorWithOrderDetail.OrderDetails.ToList();
+                    BinPackParameter parameter = null;
+                    var binPacker = BinPacker.GetDefault(BinPackerVerifyOption.BestOnly);
+                    List<Cuboid> cuboids = new List<Cuboid>();
+                    for (int i = 0; i < oldOrderDetails.Count; i++)
                     {
-                        Transfer transfer = new Transfer()
-                        {
-                            CreatedDate = now,
-                            CreatedBy = userId,
-                            FloorFromId = orderDetailToAssignFloor.OldFloorId,
-                            FloorToId = orderDetailToAssignFloor.FloorId,
-
-                        };
-                        TransferDetail transferDetail = new TransferDetail()
-                        {
-                            OrderDetailId = orderDetailToAssignFloor.OrderDetailId,
-                            Transfer = transfer
-                        };
-
-                        var oldOrderDetail = orderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssignFloor.OrderDetailId).FirstOrDefault();
-                        if (oldOrderDetail != null)
-                        {
-                            List<TransferDetail> transferDetailList = new List<TransferDetail>();
-                            transferDetailList.Add(transferDetail);
-                            oldOrderDetail.TransferDetails = transferDetailList;
-                            await _orderDetailService.UpdateAsync(oldOrderDetail);
-                        }
-
+                        if (isMany) cuboids.Add(new Cuboid((decimal)oldOrderDetails[i].Width, 1, (decimal)oldOrderDetails[i].Length));
+                        else cuboids.Add(new Cuboid((decimal)oldOrderDetails[i].Width, (decimal)oldOrderDetails[i].Height, (decimal)oldOrderDetails[i].Length));
                     }
+
+                    var orderDetailGroupByOldFloor = orderDetailByFloor.ToList().GroupBy(orderDetail => orderDetail.OldFloorId).Select(orderDetail => orderDetail);
+                    foreach(var orderDetailOldFloor in orderDetailGroupByOldFloor)
+                    {
+                        Transfer transfer = new Transfer
+                        {
+                            CreatedBy = acc.Id,
+                            CreatedDate = now,
+                            FloorToId = orderDetailByFloor.Key,
+                            FloorFromId = orderDetailOldFloor.Key,
+                        };
+                        foreach(var orderDetailToAssign in orderDetailOldFloor)
+                        {
+                            orderDetail = order.OrderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssign.OrderDetailId).FirstOrDefault();
+                            var orderDetailSize = (double)(orderDetail.Height * orderDetail.Width * orderDetail.Length);
+                            if (orderDetail.Height > floorWithOrderDetail.Height) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
+                            if (orderDetail.Width > floorWithOrderDetail.Width) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
+                            if (orderDetail.Length > floorWithOrderDetail.Length) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
+                            if (orderDetail.Height != 0 && orderDetail.Length != 0 && orderDetail.Width != 0)
+                            {
+                                // Check kho tự quản
+                                if (request.TypeOrder == (int)OrderType.Kho_tu_quan)
+                                    if (oldOrderDetails.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tầng đã được sử dụng");
+                                if (isMany)
+                                    cuboids.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length));
+                                else
+                                    cuboids.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length));
+                            }
+                            TransferDetail transferDetail = new TransferDetail
+                            {
+                                Transfer = transfer,
+                                OrderDetailId = orderDetail.Id
+                            };
+                            var oldTransferDetail = orderDetail.TransferDetails;
+                            oldTransferDetail.Add(transferDetail);
+                            orderDetail.TransferDetails = oldTransferDetail;
+                            orderDetails.Add(orderDetail);
+                        }
+                    }
+                    if(isMany)
+                        parameter = new BinPackParameter(floorWithOrderDetail.Width, 1, floorWithOrderDetail.Length, cuboids);
+                    else
+                        parameter = new BinPackParameter(floorWithOrderDetail.Width, floorWithOrderDetail.Height, floorWithOrderDetail.Length, cuboids);
+                    var result = binPacker.Pack(parameter);
+                    if (result.BestResult.Count > 1)
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Đồ không đặt vừa kho");
                 }
-                order.Status = (int)OrderStatus.Da_luu_kho;
-                await UpdateAsync(order);
+
+                foreach (var orderDetailToTransfer in orderDetails)
+                    await _orderDetailService.UpdateAsync(orderDetailToTransfer);
+
+
 
                 return _mapper.Map<OrderViewModel>(order);
             }

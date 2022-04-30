@@ -40,7 +40,7 @@ namespace RSSMS.DataService.Services
             {
                 FloorGetByIdViewModel result = Get(floor => floor.Id == floorId).Include(floor => floor.Space).ProjectTo<FloorGetByIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefault();
 
-                var orderDetails = await _orderDetailService.Get(orderDetail => orderDetail.ExportId == null && orderDetail.ImportId != null)
+                var orderDetails = await _orderDetailService.Get(orderDetail => orderDetail.ExportId == null && orderDetail.ImportId != null && orderDetail.Status != 0 && orderDetail.Order.Status != 0)
                     .Include(orderDetail => orderDetail.Import).ThenInclude(import => import.Floor).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
                     .Include(orderDetail => orderDetail.TransferDetails).ThenInclude(transferDetail => transferDetail.Transfer).ThenInclude(transfer => transfer.FloorTo).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area).ThenInclude(area => area.Storage)
                     .Include(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(orderDetailService => orderDetailService.Service)

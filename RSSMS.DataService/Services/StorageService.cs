@@ -490,6 +490,8 @@ namespace RSSMS.DataService.Services
 
             var storageList = storages.ToList();
             int i = 0;
+            var customerGeometry = await GetGeometry(deliveryAddress);
+            string customerAddress = customerGeometry.results.FirstOrDefault().geometry.location.lat + "," + customerGeometry.results.FirstOrDefault().geometry.location.lng;
             do
             {
                 // request chiếm kho
@@ -514,7 +516,8 @@ namespace RSSMS.DataService.Services
                         if (requestsNeedToDeli.Count() + 1 <= staffs.Count())
                         {
                             StorageViewModel storage = _mapper.Map<StorageViewModel>(storageList[i]);
-                            DistanceViewModel distance = await GetDistanceFromCustomerToStorage(deliveryAddress, storageList[i].Lat + ","+ storageList[i].Lng);
+                                
+                            DistanceViewModel distance = await GetDistanceFromCustomerToStorage(customerAddress, storageList[i].Lat + ","+ storageList[i].Lng);
                             if (distance != null)
                             {
                                 storage.DeliveryDistance = distance.rows[0].elements[0].distance.text;
@@ -549,18 +552,16 @@ namespace RSSMS.DataService.Services
             if (response.IsSuccessStatusCode)
             {
                 geometry = await response.Content.ReadAsAsync<GeometryViewModel>();
+                if(geometry.results.Length < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Địa chỉ không hợp lệ " + address);
                 return geometry;
             }
-            else throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Địa chỉ không hợp lệ");
+            else throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Địa chỉ không hợp lệ "+ address);
         }
 
         private async Task<DistanceViewModel> GetDistanceFromCustomerToStorage(string deliveryAddress, string destination)
         {
             DistanceViewModel result = null;
 
-            // Điểm bắt đầu
-            string origin = null;
-            // Điểm đến
             string key = "vF13WydeN0TEyp6GKIP9MpMp6ndkCojaa8VRfhHB";
             GeometryViewModel geometry = new GeometryViewModel();
             HttpClient client = new HttpClient();
@@ -568,22 +569,11 @@ namespace RSSMS.DataService.Services
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
-            HttpResponseMessage response = await client.GetAsync(
-                $"/geocode?address={deliveryAddress}&api_key={key}"
-                );
-            if (response.IsSuccessStatusCode)
-            {
-                geometry = await response.Content.ReadAsAsync<GeometryViewModel>();
-                if (geometry.results.Count() > 0)
-                    origin = geometry.results[0].geometry.location.lat + "," + geometry.results[0].geometry.location.lng;
-            }
-            else
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Địa chỉ giao nhận không hợp lệ");
-
+            
 
             // tính quãng đường
-            response = await client.GetAsync(
-                $"DistanceMatrix?origins={origin}&destinations={destination}&vehicle=truck&api_key={key}"
+            var response = await client.GetAsync(
+                $"DistanceMatrix?origins={deliveryAddress}&destinations={destination}&vehicle=truck&api_key={key}"
                 );
             if (response.IsSuccessStatusCode)
             {

@@ -48,6 +48,7 @@ namespace RSSMS.DataService.Services
         private readonly IAccountService _accountService;
         private readonly IStorageService _storageService;
         private readonly IServiceService _serviceService;
+        private readonly IOrderTimelineService _orderTimelineService;
         private readonly IUtilService _utilService;
         public RequestService(IUnitOfWork unitOfWork, IRequestRepository repository, IMapper mapper
             , IScheduleService scheduleService
@@ -57,6 +58,7 @@ namespace RSSMS.DataService.Services
             , IAccountService accountService
             , IStorageService storageService
             , IServiceService serviceService
+            , IOrderTimelineService orderTimelineService
             , IUtilService utilService
             ) : base(unitOfWork, repository)
         {
@@ -67,6 +69,7 @@ namespace RSSMS.DataService.Services
             _orderHistoryExtensionService = orderHistoryExtensionService;
             _requestTimelineService = requestTimelineService;
             _accountService = accountService;
+            _orderTimelineService = orderTimelineService;
             _storageService = storageService;
             _serviceService = serviceService;
             _utilService = utilService;
@@ -99,8 +102,10 @@ namespace RSSMS.DataService.Services
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-                var account = _accountService.Get(account => account.Id == userId && account.IsActive).Include(account => account.StaffAssignStorages).FirstOrDefault();
+                var account = _accountService.Get(account => account.Id == userId && account.IsActive).Include(account => account.StaffAssignStorages).Include(account => account.Role).FirstOrDefault();
                 if (account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
+                var staffStorage = account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).Select(staffAssign => staffAssign.StorageId).FirstOrDefault();
+                if(account.Role.Name == "Office Staff" && staffStorage == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Thủ kho chưa được phân công vào kho");
                 var requests = Get(request => request.IsActive)
                     .Include(request => request.Schedules)
                     .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
@@ -159,15 +164,11 @@ namespace RSSMS.DataService.Services
                 }
                 if (role == "Office Staff")
                 {
-                    if (secureToken.Claims.First(claim => claim.Type == "storage_id").Value != null)
-                    {
-                        var storageId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "storage_id").Value);
-                        requests = requests.Where(request => request.StorageId == storageId || request.Order.StorageId == storageId || request.StorageId == null)
+                    requests = requests.Where(request => request.StorageId == staffStorage || request.Order.StorageId == staffStorage)
                                     .Include(request => request.Schedules)
                                     .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
                                     .Include(request => request.Storage)
                                     .Include(request => request.Order).ThenInclude(order => order.Storage);
-                    }
                 }
 
                 if (role == "Delivery Staff")
@@ -245,7 +246,7 @@ namespace RSSMS.DataService.Services
                                 .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
 
                 if (role == "Office Staff" && storageId != null)
-                    request = request.Where(request => request.StorageId == storageId)
+                    request = request.Where(request => request.StorageId == storageId || request.Order.StorageId == storageId)
                                 .Include(request => request.Schedules)
                                 .Include(request => request.Order)
                                 .Include(request => request.Storage)
@@ -354,10 +355,10 @@ namespace RSSMS.DataService.Services
                         CreatedDate = DateTime.Now,
                         CreatedBy = userId,
                         Datetime = DateTime.Now,
-                        Name = "Yêu cầu tạo đơn chờ xác nhận"
+                        Name = "Yêu cầu tạo đơn đã tạo thành công"
                     });
 
-                    await _firebaseService.PushOrderNoti("New request arrive!", null, request.Id);
+                    //await _firebaseService.PushOrderNoti("Yêu cầu moi đã den!", null, request.Id);
                     return await GetById(request.Id, accessToken);
                 }
 
@@ -448,17 +449,17 @@ namespace RSSMS.DataService.Services
                     request = _mapper.Map<Request>(model);
                     request.CreatedBy = userId;
                     request.Status = (int)RequestStatus.Hoan_thanh;
+                    
                     await CreateAsync(request);
 
                     order = request.Order;
-
-                    await _requestTimelineService.CreateAsync(new RequestTimeline
+                    await _orderTimelineService.CreateAsync(new OrderTimeline
                     {
-                        RequestId = request.Id,
+                        OrderId = order.Id,
                         CreatedDate = DateTime.Now,
                         CreatedBy = userId,
                         Datetime = DateTime.Now,
-                        Name = "Gia hạn đơn"
+                        Name = "Đơn gia hạn thành công hạn trả về " + request.ReturnDate
                     });
 
                     OrderHistoryExtension orderExtend = new OrderHistoryExtension();
@@ -770,14 +771,21 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request Id not matched");
+                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id không khớp");
 
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
+                var account = _accountService.Get(account => account.Id == userId && account.IsActive).FirstOrDefault();
+                if(account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
+                var entity = await Get(x => x.Id == id && x.IsActive == true && x.Status != 0).Include(entity => entity.Schedules).FirstOrDefaultAsync();
+                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy yêu cầu");
 
-                var entity = await Get(x => x.Id == id && x.IsActive == true && x.Status != 0).FirstOrDefaultAsync();
-                if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Request not found");
-
+                var schedules = entity.Schedules;
+                if(schedules != null)
+                    if(schedules.Count > 0)
+                        foreach(var schedule in schedules)
+                            schedule.IsActive = false;
+                entity.Schedules = schedules;
                 entity.ModifiedBy = userId;
                 entity.Status = 0;
                 entity.CancelReason = model.CancelReason;

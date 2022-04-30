@@ -19,6 +19,8 @@ namespace RSSMS.DataService.Models
         public decimal? Height { get; set; }
         public decimal? Width { get; set; }
         public decimal? Length { get; set; }
+        public string Note { get; set; }
+        public int? Status { get; set; }
         public Guid? ImportId { get; set; }
         public Guid? ExportId { get; set; }
         public string ImportNote { get; set; }

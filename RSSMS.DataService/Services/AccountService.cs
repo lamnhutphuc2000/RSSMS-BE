@@ -176,7 +176,7 @@ namespace RSSMS.DataService.Services
                 Guid uid = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 string role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-                var accounts = Get(account => !account.Role.Name.Equals("Admin") && account.IsActive).Include(account => account.Role);
+                var accounts = Get(account => !account.Role.Name.Equals("Admin") && account.IsActive).Include(account => account.Role).Include(account => account.StaffAssignStorages);
                 if (role == "Manager")
                 {
                     var manager = await Get(account => account.Id == uid).Include(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive)).FirstOrDefaultAsync();
@@ -184,11 +184,11 @@ namespace RSSMS.DataService.Services
                     List<Guid> storageIds = manager.StaffAssignStorages.Select(staffAssignStorage => staffAssignStorage.StorageId).ToList();
 
                     // account list remove manager
-                    accounts = accounts.Where(account => account.Role.Name != "Manager" && account.Role.Name != "Customer").Include(accounts => accounts.Role);
+                    accounts = accounts.Where(account => account.Role.Name != "Manager" && account.Role.Name != "Customer").Include(accounts => accounts.Role).Include(account => account.StaffAssignStorages);
                     // account list get account if storageIds contain storage id of manager manage
                     // account list get account if account do not in any storage
                     accounts = accounts.Where(account => account.StaffAssignStorages.Any(staffAssignStorage => storageIds.Contains(staffAssignStorage.StorageId)) || account.StaffAssignStorages.Count == 0)
-                        .Include(accounts => accounts.Role);
+                        .Include(accounts => accounts.Role).Include(account => account.StaffAssignStorages);
                 }
                 if (role == "Office Staff")
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Thủ kho không thể coi tài khoản người dùng");
@@ -412,7 +412,7 @@ namespace RSSMS.DataService.Services
                 {
                     DateTime now = DateTime.Now;
                     var schedules = entity.Schedules.Where(schedule => schedule.Status == 1 && schedule.ScheduleDay.Date >= now.Date && schedule.IsActive).ToList();
-                    if (schedules.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Delivery Staff has schedules to delivery");
+                    if (schedules.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên vận chuyển còn lịch cần thực hiện");
                 }
                 entity.IsActive = false;
                 await UpdateAsync(entity);

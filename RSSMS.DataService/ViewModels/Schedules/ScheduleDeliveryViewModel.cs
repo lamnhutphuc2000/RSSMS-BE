@@ -8,5 +8,6 @@ namespace RSSMS.DataService.ViewModels.Schedules
         public Guid? OrderId { get; set; }
         public string DeliveryAddress { get; set; }
         public Guid? RequestId { get; set; }
+        public int? RequestRemain { get; set; }
     }
 }

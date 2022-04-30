@@ -8,6 +8,7 @@ namespace RSSMS.DataService.ViewModels.OrderDetails
         public decimal? Height { get; set; }
         public decimal? Width { get; set; }
         public decimal? Length { get; set; }
+        public string Note { get; set; }
         public virtual ICollection<ImageOrderDetailCreateViewModel> OrderDetailImages { get; set; }
         public virtual ICollection<OrderDetailServiceViewModel> OrderDetailServices { get; set; }
     }

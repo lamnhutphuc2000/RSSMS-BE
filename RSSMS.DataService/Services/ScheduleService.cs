@@ -22,7 +22,7 @@ namespace RSSMS.DataService.Services
     public interface IScheduleService : IBaseService<Schedule>
     {
         Task<DynamicModelResponse<ScheduleViewModel>> Get(ScheduleSearchViewModel model, string[] fields, int page, int size, string accessToken);
-        Task<List<ScheduleOrderViewModel>> Create(ScheduleCreateViewModel model);
+        Task<List<ScheduleOrderViewModel>> Create(ScheduleCreateViewModel model, string accessToken);
     }
     public class ScheduleService : BaseService<Schedule>, IScheduleService
 
@@ -39,7 +39,7 @@ namespace RSSMS.DataService.Services
             _accountService = accountService;
         }
 
-        public async Task<List<ScheduleOrderViewModel>> Create(ScheduleCreateViewModel model)
+        public async Task<List<ScheduleOrderViewModel>> Create(ScheduleCreateViewModel model, string accessToken)
         {
             try
             {
@@ -58,6 +58,12 @@ namespace RSSMS.DataService.Services
                     IEnumerable<Guid> duplicates = userIds.Where(e => !hashset.Add(e));
                     if(duplicates.Count() > 0)
                         throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trùng nhân viên");
+                }
+                var storageId = _accountService.Get(account => account.Id == userIds.FirstOrDefault()).Select(account => account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).FirstOrDefault().StorageId).FirstOrDefault();
+                foreach (var schedule in schedules)
+                {
+                    var staffs = await _accountService.GetStaff(storageId, accessToken, new List<string> { "Delivery Staff" }, model.ScheduleDay, new List<string> { schedule.ScheduleTime }, false);
+                    if (staffs.Count - userIds.Count < schedule.RequestRemain) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Số nhân viên còn lại không đủ để đi thực hiện yêu cầu");
                 }
 
                 foreach (var scheduleAssigned in schedulesAssigned)
@@ -111,11 +117,11 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
                 (int, IQueryable<ScheduleViewModel>) result = (0, null);
-                var account = _accountService.Get(account => account.Id == userId && account.IsActive).Include(account => account.StaffAssignStorages).FirstOrDefault();
+                var account = _accountService.Get(account => account.Id == userId && account.IsActive).Include(account => account.StaffAssignStorages).Include(account => account.Role).FirstOrDefault();
                 if (account == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy tài khoản");
                 if (model.DateFrom == null || model.DateTo == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Ngày bắt đầu và ngày kết thúc không thể để trống");
 
-                if (role == "Delivery Staff")
+                if (account.Role.Name == "Delivery Staff")
                 {
                     var schedules = await Get(x => x.IsActive == true && x.StaffId == userId)
                             .Where(x => x.ScheduleDay.Date >= model.DateFrom.Value.Date && x.ScheduleDay.Date <= model.DateTo.Value.Date).Include(x => x.Request)

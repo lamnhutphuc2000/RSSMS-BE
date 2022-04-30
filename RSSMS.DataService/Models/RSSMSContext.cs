@@ -325,6 +325,8 @@ namespace RSSMS.DataService.Models
 
                 entity.Property(e => e.Length).HasColumnType("decimal(18, 3)");
 
+                entity.Property(e => e.Note).HasMaxLength(50);
+
                 entity.Property(e => e.Width).HasColumnType("decimal(18, 3)");
 
                 entity.HasOne(d => d.Export)
@@ -423,11 +425,6 @@ namespace RSSMS.DataService.Models
                     .WithMany(p => p.OrderTimelines)
                     .HasForeignKey(d => d.OrderId)
                     .HasConstraintName("FK_OrderTimeline_Order");
-
-                entity.HasOne(d => d.Request)
-                    .WithMany(p => p.OrderTimelines)
-                    .HasForeignKey(d => d.RequestId)
-                    .HasConstraintName("FK_OrderTimeline_Request");
             });
 
             modelBuilder.Entity<Request>(entity =>
