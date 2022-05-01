@@ -226,11 +226,11 @@ namespace RSSMS.DataService.Services
                     .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
                     .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
 
-
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
+                var chep = request.FirstOrDefault();
 
                 var acc = _accountService.Get(account => account.IsActive && account.Id == userId)
                         .Include(acc => acc.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive)).FirstOrDefault();
@@ -244,7 +244,7 @@ namespace RSSMS.DataService.Services
                                 .Include(request => request.Storage)
                                 .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
                                 .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
-
+                chep = request.FirstOrDefault();
                 if (role == "Office Staff" && storageId != null)
                     request = request.Where(request => request.StorageId == storageId || request.Order.StorageId == storageId)
                                 .Include(request => request.Schedules)
@@ -252,10 +252,11 @@ namespace RSSMS.DataService.Services
                                 .Include(request => request.Storage)
                                 .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
                                 .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
+                chep = request.FirstOrDefault();
                 if ((role == "Delivery Staff" || role == "Office Staff") && storageId == null)
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên chưa vào kho");
                 var result = await request.ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
-                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Request id not found");
+                if (result == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm được yêu cầu");
                 if (!string.IsNullOrWhiteSpace(result.Note))
                 {
                     var maxServiceDeliveryFee = result.RequestDetails.Select(requestDetail => requestDetail.ServiceDeliveryFee).Max();
@@ -777,7 +778,7 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var account = _accountService.Get(account => account.Id == userId && account.IsActive).FirstOrDefault();
                 if(account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
-                var entity = await Get(x => x.Id == id && x.IsActive == true && x.Status != 0).Include(entity => entity.Schedules).FirstOrDefaultAsync();
+                var entity = await Get(x => x.Id == id && x.IsActive && x.Status != 0).Include(entity => entity.Schedules).FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy yêu cầu");
 
                 var schedules = entity.Schedules;
@@ -791,7 +792,7 @@ namespace RSSMS.DataService.Services
                 entity.CancelReason = model.CancelReason;
                 await UpdateAsync(entity);
 
-                return await GetById(id, accessToken);
+                return await GetById(id,accessToken);
             }
             catch (ErrorResponse e)
             {
@@ -926,6 +927,9 @@ namespace RSSMS.DataService.Services
                 int spaceType = (int)SpaceType.Ke;
                 // check xem là giữ ít hay nhiều 
                 bool isMany = false;
+                decimal maxServiceDeliveryFee = 0;
+                List<Cuboid> cuboid = new List<Cuboid>();
+
 
                 var services = model.RequestDetails.Select(requestDetail => new
                 {
@@ -934,8 +938,7 @@ namespace RSSMS.DataService.Services
                 }).ToList();
                 if (services.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Chưa đặt bất kì sản phẩm nào.");
                 // service list chứa list service người dùng đặt
-                decimal maxServiceDeliveryFee = 0;
-                List<Cuboid> cuboid = new List<Cuboid>();
+
                 for (int i = 0; i < services.Count; i++)
                 {
                     for (int j = 0; j < services[i].Amount; j++)
@@ -951,6 +954,28 @@ namespace RSSMS.DataService.Services
 
                         if (service.Type == (int)ServiceType.Kho) spaceType = (int)SpaceType.Dien_tich;
                     }
+                }
+
+                if (model.Type == (int)RequestType.Tra_don)
+                {
+                    var request = Get(request => request.OrderId == model.OrderId)
+                        .Include(request => request.Order).ThenInclude(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
+                        .Include(request => request.Order).ThenInclude(order => order.Storage).FirstOrDefault();
+                    if(request == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn cần rút đồ về");
+
+                    var storage = request.Order.Storage;
+                    var customerGeo = await _storageService.GetGeometry(model.ReturnAddress);
+                    string customerAddress = customerGeo.results.FirstOrDefault().geometry.location.lat + "," + customerGeo.results.FirstOrDefault().geometry.location.lng;
+                    string storageAddress = storage.Lat + "," + storage.Lng;
+                    var storageReturn = _storageService.Get(storage => storage.Id == storage.Id).ProjectTo<StorageViewModel>(_mapper.ConfigurationProvider).FirstOrDefault();
+                    var distance = await _storageService.GetDistanceFromCustomerToStorage(customerAddress, storageAddress);
+                    storageReturn.DeliveryDistance = distance.rows[0].elements[0].distance.text;
+                    if (!storageReturn.DeliveryDistance.Contains('k'))
+                        storageReturn.DeliveryFee = maxServiceDeliveryFee * 1;
+                    else
+                        storageReturn.DeliveryFee = maxServiceDeliveryFee * Math.Ceiling(Convert.ToDecimal(storageReturn.DeliveryDistance.Split(' ')[0]));
+                    result.Add(storageReturn);
+                    return result;
                 }
 
                 var requestsAssignStorage = await Get(request => request.IsActive && (request.Type == (int)RequestType.Tao_don || request.Type == (int)RequestType.Tra_don || request.Type == (int)RequestType.Gia_han_don) && (request.Status == (int)RequestStatus.Da_xu_ly || request.Status == (int)RequestStatus.Dang_van_chuyen || request.Status == (int)RequestStatus.Dang_xu_ly))

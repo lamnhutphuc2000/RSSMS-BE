@@ -60,48 +60,61 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                // Validate input
+                // Kiểm tra input email và password hợp lệ
                 if (!_utilService.ValidateEmail(model.Email)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập đúng email");
                 _utilService.ValidatePassword(model.Password);
 
-                // Check account in firebase
+                // Kiểm tra account trên firebase
                 User us = null;
                 try
                 {
                     FirebaseAuthProvider auth = new FirebaseAuthProvider(new FirebaseConfig(FirebaseKeyConstant.apiKEY));
-                    FirebaseAuthLink a = await auth.SignInWithEmailAndPasswordAsync(model.Email, EncryptedPassword(model.Password).ToString());
-                    string tok = a.FirebaseToken;
-                    us = a.User;
+                    if(auth != null)
+                    {
+                        FirebaseAuthLink a = await auth.SignInWithEmailAndPasswordAsync(model.Email, EncryptedPassword(model.Password).ToString());
+                        if(a != null)  us = a.User;
+                    }
+                    
                 }
                 catch (Exception ex)
                 {
-                    throw new ErrorResponse((int)HttpStatusCode.NotFound, ex.Message);
+                    if (ex.Message.Contains("EMAIL_NOT_FOUND"))
+                        throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy email");
+                    if (ex.Message.Contains("INVALID_PASSWORD"))
+                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Sai mật khẩu");
+
                 }
 
-                // Get account in database
-                Account acc = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password.SequenceEqual(EncryptedPassword(model.Password)) && account.IsActive)
+                // Kiểm tra tài khoản trên database
+                Account acc = await Get(account => account.Email == model.Email && account.Password.SequenceEqual(EncryptedPassword(model.Password)) && account.IsActive)
                     .Include(account => account.Role)
                     .Include(account => account.StaffAssignStorages)
                     .FirstOrDefaultAsync();
+                if(us != null)
+                    acc = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password.SequenceEqual(EncryptedPassword(model.Password)) && account.IsActive)
+                    .Include(account => account.Role)
+                    .Include(account => account.StaffAssignStorages)
+                    .FirstOrDefaultAsync();
+
                 if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Email hoặc mật khẩu không đúng");
 
                 TokenViewModel result = _mapper.Map<TokenViewModel>(acc);
 
-                // Generate Token to return
+                // Tạo token
                 TokenGenerateViewModel token = GenerateToken(acc);
                 string refreshToken = GenerateRefreshToken(acc);
                 token.RefreshToken = refreshToken;
                 result = _mapper.Map(token, result);
                 result.StorageId = null;
 
-                // Update user Device token
+                // Cập nhật device token của người dùng
                 acc.DeviceTokenId = model.DeviceToken;
                 await UpdateAsync(acc);
 
-                // Check user role
+                // Kiểm tra role của người dùng
                 if (acc.Role.Name != "Office Staff" && acc.Role.Name != "Delivery Staff") return result;
 
-                // Get office staff storage Id
+                // Lấy Id của storage của nhân viên
                 Guid? storageId = acc.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).FirstOrDefault()?.StorageId;
                 if (storageId != null) result.StorageId = storageId;
 
@@ -121,7 +134,7 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                // Validate input
+                // Kiểm tra input
                 _utilService.ValidatePassword(model.Password);
                 _utilService.ValidatePassword(model.ConfirmPassword);
                 _utilService.ValidatePassword(model.OldPassword);
@@ -132,27 +145,29 @@ namespace RSSMS.DataService.Services
 
                 byte[] OldPassword = EncryptedPassword(model.OldPassword);
                 if (!account.Password.SequenceEqual(OldPassword)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Mật khẩu cũ không đúng");
-                if (account.FirebaseId == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Tài khoản không tồn tại trên firebase");
 
-
-                // Config firebaseApp
-                if (FirebaseApp.DefaultInstance == null)
-                    FirebaseApp.Create(new AppOptions()
-                    {
-                        Credential = GoogleCredential.FromFile("privatekey.json"),
-                    });
-
-                UserRecord firebaseUser = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.GetUserAsync(account.FirebaseId);
-                UserRecordArgs args = new UserRecordArgs()
+                // Cập nhật tài khoản trên firebase
+                if (account.FirebaseId != null)
                 {
-                    Uid = firebaseUser.Uid,
-                    PhoneNumber = firebaseUser.PhoneNumber,
-                    Password = EncryptedPassword(model.Password).ToString()
-                };
+                    // Cài đặt firebase
+                    if (FirebaseApp.DefaultInstance == null)
+                        FirebaseApp.Create(new AppOptions()
+                        {
+                            Credential = GoogleCredential.FromFile("privatekey.json"),
+                        });
 
-                UserRecord userRecordUpdate = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.UpdateUserAsync(args);
+                    UserRecord firebaseUser = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.GetUserAsync(account.FirebaseId);
+                    UserRecordArgs args = new UserRecordArgs()
+                    {
+                        Uid = firebaseUser.Uid,
+                        PhoneNumber = firebaseUser.PhoneNumber,
+                        Password = EncryptedPassword(model.Password).ToString()
+                    };
+                    UserRecord userRecordUpdate = await FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance.UpdateUserAsync(args);
+                }
 
-                //Update account password
+
+                //Update mật khẩu cho tài khoản vào database
                 account.Password = EncryptedPassword(model.Password);
                 await UpdateAsync(account);
                 return _mapper.Map<AccountViewModel>(account);
@@ -171,31 +186,30 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                // Get account token
+                // Lấy token đăng nhập
                 JwtSecurityToken secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 Guid uid = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
-                string role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
-
+                var actor = await Get(account => account.Id == uid && account.IsActive).Include(account => account.Role).Include(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive)).FirstOrDefaultAsync();
+                var role = actor.Role;
                 var accounts = Get(account => !account.Role.Name.Equals("Admin") && account.IsActive).Include(account => account.Role).Include(account => account.StaffAssignStorages);
-                if (role == "Manager")
+                
+                if (role.Name == "Manager")
                 {
-                    var manager = await Get(account => account.Id == uid).Include(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive)).FirstOrDefaultAsync();
-                    // get storage id of storage where manager manage
-                    List<Guid> storageIds = manager.StaffAssignStorages.Select(staffAssignStorage => staffAssignStorage.StorageId).ToList();
+                    // Lấy Id của những kho mà manager quản lý
+                    List<Guid> storageIds = actor.StaffAssignStorages.Select(staffAssignStorage => staffAssignStorage.StorageId).ToList();
 
-                    // account list remove manager
+                    // Lấy những account không phải manager và customer
                     accounts = accounts.Where(account => account.Role.Name != "Manager" && account.Role.Name != "Customer").Include(accounts => accounts.Role).Include(account => account.StaffAssignStorages);
-                    // account list get account if storageIds contain storage id of manager manage
-                    // account list get account if account do not in any storage
+                    // Lấy những tài khoản thuộc kho manager quản lý, hoặc không thuộc kho nào cả
                     accounts = accounts.Where(account => account.StaffAssignStorages.Any(staffAssignStorage => storageIds.Contains(staffAssignStorage.StorageId)) || account.StaffAssignStorages.Count == 0)
                         .Include(accounts => accounts.Role).Include(account => account.StaffAssignStorages);
                 }
-                if (role == "Office Staff")
-                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Thủ kho không thể coi tài khoản người dùng");
+                if (role.Name == "Office Staff" || role.Name == "Delivery Staff" || role.Name == "Customer")
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không thể coi tài khoản người dùng khác");
 
                 var result = accounts.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider)
                     .DynamicFilter(model).PagingIQueryable(page, size, CommonConstant.LimitPaging, CommonConstant.DefaultPaging);
-                if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy");
+                if (result.Item2.ToList().Count < 1) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
                 var rs = new DynamicModelResponse<AccountViewModel>
                 {
                     Metadata = new PagingMetaData
@@ -260,7 +274,7 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                // Validate input
+                // Kiểm tra input
                 if (!_utilService.ValidateEmail(model.Email)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập đúng email");
                 _utilService.ValidatePassword(model.Password);
                 _utilService.ValidateBirthDate(model.Birthdate);

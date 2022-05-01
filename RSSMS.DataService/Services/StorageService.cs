@@ -36,6 +36,8 @@ namespace RSSMS.DataService.Services
         Task<StaffAssignStorageCreateViewModel> AssignStaffToStorage(StaffAssignInStorageViewModel model, string accessToken);
         Task<bool> CheckStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, bool isCreateOrder);
         Task<List<StorageViewModel>> GetStorageAvailable(Guid? storageId, int spaceType, DateTime dateFrom, DateTime dateTo, bool isMany, List<Cuboid> cuboids, List<Request> requestsAssignToStorage, bool isCustomerDelivery, string accessToken, List<string> deliveryTimes, string deliveryAddress, decimal serviceDeliveryFee);
+        Task<GeometryViewModel> GetGeometry(string address);
+        Task<DistanceViewModel> GetDistanceFromCustomerToStorage(string deliveryAddress, string destination);
     }
     public class StorageService : BaseService<Storage>, IStorageService
     {
@@ -537,7 +539,7 @@ namespace RSSMS.DataService.Services
             } while (i < storageList.Count);
             return result;
         }
-        private async Task<GeometryViewModel> GetGeometry(string address)
+        public async Task<GeometryViewModel> GetGeometry(string address)
         {
             string key = "vF13WydeN0TEyp6GKIP9MpMp6ndkCojaa8VRfhHB";
             GeometryViewModel geometry = new GeometryViewModel();
@@ -558,7 +560,7 @@ namespace RSSMS.DataService.Services
             else throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Địa chỉ không hợp lệ "+ address);
         }
 
-        private async Task<DistanceViewModel> GetDistanceFromCustomerToStorage(string deliveryAddress, string destination)
+        public async Task<DistanceViewModel> GetDistanceFromCustomerToStorage(string deliveryAddress, string destination)
         {
             DistanceViewModel result = null;
 
@@ -576,9 +578,8 @@ namespace RSSMS.DataService.Services
                 $"DistanceMatrix?origins={deliveryAddress}&destinations={destination}&vehicle=truck&api_key={key}"
                 );
             if (response.IsSuccessStatusCode)
-            {
                 result = await response.Content.ReadAsAsync<DistanceViewModel>();
-            }
+
             return result;
         }
     }

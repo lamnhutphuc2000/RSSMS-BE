@@ -74,9 +74,11 @@ namespace RSSMS.DataService.Services
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Images)
                     .Include(order => order.Requests)
                     .Include(order => order.OrderAdditionalFees)
-                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
                     .FirstOrDefaultAsync();
                 var orderSecond = await Get(x => x.Id == id && x.IsActive)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.Import).ThenInclude(import => import.Floor).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(transferDetail => transferDetail.Transfer).ThenInclude(transfer => transfer.FloorTo).ThenInclude(floor => floor.Space).ThenInclude(space => space.Area)
+                    .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps).ThenInclude(serviceMap => serviceMap.Service)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer)
                     .Include(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.TransferDetails).ThenInclude(export => export.Transfer)

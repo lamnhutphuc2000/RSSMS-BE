@@ -24,6 +24,7 @@ namespace RSSMS.DataService.AutoMapper
 
 
             mc.CreateMap<OrderDetail, OrderDetailByIdViewModel>()
+                .ForMember(des => des.Status, opt => opt.MapFrom(src => src.Status))
                 .ForMember(des => des.FloorName, opt => opt.MapFrom(src => src.Import != null ? src.Export != null ? null : src.TransferDetails.Count > 0 ? src.TransferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault().FloorTo.Name : src.Import.Floor.Name : null))
                 .ForMember(des => des.SpaceName, opt => opt.MapFrom(src => src.Import != null ? src.Export != null ? null : src.TransferDetails.Count > 0 ? src.TransferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault().FloorTo.Space.Name : src.Import.Floor.Space.Name : null))
                 .ForMember(des => des.AreaName, opt => opt.MapFrom(src => src.Import != null ? src.Export != null ? null : src.TransferDetails.Count > 0 ? src.TransferDetails.OrderByDescending(transferDetail => transferDetail.Transfer.CreatedDate).Select(transferDetail => transferDetail.Transfer).FirstOrDefault().FloorTo.Space.Area.Name : src.Import.Floor.Space.Area.Name : null))
