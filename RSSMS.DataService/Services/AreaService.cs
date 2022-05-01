@@ -40,17 +40,14 @@ namespace RSSMS.DataService.Services
         private readonly ISpaceService _spaceService;
         private readonly IUtilService _utilService;
         private readonly IServiceService _serviceService;
-        private readonly IAccountService _accountService;
         public AreaService(IUnitOfWork unitOfWork, ISpaceService spaceService,
             IUtilService utilService, IServiceService serviceService,
-            IAccountService accountService,
             IAreaRepository repository, IMapper mapper) : base(unitOfWork, repository)
         {
             _mapper = mapper;
             _spaceService = spaceService;
             _utilService = utilService;
             _serviceService = serviceService;
-            _accountService = accountService;
         }
 
         public async Task<AreaViewModel> Create(AreaCreateViewModel model)
@@ -58,7 +55,7 @@ namespace RSSMS.DataService.Services
             Area areaToCreate = null;
             try
             {
-                // Validate input
+                // Kiểm tra input
                 _utilService.ValidateString(model.Name, "tên khu vực");
                 _utilService.ValidateString(model.Description, "giới thiệu khu vực");
                 _utilService.ValidateDecimal(model.Width, " chiều rộng khu vực");
@@ -66,16 +63,17 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidateDecimal(model.Length, " chiều dài khu vực");
                 _utilService.ValidateInt(model.Type, " loại khu vực");
 
-                // Check area name is existed
+                // Kiểm tra tên khu vực bị trùng trong kho
                 var entity = Get(area => area.StorageId == model.StorageId && area.Name == model.Name && area.IsActive).FirstOrDefault();
                 if (entity != null) throw new ErrorResponse((int)HttpStatusCode.Conflict, "Tên khu vực đã tồn tại trong kho này");
 
-                // Create new Area
+
+                // Tạo khu vực mới
                 areaToCreate = _mapper.Map<Area>(model);
                 await CreateAsync(areaToCreate);
 
 
-                // Check is Storage oversize
+                // Kiểm tra kích cỡ kho
                 var area = Get(area => area.Id == areaToCreate.Id).Include(area => area.Storage)
                     .ThenInclude(storage => storage.Areas).FirstOrDefault();
 
@@ -94,7 +92,7 @@ namespace RSSMS.DataService.Services
                 if (result.BestResult.Count > 1)
                 {
                     await DeleteAsync(areaToCreate);
-                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
+                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ khu vực vượt quá kích cỡ kho");
                 }
 
 
@@ -108,7 +106,7 @@ namespace RSSMS.DataService.Services
             catch (InvalidOperationException)
             {
                 if (areaToCreate != null) await DeleteAsync(areaToCreate);
-                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage size is overload");
+                throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ kho bị vượt quá");
             }
             catch (Exception ex)
             {

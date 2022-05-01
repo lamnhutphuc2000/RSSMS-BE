@@ -175,13 +175,9 @@ namespace RSSMS.DataService.Services
         {
             if (string.IsNullOrWhiteSpace(phonenumber)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại");
             if (phonenumber.Length != 10) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại đúng");
-            if (!phonenumber.First().Equals('0')) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại đúng");
 
-            var vnf_regex = new Regex("((09|03|07|08|05)+([0-9]{8})\b)");
-            if (!vnf_regex.IsMatch(phonenumber)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Số điện thoại sai định dạng");
-            //var regexItem = new Regex("^[0-9 ]*$");
-
-            //if (!regexItem.IsMatch(phonenumber)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Vui lòng nhập số điện thoại đúng");
+            var regexItem = new Regex(@"^((0(\d){9}))*$");
+            if (!regexItem.IsMatch(phonenumber)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Số điện thoại sai định dạng");
             return true;
         }
 

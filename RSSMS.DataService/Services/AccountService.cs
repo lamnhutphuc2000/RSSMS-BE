@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using RSSMS.DataService.Constants;
+using RSSMS.DataService.Enums;
 using RSSMS.DataService.Models;
 using RSSMS.DataService.Repositories;
 using RSSMS.DataService.Responses;
@@ -287,9 +288,9 @@ namespace RSSMS.DataService.Services
 
                 var account = await Get(account => account.Phone == model.Phone).FirstOrDefaultAsync();
                 if (account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Số điện thoại bị trùng");
-                account = await Get(account => account.Email == model.Email && account.IsActive).FirstOrDefaultAsync();
+                account = await Get(account => account.Email == model.Email).FirstOrDefaultAsync();
                 if (account != null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Email đã tồn tại");
-                // Create user to firebase
+                // Tạo tài khoản trên firebase
                 var autho = new FirebaseAuthProvider(new FirebaseConfig(FirebaseKeyConstant.apiKEY));
                 User us = null;
                 try
@@ -304,7 +305,7 @@ namespace RSSMS.DataService.Services
 
 
 
-                // Create user to database
+                // Cập nhật thông tin tài khoản
 
                 var userCreate = _mapper.Map<Account>(model);
                 var image = model.Image;
@@ -312,9 +313,9 @@ namespace RSSMS.DataService.Services
                 userCreate.FirebaseId = us.LocalId;
                 userCreate.DeviceTokenId = model.DeviceToken;
                 userCreate.Password = EncryptedPassword(model.Password);
-                await CreateAsync(userCreate);
+                
 
-                // Upload image to firebase
+                // Đăng ảnh lên firebase
                 if (image != null)
                 {
                     var url = await _firebaseService.UploadImageToFirebase(image.File, "accounts", userCreate.Id, "avatar");
@@ -322,7 +323,7 @@ namespace RSSMS.DataService.Services
                 }
 
                 List<StaffAssignStorage> staffToAssigns = null;
-                // Assign user to storages
+                // Phân công nhân viên vào kho
                 if (model.StorageIds != null)
                 {
                     staffToAssigns = new List<StaffAssignStorage>();
@@ -339,14 +340,16 @@ namespace RSSMS.DataService.Services
                     }
                 }
 
-                if (staffToAssigns != null) userCreate.StaffAssignStorages = staffToAssigns;
+                if (staffToAssigns != null)
+                    userCreate.StaffAssignStorages = staffToAssigns;
 
-                // update user devicetoken
-                userCreate.DeviceTokenId = model.DeviceToken;
-                await UpdateAsync(userCreate);
 
-                // Get user token to return
-                var newUser = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password == EncryptedPassword(model.Password) && account.IsActive).Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefaultAsync();
+                await CreateAsync(userCreate);
+
+
+
+                // Lấy JWT để trả về
+                var newUser = await Get(account => account.Id == userCreate.Id).Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefaultAsync();
                 var result = _mapper.Map<TokenViewModel>(newUser);
                 var token = GenerateToken(newUser);
                 var refreshToken = GenerateRefreshToken(newUser);
@@ -354,7 +357,7 @@ namespace RSSMS.DataService.Services
                 result = _mapper.Map(token, result);
                 result.StorageId = null;
 
-                // get office staff storage id
+                // Lấy Id của kho mà nhân viên thuộc
                 var storageId = userCreate.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive == true).FirstOrDefault()?.StorageId;
                 if (storageId != null && (userCreate.Role.Name == "Office Staff" || userCreate.Role.Name == "Delivery Staff"))
                     result.StorageId = storageId;
@@ -376,7 +379,7 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                // validate input
+                // Kiểm tra input
                 _utilService.ValidateBirthDate(model.Birthdate);
                 _utilService.ValidatePhonenumber(model.Phone);
                 _utilService.ValidateString(model.Name, "Tên");
@@ -389,7 +392,7 @@ namespace RSSMS.DataService.Services
 
                 var image = model.Image;
 
-                // Upload image to firebase
+                // Đăng ảnh lên firebase
                 string url = account.ImageUrl;
                 Account updateAccount = _mapper.Map(model, account);
                 updateAccount.ImageUrl = url;
@@ -503,6 +506,7 @@ namespace RSSMS.DataService.Services
         {
             try
             {
+                // Lấy token của actor
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var account = Get(account => account.IsActive && (Guid)account.Id == userId).Include(account => account.Role).FirstOrDefault();
@@ -510,22 +514,23 @@ namespace RSSMS.DataService.Services
 
                 var staffs = Get(account => account.IsActive && account.Role.Name != "Admin" && account.Role.Name != "Customer").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
                 if (roleName.Count > 0) staffs = Get(account => account.IsActive && roleName.Contains(account.Role.Name)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                // Admin chỉ lấy người quản lý
                 if (account.Role.Name == "Admin")
                     staffs = staffs.Where(account => account.Role.Name == "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-
+                // Người quản lý chỉ lấy nhân viên thủ kho hoặc vận chuyển
                 if (account.Role.Name == "Manager")
                     staffs = staffs.Where(account => account.Role.Name != "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
 
-                // Nhân viên không thuộc kho nào
+                // Lấy nhân viên chưa được phân công vào kho
                 if (storageId == null && !getFromAllStorage)
                     staffs = staffs.Where(account => (account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() == 0) || account.Role.Name == "Manager").Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-
+                // Lấy tất cả nhân viên từ mọi kho
                 if (getFromAllStorage)
                     staffs = staffs.Where(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive).Count() > 0).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-
+                // Lấy đúng kho
                 if (storageId != null)
                     staffs = staffs.Where(account => account.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId && staffAssignStorage.IsActive)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-
+                var tho = staffs.ToList();
                 if (scheduleDay != null)
                 {
                     List<TimeSpan> timeSpan = new List<TimeSpan>();
@@ -537,16 +542,13 @@ namespace RSSMS.DataService.Services
                                 timeSpan.Add(_utilService.StringToTime(time));
                         }
                             
-                        // delivery staff not busy in the time
+                        // Lấy những nhân viên không bận trong khung giờ
                         if (timeSpan.Count > 0)
-                        {
-                            var tmp2 = staffs.ToList();
                             staffs = staffs.Where(account => account.Schedules.Where(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).FirstOrDefault() == null).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-                            var tmp = staffs.ToList();
-                        }
                     }
-                    //delivery staff not busy in the day
-                    staffs = staffs.Where(account => account.Schedules.Where(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && !schedule.IsActive && schedule.Status == 6).FirstOrDefault() == null).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                    // Lấy những nhân viên không bận trong ngày
+                    staffs = staffs.Where(account => account.Requests.Where(request => request.CreatedBy == account.Id && request.IsActive && request.Type == (int)RequestType.Huy_lich_giao_hang && request.CancelDate.Value.Date == scheduleDay.Value.Date).FirstOrDefault() == null).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                    var chop = staffs.ToList();
                 }
                 var result = await staffs.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToListAsync();
                 return result;

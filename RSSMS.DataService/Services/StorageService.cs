@@ -251,8 +251,8 @@ namespace RSSMS.DataService.Services
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage not found");
 
                 var areas = entity.Areas.Where(area => area.IsActive).ToList();
-                foreach (var area in areas)
-                    if (await _areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
+                //foreach (var area in areas)
+                //    if (await _areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage is in used");
 
                 //Check kích thước kho sau khi update
                 List<Cuboid> cuboids = new List<Cuboid>();
