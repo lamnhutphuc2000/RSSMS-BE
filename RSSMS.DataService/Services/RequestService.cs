@@ -944,7 +944,6 @@ namespace RSSMS.DataService.Services
                     for (int j = 0; j < services[i].Amount; j++)
                     {
                         var service = _serviceService.Get(service => service.Id == services[i].ServiceId).FirstOrDefault();
-                        if (!service.IsActive) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Dịch vụ không tồn tại");
                         if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
                         if (service.Type != (int)ServiceType.Phu_kien)
                         {
