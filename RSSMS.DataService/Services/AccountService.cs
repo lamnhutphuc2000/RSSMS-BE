@@ -473,7 +473,7 @@ namespace RSSMS.DataService.Services
             return new TokenGenerateViewModel
             {
                 IdToken = new JwtSecurityTokenHandler().WriteToken(token),
-                ExpiresIn = expires.TotalMinutes,
+                ExpiresIn = expires.TotalDays,
                 TokenType = "Bearer",
             };
         }
