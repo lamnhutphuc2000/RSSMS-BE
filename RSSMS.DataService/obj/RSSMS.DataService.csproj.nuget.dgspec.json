@@ -130,6 +130,10 @@
               "target": "Package",
               "version": "[1.0.3, )"
             },
+            "Magick.NET-Q16-AnyCPU": {
+              "target": "Package",
+              "version": "[11.1.0, )"
+            },
             "Microsoft.AspNet.WebApi.Client": {
               "target": "Package",
               "version": "[5.2.8, )"
