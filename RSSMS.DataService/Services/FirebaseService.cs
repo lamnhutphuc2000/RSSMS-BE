@@ -9,6 +9,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Drawing.Imaging;
+using ImageMagick;
 
 namespace RSSMS.DataService.Services
 {
@@ -31,7 +33,7 @@ namespace RSSMS.DataService.Services
             _staffAssignStoragesService = staffAssignStoragesService;
             _notificationService = notificationService;
         }
-
+        
         public async Task<string> UploadImageToFirebase(string image, string type, Guid id, string name)
         {
             if (image == null) return null;
@@ -39,7 +41,13 @@ namespace RSSMS.DataService.Services
 
             byte[] data = System.Convert.FromBase64String(image);
             MemoryStream ms = new MemoryStream(data);
-
+            using (MagickImage magicImage = new MagickImage(data))
+            {
+                magicImage.Format = MagickFormat.Jpeg; // Get or Set the format of the image.
+                magicImage.Resize(10, 10); // fit the image into the requested width and height. 
+                magicImage.Quality = 10; // This is the Compression level.
+                await magicImage.WriteAsync(ms);
+            }
             var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
             var a = await auth.SignInWithEmailAndPasswordAsync("toadmin@gmail.com", "123456");
 

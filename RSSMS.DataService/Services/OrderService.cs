@@ -379,7 +379,7 @@ namespace RSSMS.DataService.Services
                                 Image tmp = new Image
                                 {
                                     Url = url,
-                                    Name = "Order detail image - " + num,
+                                    Name = "Ảnh - " + num,
                                     Note = orderDetailImage.Note,
                                     OrderDetailid = orderDetailToAddImg.Id
                                 };

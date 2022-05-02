@@ -85,7 +85,6 @@ namespace RSSMS.DataService.Services
                         throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Sai mật khẩu");
 
                 }
-
                 // Kiểm tra tài khoản trên database
                 Account acc = await Get(account => account.Email == model.Email && account.Password.SequenceEqual(EncryptedPassword(model.Password)) && account.IsActive)
                     .Include(account => account.Role)
@@ -300,7 +299,8 @@ namespace RSSMS.DataService.Services
                 }
                 catch (Exception e)
                 {
-                    throw new ErrorResponse((int)HttpStatusCode.BadRequest, e.Message);
+                    if (e.Message.Contains("EMAIL_EXISTS"))
+                        throw new ErrorResponse((int)HttpStatusCode.NotFound, "Email đã tồn tại");
                 }
 
 
@@ -530,7 +530,6 @@ namespace RSSMS.DataService.Services
                 // Lấy đúng kho
                 if (storageId != null)
                     staffs = staffs.Where(account => account.StaffAssignStorages.Any(staffAssignStorage => staffAssignStorage.StorageId == storageId && staffAssignStorage.IsActive)).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-                var tho = staffs.ToList();
                 if (scheduleDay != null)
                 {
                     List<TimeSpan> timeSpan = new List<TimeSpan>();
@@ -544,11 +543,10 @@ namespace RSSMS.DataService.Services
                             
                         // Lấy những nhân viên không bận trong khung giờ
                         if (timeSpan.Count > 0)
-                            staffs = staffs.Where(account => account.Schedules.Where(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).FirstOrDefault() == null).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
+                            staffs = staffs.Where(account => account.Schedules.Where(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).ToList().Count == 0).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
                     }
                     // Lấy những nhân viên không bận trong ngày
                     staffs = staffs.Where(account => account.Requests.Where(request => request.CreatedBy == account.Id && request.IsActive && request.Type == (int)RequestType.Huy_lich_giao_hang && request.CancelDate.Value.Date == scheduleDay.Value.Date).FirstOrDefault() == null).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);
-                    var chop = staffs.ToList();
                 }
                 var result = await staffs.ProjectTo<AccountViewModel>(_mapper.ConfigurationProvider).ToListAsync();
                 return result;

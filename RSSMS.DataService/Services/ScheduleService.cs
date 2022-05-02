@@ -63,6 +63,7 @@ namespace RSSMS.DataService.Services
                 foreach (var schedule in schedules)
                 {
                     var staffs = await _accountService.GetStaff(storageId, accessToken, new List<string> { "Delivery Staff" }, model.ScheduleDay, new List<string> { schedule.ScheduleTime }, false);
+                    
                     if (staffs.Count - userIds.Count < schedule.RequestRemain) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Số nhân viên còn lại không đủ để đi thực hiện yêu cầu");
                 }
 

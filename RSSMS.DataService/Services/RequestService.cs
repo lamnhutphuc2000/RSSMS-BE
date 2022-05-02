@@ -943,7 +943,8 @@ namespace RSSMS.DataService.Services
                 {
                     for (int j = 0; j < services[i].Amount; j++)
                     {
-                        var service = _serviceService.Get(service => service.Id == services[i].ServiceId).FirstOrDefault();
+                        var service = _serviceService.Get(service => service.Id == services[i].ServiceId && service.IsActive).FirstOrDefault();
+                        if (service == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy dịch vụ muốn đặt");
                         if (service.Type == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
                         if (service.Type != (int)ServiceType.Phu_kien)
                         {

@@ -505,6 +505,9 @@ namespace RSSMS.DataService.Services
                 var staffs = await _accountService.GetStaff(storageList[i].Id, accessToken, new List<string> { "Delivery Staff" }, dateFrom, deliveryTimes, false);
                 if (isAvailable)
                 {
+
+                    //throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Đây");
+
                     if (!isCustomerDelivery && spaceType == (int)SpaceType.Ke)
                     {
                         // list time
@@ -527,8 +530,8 @@ namespace RSSMS.DataService.Services
                                     storage.DeliveryFee = serviceDeliveryFee * 1;
                                 else
                                     storage.DeliveryFee = serviceDeliveryFee * Math.Ceiling(Convert.ToDecimal(storage.DeliveryDistance.Split(' ')[0]));
-                                result.Add(storage);
                             }
+                            result.Add(storage);
                         }
                     }
                     else
