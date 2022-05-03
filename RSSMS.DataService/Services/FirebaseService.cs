@@ -1,6 +1,7 @@
 ﻿using FCM.Net;
 using Firebase.Auth;
 using Firebase.Storage;
+using ImageMagick;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System;
@@ -9,8 +10,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Drawing.Imaging;
-using ImageMagick;
 
 namespace RSSMS.DataService.Services
 {

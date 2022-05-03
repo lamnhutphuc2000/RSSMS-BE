@@ -70,12 +70,12 @@ namespace RSSMS.DataService.Services
                 try
                 {
                     FirebaseAuthProvider auth = new FirebaseAuthProvider(new FirebaseConfig(FirebaseKeyConstant.apiKEY));
-                    if(auth != null)
+                    if (auth != null)
                     {
                         FirebaseAuthLink a = await auth.SignInWithEmailAndPasswordAsync(model.Email, EncryptedPassword(model.Password).ToString());
-                        if(a != null)  us = a.User;
+                        if (a != null) us = a.User;
                     }
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -90,7 +90,7 @@ namespace RSSMS.DataService.Services
                     .Include(account => account.Role)
                     .Include(account => account.StaffAssignStorages)
                     .FirstOrDefaultAsync();
-                if(us != null)
+                if (us != null)
                     acc = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password.SequenceEqual(EncryptedPassword(model.Password)) && account.IsActive)
                     .Include(account => account.Role)
                     .Include(account => account.StaffAssignStorages)
@@ -192,7 +192,7 @@ namespace RSSMS.DataService.Services
                 var actor = await Get(account => account.Id == uid && account.IsActive).Include(account => account.Role).Include(account => account.StaffAssignStorages.Where(staffAssignStorage => staffAssignStorage.IsActive)).FirstOrDefaultAsync();
                 var role = actor.Role;
                 var accounts = Get(account => !account.Role.Name.Equals("Admin") && account.IsActive).Include(account => account.Role).Include(account => account.StaffAssignStorages);
-                
+
                 if (role.Name == "Manager")
                 {
                     // Lấy Id của những kho mà manager quản lý
@@ -313,7 +313,7 @@ namespace RSSMS.DataService.Services
                 userCreate.FirebaseId = us.LocalId;
                 userCreate.DeviceTokenId = model.DeviceToken;
                 userCreate.Password = EncryptedPassword(model.Password);
-                
+
 
                 // Đăng ảnh lên firebase
                 if (image != null)
@@ -540,7 +540,7 @@ namespace RSSMS.DataService.Services
                             if (!string.IsNullOrWhiteSpace(time))
                                 timeSpan.Add(_utilService.StringToTime(time));
                         }
-                            
+
                         // Lấy những nhân viên không bận trong khung giờ
                         if (timeSpan.Count > 0)
                             staffs = staffs.Where(account => account.Schedules.Where(schedule => schedule.ScheduleDay.Date == scheduleDay.Value.Date && timeSpan.Contains(schedule.ScheduleTime) && schedule.IsActive).ToList().Count == 0).Include(account => account.StaffAssignStorages).Include(account => account.Schedules);

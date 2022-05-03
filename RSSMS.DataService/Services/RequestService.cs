@@ -105,7 +105,7 @@ namespace RSSMS.DataService.Services
                 var account = _accountService.Get(account => account.Id == userId && account.IsActive).Include(account => account.StaffAssignStorages).Include(account => account.Role).FirstOrDefault();
                 if (account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
                 var staffStorage = account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).Select(staffAssign => staffAssign.StorageId).FirstOrDefault();
-                if(account.Role.Name == "Office Staff" && staffStorage == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Thủ kho chưa được phân công vào kho");
+                if (account.Role.Name == "Office Staff" && staffStorage == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Thủ kho chưa được phân công vào kho");
                 var requests = Get(request => request.IsActive)
                     .Include(request => request.Schedules)
                     .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.StaffAssignStorages)
@@ -243,7 +243,7 @@ namespace RSSMS.DataService.Services
                                 .Include(request => request.Storage)
                                 .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
                                 .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
-                
+
                 if (role == "Office Staff" && storageId != null)
                     request = request.Where(request => request.StorageId == storageId || request.Order.StorageId == storageId)
                                 .Include(request => request.Schedules)
@@ -251,7 +251,7 @@ namespace RSSMS.DataService.Services
                                 .Include(request => request.Storage)
                                 .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
                                 .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
-                
+
                 if ((role == "Delivery Staff" || role == "Office Staff") && storageId == null)
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên chưa vào kho");
                 var result = await request.ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
@@ -406,7 +406,7 @@ namespace RSSMS.DataService.Services
                     if (model.IsPaid == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa thanh toán");
                     if (model.IsPaid == false) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa thanh toán");
                     var days = (model.ReturnDate.Value.Date.Subtract(model.OldReturnDate.Value.Date).Days);
-                    if(days < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Phải gia hạn thêm ít nhất 1 ngày");
+                    if (days < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Phải gia hạn thêm ít nhất 1 ngày");
                     var orderDetails = orderToExtend.OrderDetails.ToList();
                     int typeService = 1;
                     int spaceType = 0;
@@ -416,9 +416,9 @@ namespace RSSMS.DataService.Services
 
                     decimal totalPrice = 0;
                     decimal month = Math.Ceiling((decimal)model.ReturnDate.Value.Date.Subtract(model.OldReturnDate.Value.Date).Days / 30);
-                    if(orderToExtend.Type == (int)OrderType.Kho_tu_quan)
+                    if (orderToExtend.Type == (int)OrderType.Kho_tu_quan)
                         month = ((model.ReturnDate.Value.Year - model.OldReturnDate.Value.Year) * 12) + model.ReturnDate.Value.Month - model.OldReturnDate.Value.Month;
-                    
+
                     // service list chứa list service người dùng đặt
                     List<Cuboid> cuboid = new List<Cuboid>();
 
@@ -453,7 +453,7 @@ namespace RSSMS.DataService.Services
                     request = _mapper.Map<Request>(model);
                     request.CreatedBy = userId;
                     request.Status = (int)RequestStatus.Hoan_thanh;
-                    
+
                     await CreateAsync(request);
 
                     order = request.Order;
@@ -776,14 +776,14 @@ namespace RSSMS.DataService.Services
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var account = _accountService.Get(account => account.Id == userId && account.IsActive).FirstOrDefault();
-                if(account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
+                if (account == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
                 var entity = await Get(x => x.Id == id && x.IsActive && x.Status != 0).Include(entity => entity.Schedules).FirstOrDefaultAsync();
                 if (entity == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy yêu cầu");
 
                 var schedules = entity.Schedules;
-                if(schedules != null)
-                    if(schedules.Count > 0)
-                        foreach(var schedule in schedules)
+                if (schedules != null)
+                    if (schedules.Count > 0)
+                        foreach (var schedule in schedules)
                             schedule.IsActive = false;
                 entity.Schedules = schedules;
                 entity.ModifiedBy = userId;
@@ -791,7 +791,7 @@ namespace RSSMS.DataService.Services
                 entity.CancelReason = model.CancelReason;
                 await UpdateAsync(entity);
 
-                return await GetById(id,accessToken);
+                return await GetById(id, accessToken);
             }
             catch (ErrorResponse e)
             {
@@ -960,7 +960,7 @@ namespace RSSMS.DataService.Services
                     var request = Get(request => request.OrderId == model.OrderId)
                         .Include(request => request.Order).ThenInclude(order => order.OrderDetails).ThenInclude(orderDetail => orderDetail.OrderDetailServiceMaps)
                         .Include(request => request.Order).ThenInclude(order => order.Storage).FirstOrDefault();
-                    if(request == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn cần rút đồ về");
+                    if (request == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn cần rút đồ về");
 
                     var storage = request.Order.Storage;
                     var customerGeo = await _storageService.GetGeometry(model.ReturnAddress);

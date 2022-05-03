@@ -6,7 +6,6 @@ using RSSMS.DataService.Responses;
 using RSSMS.DataService.UnitOfWorks;
 using RSSMS.DataService.ViewModels.OrderDetails;
 using System;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -29,19 +28,19 @@ namespace RSSMS.DataService.Services
         {
             try
             {
-                if(id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id không khớp");
+                if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Id không khớp");
                 var orderDetail = await Get(orderDetail => orderDetail.Id == id).Include(orderDetail => orderDetail.Images)
                                              .Include(orderDetail => orderDetail.OrderDetailServiceMaps).FirstOrDefaultAsync();
-                if(orderDetail == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy chi tiết đơn");
+                if (orderDetail == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy chi tiết đơn");
                 orderDetail.Status = model.Status;
                 await UpdateAsync(orderDetail);
                 return _mapper.Map<OrderDetailViewModel>(orderDetail);
             }
-            catch(ErrorResponse e)
+            catch (ErrorResponse e)
             {
                 throw new ErrorResponse(e.Error.Code, e.Error.Message);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }

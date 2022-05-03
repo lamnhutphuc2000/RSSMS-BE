@@ -534,7 +534,7 @@ namespace RSSMS.DataService.Services
                             }
                         }
 
-                        if(order.Type == (int)OrderType.Giu_do_thue)
+                        if (order.Type == (int)OrderType.Giu_do_thue)
                             order.Status = (int)OrderStatus.Da_xuat_kho;
                         if (order.Type == (int)OrderType.Kho_tu_quan)
                             order.Status = (int)OrderStatus.Hoan_thanh;
@@ -595,7 +595,7 @@ namespace RSSMS.DataService.Services
                             Datetime = DateTime.Now,
                             Name = "Đã xuất kho"
                         });
-                        if(order.Type != (int)OrderType.Kho_tu_quan)
+                        if (order.Type != (int)OrderType.Kho_tu_quan)
                             return await GetById(model.OrderId, new List<int>());
                     }
                 }

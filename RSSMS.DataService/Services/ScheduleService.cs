@@ -52,17 +52,17 @@ namespace RSSMS.DataService.Services
                 var schedulesAssigned = listSchedules.Where(x => schedules.Any(a => a.RequestId == x.RequestId));
 
 
-                if(userIds.Count() > 0)
+                if (userIds.Count() > 0)
                 {
                     HashSet<Guid> hashset = new HashSet<Guid>();
                     IEnumerable<Guid> duplicates = userIds.Where(e => !hashset.Add(e));
-                    if(duplicates.Count() > 0)
+                    if (duplicates.Count() > 0)
                         throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trùng nhân viên");
                 }
                 var storageId = _accountService.Get(account => account.Id == userIds.FirstOrDefault()).Select(account => account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).FirstOrDefault().StorageId).FirstOrDefault();
                 foreach (var schedule in schedules)
                     if (model.AvailableStaffs < schedule.RequestRemain) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Số nhân viên còn lại không đủ để đi thực hiện yêu cầu");
-                
+
 
                 foreach (var scheduleAssigned in schedulesAssigned)
                 {

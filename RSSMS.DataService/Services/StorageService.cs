@@ -117,20 +117,20 @@ namespace RSSMS.DataService.Services
                 foreach (var area in areas)
                     if (await _areaService.CheckIsUsed(area.Id)) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Storage is in used");
                 var orders = entity.Orders;
-                if(orders.Count > 0)
+                if (orders.Count > 0)
                 {
-                    if(orders.Where(order => order.IsActive && (order.Status == (int)OrderStatus.Dang_van_chuyen || order.Status == (int)OrderStatus.Da_luu_kho
-                    || order.Status == (int)OrderStatus.Sap_qua_han || order.Status == (int)OrderStatus.Da_qua_han)).FirstOrDefault() != null)
+                    if (orders.Where(order => order.IsActive && (order.Status == (int)OrderStatus.Dang_van_chuyen || order.Status == (int)OrderStatus.Da_luu_kho
+                     || order.Status == (int)OrderStatus.Sap_qua_han || order.Status == (int)OrderStatus.Da_qua_han)).FirstOrDefault() != null)
                         throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn đơn đang được gán vào");
                 }
                 var requests = entity.Requests;
-                if(requests.Count > 0)
+                if (requests.Count > 0)
                 {
-                    if(requests.Where(request => request.IsActive && (request.Status == (int)RequestStatus.Dang_xu_ly 
-                    || request.Status == (int)RequestStatus.Da_xu_ly || request.Status == 6) && (request.Status == (int)RequestStatus.Dang_van_chuyen && request.Type == (int)RequestType.Tao_don)).FirstOrDefault() != null)
+                    if (requests.Where(request => request.IsActive && (request.Status == (int)RequestStatus.Dang_xu_ly
+                     || request.Status == (int)RequestStatus.Da_xu_ly || request.Status == 6) && (request.Status == (int)RequestStatus.Dang_van_chuyen && request.Type == (int)RequestType.Tao_don)).FirstOrDefault() != null)
                         throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn đơn yêu cầu đang được gán vào");
                 }
-                    
+
                 if (entity.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive && staffAssign.Staff.Role.Name != "Manager").Count() > 0)
                     throw new ErrorResponse((int)HttpStatusCode.NotFound, "Trong kho vẫn còn nhân viên đang được gán vào");
                 entity.IsActive = false;
@@ -243,7 +243,7 @@ namespace RSSMS.DataService.Services
                 _utilService.ValidateDecimal(model.Length, " chiều dài kho");
 
                 var geometry = await GetGeometry(model.Address);
-                
+
 
                 if (id != model.Id) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Storage Id not matched");
 
@@ -334,9 +334,9 @@ namespace RSSMS.DataService.Services
                     var staffsToUnAssigned = await _accountService.Get(account => account.IsActive && staffUnAssignedId.Contains(account.Id))
                                                             .Include(account => account.Role).Include(account => account.Schedules)
                                                             .ToListAsync();
-                    foreach(var staffToUnAssigned in staffsToUnAssigned)
+                    foreach (var staffToUnAssigned in staffsToUnAssigned)
                     {
-                        if(staffToUnAssigned.Schedules.Where(schedule => schedule.IsActive && schedule.Status == 1 && schedule.ScheduleDay.Date > DateTime.Now.Date).FirstOrDefault() != null)
+                        if (staffToUnAssigned.Schedules.Where(schedule => schedule.IsActive && schedule.Status == 1 && schedule.ScheduleDay.Date > DateTime.Now.Date).FirstOrDefault() != null)
                             throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên còn lịch chưa hoàn thành không thể rút khỏi kho");
                     }
 
@@ -522,8 +522,8 @@ namespace RSSMS.DataService.Services
                         if (requestsNeedToDeli.Count() + 1 <= staffs.Count())
                         {
                             StorageViewModel storage = _mapper.Map<StorageViewModel>(storageList[i]);
-                                
-                            DistanceViewModel distance = await GetDistanceFromCustomerToStorage(customerAddress, storageList[i].Lat + ","+ storageList[i].Lng);
+
+                            DistanceViewModel distance = await GetDistanceFromCustomerToStorage(customerAddress, storageList[i].Lat + "," + storageList[i].Lng);
                             if (distance != null)
                             {
                                 storage.DeliveryDistance = distance.rows[0].elements[0].distance.text;
@@ -558,10 +558,10 @@ namespace RSSMS.DataService.Services
             if (response.IsSuccessStatusCode)
             {
                 geometry = await response.Content.ReadAsAsync<GeometryViewModel>();
-                if(geometry.results.Length < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Địa chỉ không hợp lệ " + address);
+                if (geometry.results.Length < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Địa chỉ không hợp lệ " + address);
                 return geometry;
             }
-            else throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Địa chỉ không hợp lệ "+ address);
+            else throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Địa chỉ không hợp lệ " + address);
         }
 
         public async Task<DistanceViewModel> GetDistanceFromCustomerToStorage(string deliveryAddress, string destination)
@@ -575,7 +575,7 @@ namespace RSSMS.DataService.Services
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
-            
+
 
             // tính quãng đường
             var response = await client.GetAsync(

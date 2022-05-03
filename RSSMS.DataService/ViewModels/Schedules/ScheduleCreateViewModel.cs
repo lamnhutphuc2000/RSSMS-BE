@@ -9,6 +9,6 @@ namespace RSSMS.DataService.ViewModels.Schedules
         public IList<ScheduleDeliveryViewModel> Schedules { get; set; }
         public IList<Guid> UserIds { get; set; }
         public int AvailableStaffs { get; set; }
-        
+
     }
 }
