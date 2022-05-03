@@ -331,13 +331,14 @@ namespace RSSMS.DataService.Services
                 if (staffUnAssigned != null)
                 {
                     var staffUnAssignedId = staffUnAssigned.Select(staff => staff.UserId);
-                    // get staff need to unassign with role and schedules
-                    var staffsToUnAssigned = _staffAssignStoragesService.Get(staffAssign => staffUnAssignedId.Contains(staffAssign.Id) && staffAssign.IsActive)
-                                                .Include(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Role)
-                                                .Include(staffAssign => staffAssign.Staff).ThenInclude(staff => staff.Schedules).ThenInclude(schedule => schedule.Request).ToList();
-                    // check if there is staff who schedule have not finish
-                    if (staffsToUnAssigned.Where(staffAssign => staffAssign.Staff.Schedules.Where(schedule => schedule.IsActive && (schedule.Request.Status == (int)RequestStatus.Dang_van_chuyen || schedule.Request.Status == (int)RequestStatus.Da_xu_ly)).Count() > 0).Count() > 0)
-                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên còn lịch chưa hoàn thành không thể rút khỏi kho");
+                    var staffsToUnAssigned = await _accountService.Get(account => account.IsActive && staffUnAssignedId.Contains(account.Id))
+                                                            .Include(account => account.Role).Include(account => account.Schedules)
+                                                            .ToListAsync();
+                    foreach(var staffToUnAssigned in staffsToUnAssigned)
+                    {
+                        if(staffToUnAssigned.Schedules.Where(schedule => schedule.IsActive && schedule.Status == 1 && schedule.ScheduleDay.Date > DateTime.Now.Date).FirstOrDefault() != null)
+                            throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên còn lịch chưa hoàn thành không thể rút khỏi kho");
+                    }
 
                     // check if there is request that is assigned to this storage but unassigned staff leading to not enough staff;
                     var requests = Get(storage => storage.Id == model.StorageId && storage.IsActive).Include(storage => storage.Requests).FirstOrDefault()

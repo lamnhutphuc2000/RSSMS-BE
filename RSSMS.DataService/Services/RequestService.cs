@@ -230,7 +230,6 @@ namespace RSSMS.DataService.Services
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var role = secureToken.Claims.First(claim => claim.Type.Contains("role")).Value;
 
-                var chep = request.FirstOrDefault();
 
                 var acc = _accountService.Get(account => account.IsActive && account.Id == userId)
                         .Include(acc => acc.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive)).FirstOrDefault();
@@ -238,13 +237,13 @@ namespace RSSMS.DataService.Services
                 Guid? storageId = null;
                 if (acc != null) storageId = acc.StaffAssignStorages.FirstOrDefault()?.StorageId;
                 if (role == "Delivery Staff" && storageId != null)
-                    request = request.Where(request => request.StorageId == storageId && request.Schedules.Where(schedule => schedule.IsActive && schedule.StaffId == userId).Count() > 0)
+                    request = request.Where(request => (request.StorageId == storageId || request.Order.StorageId == storageId) && request.Schedules.Where(schedule => schedule.IsActive && schedule.StaffId == userId).Count() > 0)
                                 .Include(request => request.Schedules)
                                 .Include(request => request.Order)
                                 .Include(request => request.Storage)
                                 .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
                                 .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
-                chep = request.FirstOrDefault();
+                
                 if (role == "Office Staff" && storageId != null)
                     request = request.Where(request => request.StorageId == storageId || request.Order.StorageId == storageId)
                                 .Include(request => request.Schedules)
@@ -252,7 +251,7 @@ namespace RSSMS.DataService.Services
                                 .Include(request => request.Storage)
                                 .Include(request => request.RequestDetails).ThenInclude(requestDetail => requestDetail.Service)
                                 .Include(request => request.CreatedByNavigation).ThenInclude(createdBy => createdBy.Role);
-                chep = request.FirstOrDefault();
+                
                 if ((role == "Delivery Staff" || role == "Office Staff") && storageId == null)
                     throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Nhân viên chưa vào kho");
                 var result = await request.ProjectTo<RequestByIdViewModel>(_mapper.ConfigurationProvider).FirstOrDefaultAsync();
@@ -406,16 +405,20 @@ namespace RSSMS.DataService.Services
 
                     if (model.IsPaid == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa thanh toán");
                     if (model.IsPaid == false) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Chưa thanh toán");
+                    var days = (model.ReturnDate.Value.Date.Subtract(model.OldReturnDate.Value.Date).Days);
+                    if(days < 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Phải gia hạn thêm ít nhất 1 ngày");
                     var orderDetails = orderToExtend.OrderDetails.ToList();
                     int typeService = 1;
                     int spaceType = 0;
-                    if (model.Type == (int)OrderType.Kho_tu_quan) spaceType = 1;
+                    if (orderToExtend.Type == (int)OrderType.Kho_tu_quan) spaceType = 1;
                     bool isMany = false;
                     bool isMainService = false;
 
                     decimal totalPrice = 0;
                     decimal month = Math.Ceiling((decimal)model.ReturnDate.Value.Date.Subtract(model.OldReturnDate.Value.Date).Days / 30);
-                    if (spaceType == 1) month = (model.ReturnDate.Value.Date.Subtract(model.OldReturnDate.Value.Date).Days / 30);
+                    if(orderToExtend.Type == (int)OrderType.Kho_tu_quan)
+                        month = ((model.ReturnDate.Value.Year - model.OldReturnDate.Value.Year) * 12) + model.ReturnDate.Value.Month - model.OldReturnDate.Value.Month;
+                    
                     // service list chứa list service người dùng đặt
                     List<Cuboid> cuboid = new List<Cuboid>();
 
@@ -482,7 +485,7 @@ namespace RSSMS.DataService.Services
                             var serviceExtend = new OrderHistoryExtensionServiceMap()
                             {
                                 Amount = service.Amount,
-                                Price = service.Price,
+                                Price = service.Service.Price,
                                 Serviceid = service.ServiceId,
                                 OrderHistoryExtensionId = orderExtend.Id
                             };
@@ -496,26 +499,22 @@ namespace RSSMS.DataService.Services
                         orderExtend.Order = order;
                         await _orderHistoryExtensionService.UpdateAsync(orderExtend);
                     }
-                    var orderHistoryExtend = request.Order.OrderHistoryExtensions.Where(x => x.RequestId == request.Id).FirstOrDefault();
-                    if (orderHistoryExtend == null)
-                        throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy thông tin gia hạn đơn");
-                    orderHistoryExtend.PaidDate = DateTime.Now;
-                    orderHistoryExtend.ModifiedBy = userId;
-                    await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
 
-                    order = orderHistoryExtend.Order;
-                    order.ReturnDate = orderHistoryExtend.ReturnDate;
+                    order.ReturnDate = model.ReturnDate;
                     order.IsPaid = (bool)model.IsPaid;
                     order.ModifiedBy = userId;
                     order.ModifiedDate = DateTime.Now;
-                    orderHistoryExtend.Order = order;
-                    await _orderHistoryExtensionService.UpdateAsync(orderHistoryExtend);
+                    orderExtend.Order = order;
+                    await _orderHistoryExtensionService.UpdateAsync(orderExtend);
 
 
                     var requestTmp = Get(x => x.Id == request.Id).Include(x => x.Order).ThenInclude(order => order.Storage).ThenInclude(storage => storage.StaffAssignStorages.Where(staffAssign => staffAssign.Staff.Role.Name == "Manager" && staffAssign.IsActive)).ThenInclude(staffAssignInStorage => staffAssignInStorage.Staff).Select(x => x.Order.Storage.StaffAssignStorages.FirstOrDefault()).FirstOrDefault();
 
+                    var managerToNoti = _staffAssignStoragesService.Get(staffAssign => staffAssign.IsActive && staffAssign.Staff.Role.Name == "Manager" && staffAssign.StorageId == orderToExtend.StorageId).Include(staffAssign => staffAssign.Staff).FirstOrDefault();
 
-                    await _firebaseService.SendNoti("Khách " + userId + " gia hạn đơn: " + order.Name, userId, requestTmp.Staff.DeviceTokenId, request.Id, new
+                    var customer = await _accountService.Get(account => account.Id == userId).FirstOrDefaultAsync();
+
+                    await _firebaseService.SendNoti("Khách " + customer.Name + " gia hạn đơn: " + order.Name, userId, managerToNoti.Staff.DeviceTokenId, request.Id, new
                     {
                         Content = "Khách " + userId + " gia hạn đơn: " + order.Name,
                         model.OrderId,

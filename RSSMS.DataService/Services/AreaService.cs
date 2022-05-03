@@ -404,9 +404,12 @@ namespace RSSMS.DataService.Services
             if (floorList.Count == 0) return result;
 
             if (spaceType == (int)SpaceType.Dien_tich && (floorList.Count < cuboids.Count || floorList.Count <= requestsAssignToStorage.Count)) return false;
-
             foreach (var request in requestsAssignToStorage)
             {
+                if ((request.TypeOrder == (int)OrderType.Kho_tu_quan && spaceType != (int)SpaceType.Dien_tich) || (request.TypeOrder == (int)OrderType.Giu_do_thue && spaceType != (int)SpaceType.Ke))
+                {
+                    continue;
+                }
                 var servicesInRequestDetail = request.RequestDetails.Select(requestDetail => new
                 {
                     ServiceId = (Guid)requestDetail.ServiceId,
@@ -424,7 +427,6 @@ namespace RSSMS.DataService.Services
                         Length = orderDetail.Length,
                         Amount = 0
                     }).ToList();
-
                 for (int i = 0; i < servicesInRequestDetail.Count; i++)
                 {
                     for (int j = 0; j < servicesInRequestDetail[i].Amount; j++)
@@ -434,15 +436,34 @@ namespace RSSMS.DataService.Services
                             var service = _serviceService.Get(service => service.Id == servicesInRequestDetail[i].ServiceId).FirstOrDefault();
                             if (service.Type != (int)ServiceType.Phu_kien)
                             {
-
-                                if (isMany) cuboidsTmp.Add(new Cuboid(service.Width, 1, service.Length, 0, service.Id));
-                                else cuboidsTmp.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                if (service.Type == (int)ServiceType.Kho && spaceType == (int)SpaceType.Dien_tich)
+                                {
+                                    cuboidsTmp.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                }
+                                else
+                                {
+                                    if (isMany) cuboidsTmp.Add(new Cuboid(service.Width, 1, service.Length, 0, service.Id));
+                                    else cuboidsTmp.Add(new Cuboid(service.Width, service.Height, service.Length, 0, service.Id));
+                                }
                             }
                         }
                         else
                         {
-                            if (isMany) cuboidsTmp.Add(new Cuboid((decimal)servicesInRequestDetail[i].Width, 1, (decimal)servicesInRequestDetail[i].Length));
-                            else cuboidsTmp.Add(new Cuboid((decimal)servicesInRequestDetail[i].Width, (decimal)servicesInRequestDetail[i].Height, (decimal)servicesInRequestDetail[i].Length));
+                            var service = _serviceService.Get(service => service.Id == servicesInRequestDetail[i].ServiceId).FirstOrDefault();
+                            if (service.Type != (int)ServiceType.Phu_kien)
+                            {
+                                if (service.Type == (int)ServiceType.Kho && spaceType == (int)SpaceType.Dien_tich)
+                                {
+                                    cuboidsTmp.Add(new Cuboid((decimal)servicesInRequestDetail[i].Width, (decimal)servicesInRequestDetail[i].Height, (decimal)servicesInRequestDetail[i].Length));
+                                }
+                                else
+                                {
+                                    if (isMany) cuboidsTmp.Add(new Cuboid((decimal)servicesInRequestDetail[i].Width, 1, (decimal)servicesInRequestDetail[i].Length));
+                                    else cuboidsTmp.Add(new Cuboid((decimal)servicesInRequestDetail[i].Width, (decimal)servicesInRequestDetail[i].Height, (decimal)servicesInRequestDetail[i].Length));
+                                }
+                            }
+
+
 
                         }
                     }

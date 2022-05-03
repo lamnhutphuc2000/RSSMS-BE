@@ -519,7 +519,7 @@ namespace RSSMS.DataService.Services
 
                 if (account.Role.Name == "Office Staff")
                 {
-                    if (model.OrderAdditionalFees == null)
+                    if (model.OrderAdditionalFees == null || order.Type == (int)OrderType.Kho_tu_quan)
                     {
                         if (model.DeliveryBy != null)
                         {
@@ -595,7 +595,8 @@ namespace RSSMS.DataService.Services
                             Datetime = DateTime.Now,
                             Name = "Đã xuất kho"
                         });
-                        return await GetById(model.OrderId, new List<int>());
+                        if(order.Type != (int)OrderType.Kho_tu_quan)
+                            return await GetById(model.OrderId, new List<int>());
                     }
                 }
                 var requests = order.Requests;
@@ -732,7 +733,7 @@ namespace RSSMS.DataService.Services
                     deliveryTo = _accountService.Get(account => account.IsActive && account.Id == model.DeliveryId)
                         .Include(account => account.Role)
                         .Include(account => account.Schedules).ThenInclude(schedule => schedule.Request).FirstOrDefault();
-                    if(deliveryTo.Role.Name == "Delivery Staff")
+                    if (deliveryTo.Role.Name == "Delivery Staff")
                     {
                         if (deliveryTo == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy nhân viên vận chuyển");
                         Schedule schedule = deliveryTo.Schedules.Where(schedule => schedule.IsActive && schedule.Request.OrderId == orders.FirstOrDefault().Id).FirstOrDefault();
@@ -745,7 +746,7 @@ namespace RSSMS.DataService.Services
                 var order = orders.First();
                 if (order.Status != (int)OrderStatus.Dang_van_chuyen) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Đơn không đang vận chuyển");
 
-                
+
 
                 // Check xem tầng còn đủ chỗ không
                 bool isMany = false;
@@ -769,9 +770,9 @@ namespace RSSMS.DataService.Services
                 OrderDetail orderDetail = null;
                 foreach (var orderDetailToAssignFloor in orderDetailToAssignFloorList)
                 {
-                    if(orderDetailToAssignFloor.Key == null)
+                    if (orderDetailToAssignFloor.Key == null)
                     {
-                        foreach(var orderDetailNotAssign in orderDetailToAssignFloor)
+                        foreach (var orderDetailNotAssign in orderDetailToAssignFloor)
                         {
                             orderDetail = order.OrderDetails.Where(orderDetail => orderDetail.Id == orderDetailNotAssign.OrderDetailId).FirstOrDefault();
                             orderDetail.Note = orderDetailNotAssign.ImportNote;
@@ -820,12 +821,13 @@ namespace RSSMS.DataService.Services
                                     cuboids.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length));
                                 else
                                     cuboids.Add(new Cuboid((decimal)orderDetail.Width, (decimal)orderDetail.Height, (decimal)orderDetail.Length));
-                                
+
                             }
-                            
+
                             orderDetail.ImportNote = orderDetailToAssign.ImportNote;
                             orderDetail.Import = import;
                             orderDetail.ImportCode = import.Code + " - " + index;
+                            orderDetail.Status = 1;
                             orderDetails.Add(orderDetail);
                         }
                         if (isMany)
@@ -839,7 +841,9 @@ namespace RSSMS.DataService.Services
                     }
                 }
 
-                order.OrderDetails = orderDetails;
+                foreach (var orderDetailToUpdate in orderDetails)
+                    await _orderDetailService.UpdateAsync(orderDetailToUpdate);
+
                 order.Status = (int)OrderStatus.Da_luu_kho;
                 await UpdateAsync(order);
                 await _orderTimelineService.CreateAsync(new OrderTimeline
@@ -853,7 +857,7 @@ namespace RSSMS.DataService.Services
 
 
                 return _mapper.Map<OrderViewModel>(order);
-                
+
             }
             catch (InvalidOperationException)
             {
@@ -868,6 +872,7 @@ namespace RSSMS.DataService.Services
                 throw new ErrorResponse((int)HttpStatusCode.InternalServerError, ex.Message);
             }
         }
+
         public async Task<OrderViewModel> AssignAnotherFloor(OrderAssignAnotherFloorViewModel model, string accessToken)
         {
             try
@@ -878,40 +883,18 @@ namespace RSSMS.DataService.Services
                     .Include(account => account.Role).Include(account => account.StaffAssignStorages).FirstOrDefault();
                 if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy tài khoản");
                 if (acc.Role.Name != "Office Staff") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không phải nhân viên thủ kho");
+                var orderDetailGroupByFloor = model.OrderDetailAssignFloor.GroupBy(orderDetail => orderDetail.FloorId).Select(orderDetail => orderDetail);
 
-                var orderDetailIds = model.OrderDetailAssignFloor.Select(orderDetailAssign => orderDetailAssign.OrderDetailId).ToList();
-                var orders = Get(order => order.IsActive)
-                    .Include(order => order.OrderDetails)
-                    .Where(order => order.OrderDetails.Any(orderDetail => orderDetailIds.Contains(orderDetail.Id)))
-                    .Include(order => order.Requests)
-                    .ToList().AsQueryable()
-                    .ToList();
-                if (orders.Count == 0) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đơn");
-                if (orders.Count > 1) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Đồ không cùng một đơn");
-                var order = orders.First();
-
-                // Check xem tầng còn đủ chỗ không
-                bool isMany = false;
-                if(order.OrderDetails.Where(orderDetail => orderDetail.Status != 0 && orderDetail.ExportId == null && orderDetail.ImportId != null).Count() == 0)
-                    throw new ErrorResponse((int)HttpStatusCode.NotFound, "Không tìm thấy đồ có thể đặt trên đơn");
-                foreach (var orderDetailAssign in model.OrderDetailAssignFloor)
-                    if (orderDetailAssign.ServiceType == (int)ServiceType.Gui_theo_dien_tich)
-                    {
-                        isMany = true;
-                        break;
-                    }
-                var request = order.Requests.Where(request => request.IsActive && request.Type == (int)RequestType.Tao_don && request.Status == (int)RequestStatus.Hoan_thanh).First();
-                var orderDetailGroupByFloor = model.OrderDetailAssignFloor.GroupBy(orderDetail => orderDetail.FloorId)
-                                                                                .Select(orderDetail => orderDetail);
                 Guid newFloor = Guid.Empty;
                 OrderDetail orderDetail = null;
                 DateTime now = DateTime.Now;
                 List<OrderDetail> orderDetails = new List<OrderDetail>();
+                bool isMany = false;
                 foreach (var orderDetailByFloor in orderDetailGroupByFloor)
                 {
-                    
+
                     if (newFloor == Guid.Empty || newFloor != orderDetailByFloor.Key) newFloor = orderDetailByFloor.Key;
-                    
+
                     var floorWithOrderDetail = await _floorService.GetFloorWithOrderDetail(newFloor);
                     var oldOrderDetails = floorWithOrderDetail.OrderDetails.ToList();
                     BinPackParameter parameter = null;
@@ -919,12 +902,14 @@ namespace RSSMS.DataService.Services
                     List<Cuboid> cuboids = new List<Cuboid>();
                     for (int i = 0; i < oldOrderDetails.Count; i++)
                     {
+                        if (oldOrderDetails[i].ServiceType == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+                        if (isMany && floorWithOrderDetail.Name != "Tầng trệt") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Giữ theo loại phải để tầng trệt");
                         if (isMany) cuboids.Add(new Cuboid((decimal)oldOrderDetails[i].Width, 1, (decimal)oldOrderDetails[i].Length));
                         else cuboids.Add(new Cuboid((decimal)oldOrderDetails[i].Width, (decimal)oldOrderDetails[i].Height, (decimal)oldOrderDetails[i].Length));
                     }
 
                     var orderDetailGroupByOldFloor = orderDetailByFloor.ToList().GroupBy(orderDetail => orderDetail.OldFloorId).Select(orderDetail => orderDetail);
-                    foreach(var orderDetailOldFloor in orderDetailGroupByOldFloor)
+                    foreach (var orderDetailOldFloor in orderDetailGroupByOldFloor)
                     {
                         Transfer transfer = new Transfer
                         {
@@ -933,17 +918,19 @@ namespace RSSMS.DataService.Services
                             FloorToId = orderDetailByFloor.Key,
                             FloorFromId = orderDetailOldFloor.Key,
                         };
-                        foreach(var orderDetailToAssign in orderDetailOldFloor)
+                        foreach (var orderDetailToAssign in orderDetailOldFloor)
                         {
-                            orderDetail = order.OrderDetails.Where(orderDetail => orderDetail.Id == orderDetailToAssign.OrderDetailId).FirstOrDefault();
+                            orderDetail = _orderDetailService.Get(orderDetail => orderDetail.Id == orderDetailToAssign.OrderDetailId).Include(orderDetail => orderDetail.Order).FirstOrDefault();
                             var orderDetailSize = (double)(orderDetail.Height * orderDetail.Width * orderDetail.Length);
                             if (orderDetail.Height > floorWithOrderDetail.Height) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
                             if (orderDetail.Width > floorWithOrderDetail.Width) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
                             if (orderDetail.Length > floorWithOrderDetail.Length) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Kích cỡ không đủ để chứa đồ");
                             if (orderDetail.Height != 0 && orderDetail.Length != 0 && orderDetail.Width != 0)
                             {
+                                if (orderDetailToAssign.ServiceType == (int)ServiceType.Gui_theo_dien_tich) isMany = true;
+                                if (isMany && floorWithOrderDetail.Name != "Tầng trệt") throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Giữ theo loại phải để tầng trệt");
                                 // Check kho tự quản
-                                if (request.TypeOrder == (int)OrderType.Kho_tu_quan)
+                                if (orderDetailToAssign.ServiceType == (int)OrderType.Kho_tu_quan)
                                     if (oldOrderDetails.Count > 0) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Tầng đã được sử dụng");
                                 if (isMany)
                                     cuboids.Add(new Cuboid((decimal)orderDetail.Width, 1, (decimal)orderDetail.Length));
@@ -961,7 +948,7 @@ namespace RSSMS.DataService.Services
                             orderDetails.Add(orderDetail);
                         }
                     }
-                    if(isMany)
+                    if (isMany)
                         parameter = new BinPackParameter(floorWithOrderDetail.Width, 1, floorWithOrderDetail.Length, cuboids);
                     else
                         parameter = new BinPackParameter(floorWithOrderDetail.Width, floorWithOrderDetail.Height, floorWithOrderDetail.Length, cuboids);
@@ -975,7 +962,7 @@ namespace RSSMS.DataService.Services
 
 
 
-                return _mapper.Map<OrderViewModel>(order);
+                return null;
             }
             catch (ErrorResponse e)
             {

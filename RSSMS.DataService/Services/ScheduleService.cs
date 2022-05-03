@@ -61,11 +61,8 @@ namespace RSSMS.DataService.Services
                 }
                 var storageId = _accountService.Get(account => account.Id == userIds.FirstOrDefault()).Select(account => account.StaffAssignStorages.Where(staffAssign => staffAssign.IsActive).FirstOrDefault().StorageId).FirstOrDefault();
                 foreach (var schedule in schedules)
-                {
-                    var staffs = await _accountService.GetStaff(storageId, accessToken, new List<string> { "Delivery Staff" }, model.ScheduleDay, new List<string> { schedule.ScheduleTime }, false);
-                    
-                    if (staffs.Count - userIds.Count < schedule.RequestRemain) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Số nhân viên còn lại không đủ để đi thực hiện yêu cầu");
-                }
+                    if (model.AvailableStaffs < schedule.RequestRemain) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Số nhân viên còn lại không đủ để đi thực hiện yêu cầu");
+                
 
                 foreach (var scheduleAssigned in schedulesAssigned)
                 {

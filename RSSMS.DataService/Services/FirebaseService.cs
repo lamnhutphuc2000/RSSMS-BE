@@ -33,40 +33,43 @@ namespace RSSMS.DataService.Services
             _staffAssignStoragesService = staffAssignStoragesService;
             _notificationService = notificationService;
         }
-        
+
         public async Task<string> UploadImageToFirebase(string image, string type, Guid id, string name)
         {
             if (image == null) return null;
             if (image.Length <= 0) return null;
 
             byte[] data = System.Convert.FromBase64String(image);
-            MemoryStream ms = new MemoryStream(data);
+
             using (MagickImage magicImage = new MagickImage(data))
             {
-                magicImage.Format = MagickFormat.Jpeg; // Get or Set the format of the image.
-                magicImage.Resize(10, 10); // fit the image into the requested width and height. 
+                magicImage.Format = MagickFormat.Jpg; // Get or Set the format of the image.
                 magicImage.Quality = 10; // This is the Compression level.
-                await magicImage.WriteAsync(ms);
+                using (MemoryStream memStream = new MemoryStream())
+                {
+                    magicImage.Write(memStream);
+                    memStream.Position = 0;
+
+                    var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
+                    var a = await auth.SignInWithEmailAndPasswordAsync("toadmin@gmail.com", "123456");
+
+                    var cancellation = new CancellationTokenSource();
+
+                    var upload = new FirebaseStorage(
+                                Bucket,
+                                new FirebaseStorageOptions
+                                {
+                                    AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
+                                    ThrowOnCancel = true
+                                }).Child("assets")
+                                .Child($"{type}")
+                                .Child($"{id}")
+                                .Child($"{name}.jpg")
+                                .PutAsync(memStream, cancellation.Token);
+                    string url = await upload;
+                    return url;
+                }
             }
-            var auth = new FirebaseAuthProvider(new FirebaseConfig(apiKEY));
-            var a = await auth.SignInWithEmailAndPasswordAsync("toadmin@gmail.com", "123456");
-
-            var cancellation = new CancellationTokenSource();
-
-            var upload = new FirebaseStorage(
-                        Bucket,
-                        new FirebaseStorageOptions
-                        {
-                            AuthTokenAsyncFactory = () => Task.FromResult(a.FirebaseToken),
-                            ThrowOnCancel = true
-                        }).Child("assets")
-                        .Child($"{type}")
-                        .Child($"{id}")
-                        .Child($"{name}.jpg")
-                        .PutAsync(ms, cancellation.Token);
-            string url = await upload;
-
-            return url;
         }
 
         public async Task<ResponseContent> PushOrderNoti(string description, Guid? orderId, Guid? requestId)
