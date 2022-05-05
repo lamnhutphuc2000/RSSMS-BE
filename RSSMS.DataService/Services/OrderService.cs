@@ -416,7 +416,7 @@ namespace RSSMS.DataService.Services
                     Name = "Đơn đang vận chuyển về kho"
                 });
 
-                await _firebaseService.PushOrderNoti("New order arrive!", order.Id, null);
+                await _firebaseService.PushOrderNoti("Đơn đang tới!", order.Id, null);
 
                 return model;
             }
@@ -506,6 +506,7 @@ namespace RSSMS.DataService.Services
                     .Include(order => order.Requests).ThenInclude(request => request.Schedules).FirstOrDefaultAsync();
                 if (order == null) throw new ErrorResponse((int)HttpStatusCode.BadRequest, "Không tìm thấy đơn");
 
+                
                 var secureToken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
                 var userId = Guid.Parse(secureToken.Claims.First(claim => claim.Type == "user_id").Value);
                 var account = await _accountService.Get(account => account.IsActive && account.Id == userId).Include(account => account.Role)

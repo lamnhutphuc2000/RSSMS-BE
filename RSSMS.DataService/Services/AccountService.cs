@@ -86,15 +86,18 @@ namespace RSSMS.DataService.Services
 
                 }
                 // Kiểm tra tài khoản trên database
-                Account acc = await Get(account => account.Email == model.Email && account.Password.SequenceEqual(EncryptedPassword(model.Password)) && account.IsActive)
-                    .Include(account => account.Role)
-                    .Include(account => account.StaffAssignStorages)
-                    .FirstOrDefaultAsync();
+                Account acc = null;
                 if (us != null)
                     acc = await Get(account => account.Email == model.Email && us.LocalId == account.FirebaseId && account.Password.SequenceEqual(EncryptedPassword(model.Password)) && account.IsActive)
                     .Include(account => account.Role)
+                    .Include(account => account.StaffAssignStorages).FirstOrDefaultAsync();
+                if(acc == null)
+                    acc = await Get(account => account.Email == model.Email && account.Password.SequenceEqual(EncryptedPassword(model.Password)) && account.IsActive)
+                    .Include(account => account.Role)
                     .Include(account => account.StaffAssignStorages)
                     .FirstOrDefaultAsync();
+                
+                    
 
                 if (acc == null) throw new ErrorResponse((int)HttpStatusCode.NotFound, "Email hoặc mật khẩu không đúng");
 

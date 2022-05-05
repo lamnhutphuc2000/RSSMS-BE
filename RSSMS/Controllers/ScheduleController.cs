@@ -53,7 +53,7 @@ namespace RSSMS.API.Controllers
         public async Task<IActionResult> Add(ScheduleCreateViewModel model)
         {
             var accessToken = await HttpContext.GetTokenAsync("access_token");
-            return Ok(await _scheduleService.Create(model,accessToken));
+            return Ok(await _scheduleService.Create(model, accessToken));
         }
     }
 }

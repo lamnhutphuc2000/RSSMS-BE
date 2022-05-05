@@ -226,9 +226,9 @@ namespace RSSMS.DataService.Services
 
 
                 double usage = totalVolume * 100 / floorVolume;
-                floorUsage.Add(usage);
-                floorUsage.Add(totalVolume);
-                floorUsage.Add(floorVolume - totalVolume);
+                floorUsage.Add(Math.Round(usage, 2));
+                floorUsage.Add(Math.Round(totalVolume, 2));
+                floorUsage.Add(Math.Round(floorVolume - totalVolume, 2));
                 return floorUsage;
             }
             catch (Exception ex)
